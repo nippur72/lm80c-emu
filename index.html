@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+      <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />					
+      <style>
+         .scanlines {
+            background: linear-gradient(
+               to bottom,
+               rgba(0,0,0,0),
+               rgba(0,0,0,0),
+               rgba(0,0,0,0),
+               rgba(0,0,0,0),
+               rgba(0,0,0,0.1),
+               rgba(0,0,0,0.2),
+               rgba(0,0,0,0.2),
+               rgba(0,0,0,0.2)
+            );
+            background-size: 100% 3px;
+            border-radius: 2rem;
+            position: absolute;
+         }
+      </style>
+      <style>
+         .mask {
+            background: repeating-linear-gradient(90deg, rgba(255,0,0,0.2),  rgba(0,255,0,0.2), rgba(0,0,255,0.2));            
+            background-size: 4px;
+            /*border-radius: 2rem;*/
+            position: absolute;
+         }
+      </style>
+   </head>
+   
+
+<body style="padding:0; margin:0; background: black; color: green;">
+   
+   <div style="margin: auto" id="screen">
+      <canvas class="mask" id="rgbmask" style="display: block; z-index: 0; height: 83vmin; width: 100vmin;">&nbsp;</canvas>            
+      <canvas id="canvas" name="canvas" width="256" height="192" style="border:black 10 px solid; padding 2em;"></canvas>
+   </div>   
+
+   <!-- allows to "Save As..." programs from the emulator -->
+   <script type="text/javascript" src="FileSaver.js"></script>
+
+   <!-- allows to used a keyval store with IndexedDB -->
+   <script type="text/javascript" src="idb-keyval-iife.min.js"></script>
+
+   <!-- core emulator files -->
+   <script type="text/javascript" src="autoload.js"></script>
+   <script type="text/javascript" src="roms.js"></script>
+   <script type="text/javascript" src="Z80.js"></script>
+   <script type="text/javascript" src="keys.js"></script>
+   <script type="text/javascript" src="keyboard.js"></script>
+   <script type="text/javascript" src="SIO.js"></script>
+   <script type="text/javascript" src="video.js"></script>
+   <script type="text/javascript" src="tms9918.js"></script>
+   <script type="text/javascript" src="ay-3-8910.js"></script>
+   <script type="text/javascript" src="utils.js"></script>
+   <script type="text/javascript" src="filesystem.js"></script>
+   <script type="text/javascript" src="bus.js"></script>
+   <script type="text/javascript" src="printer.js"></script>
+   <script type="text/javascript" src="wav-decoder.js"></script>
+   <script type="text/javascript" src="wav-encoder.js"></script>
+   <script type="text/javascript" src="browser.js"></script>
+   <script type="text/javascript" src="emulator.js"></script>
+      
+</body>
+</html>
