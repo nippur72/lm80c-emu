@@ -86,13 +86,13 @@ function renderLines(nlines, hidden) {
 }
 
 function renderAllLines() {   
+   if(total_cycles > 10000000) cpu.interrupt(false, 0x16);        // TODO fix with CTC
+
    renderLines(HIDDEN_SCANLINES_TOP, true);               
    renderLines(SCREEN_H, false);                    
    renderLines(HIDDEN_SCANLINES_BOTTOM, true);       
    
-   tms.montaUsandoMemoria();
-
-   if(total_cycles > 15000000) cpu.interrupt(false, 0x16);        // TODO fix with CTC
+   tms.montaUsandoMemoria();   
 }
 
 let nextFrame;

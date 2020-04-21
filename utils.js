@@ -69,37 +69,35 @@ async function crun(filename) {
    pasteLine("RUN\r\n");
 }
 
-function pasteLine(text) {
-   // TODO
-}
-
-function pasteBasic(text) {   
+async function paste(text) {   
    const lines = text.split("\n");   
    for(let t=0; t<lines.length; t++) {
       const linea = lines[t];
       console.log(linea);
-      pasteBasicLine(linea);      
+      await pasteLine(linea);      
+      await pasteChar(13);   // CR   
    }
    console.log("pasted!");   
 }
 
-function pasteBasicLine(line) {
+async function pasteLine(line) {
    for(let t=0;t<line.length;t++) {
-      let c = line.charAtPos(t);
-      SIO.receiveChar(c);
+      let c = line.charCodeAt(t);
+      await pasteChar(c);
    }
 }
 
-function pasteBasicChar(char) {
-   // TODO
+async function pasteChar(c) {
+   sio.receiveChar(c);
+   await wait(50);
 }
 
-function evkey(pcKey) {
-   const ev = {
-      code: pcKey,
-      preventDefault: ()=>{}
-   };
-   return ev;
+function wait(time) {
+   return new Promise((resolve,reject)=>{
+      setTimeout(()=>{
+         resolve();
+      }, time);
+   });
 }
 
 function zap() {            
