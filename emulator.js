@@ -31,9 +31,10 @@ let sio = new SIO();
  
 /******************/
 
-const cpuSpeed = 3685000; 
-const frameRate = (cpuSpeed*2)/(280*525); // ~50 Hz
-const frameDuration = 1000/frameRate;     // duration of 1 frame in msec
+const cpuSpeed = 3686400; 
+const vdcSpeed = 10700000;
+const frameRate = vdcSpeed/(342*262*2); // ~60 Hz
+const frameDuration = 1000/frameRate;   // duration of 1 frame in msec
 const cyclesPerLine = 280; 
 const HIDDEN_LINES = 0;
 
