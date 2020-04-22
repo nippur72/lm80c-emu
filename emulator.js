@@ -63,15 +63,15 @@ let options = {
    rgbmasksize: 3   
 };
 
+let CTC_counter = 0;
+
 // scanline version
 function renderLines(nlines, hidden) {
    for(let t=0; t<nlines; t++) {
       // run cpu
       while(true) {         
-         if(debugBefore !== undefined) debugBefore();
-         bus_ops = 0;
-         let elapsed = cpu.run_instruction();         
-         elapsed += bus_ops;
+         if(debugBefore !== undefined) debugBefore();         
+         let elapsed = cpu.run_instruction();                  
          if(debugAfter !== undefined) debugAfter(elapsed);
          cycle += elapsed;
          total_cycles += elapsed;
@@ -79,16 +79,28 @@ function renderLines(nlines, hidden) {
          cloadAudioSamples(elapsed); 
          if(csaving) csaveAudioSamples(elapsed);       
          
+         // CTC emulation TODO improve
+         CTC_counter += elapsed;
+         if(total_cycles > 10000000) 
+         {
+            if(CTC_counter > (cpuSpeed / 100)) {
+               CTC_counter -= (cpuSpeed / 100);  // 10 msec (100Hz)
+               cpu.interrupt(false, 0x16);               
+            }            
+         }
+
          if(cycle>=cyclesPerLine) {
             cycle-=cyclesPerLine;
             break;            
          }
       } 
+
    }
 }
 
 function renderAllLines() {   
-   if(total_cycles > 10000000) cpu.interrupt(false, 0x16);        // TODO fix with CTC
+   // VDP interrupt triggers a NMI
+   cpu.interrupt(true, 0x16);      
 
    renderLines(HIDDEN_SCANLINES_TOP, true);               
    renderLines(SCREEN_H, false);                    
