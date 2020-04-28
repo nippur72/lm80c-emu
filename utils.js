@@ -63,33 +63,37 @@ function mem_read_word(address) {
    return lo+hi*256;
 }
 
-async function crun(filename) {
+function crun(filename) {
    load(filename);
    //await print_string("\nrun:\n");
    pasteLine("RUN\r\n");
 }
 
-async function paste(text) {   
-   const lines = text.split("\n");   
+function paste(text) {
+   const lines = text.split("\n");
    for(let t=0; t<lines.length; t++) {
       const linea = lines[t];
       console.log(linea);
-      await pasteLine(linea);      
-      await pasteChar(13);   // CR   
+      pasteLine(linea);
+      pasteChar(13);   // CR
    }
-   console.log("pasted!");   
+   console.log("pasted!");
 }
 
-async function pasteLine(line) {
+function pasteLine(line) {
    for(let t=0;t<line.length;t++) {
       let c = line.charCodeAt(t);
-      await pasteChar(c);
+      pasteChar(c);
    }
 }
 
-async function pasteChar(c) {
+let CTC_enabled = true;
+
+function pasteChar(c) {
+   CTC_enabled = false;
    sio.receiveChar(c);
-   await wait(50);
+   renderLines(262*4);
+   CTC_enabled = true;
 }
 
 function wait(time) {
