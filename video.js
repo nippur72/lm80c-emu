@@ -3,11 +3,11 @@
 let border_top = undefined;
 let border_bottom = undefined;
 let border_h = undefined;
-let aspect = 1.55;
+let aspect = 1.4;
 
 const hardware_screen = false;
 
-const TEXT_W = 256; 
+const TEXT_W = 256*2;
 const TEXT_H = 192;
 
 let HIDDEN_SCANLINES_TOP;
@@ -36,9 +36,9 @@ function calculateGeometry() {
    if(border_bottom !== undefined && (border_bottom > 56 || border_bottom < 0)) border_bottom = undefined;
    if(border_h      !== undefined && (border_h      > 40 || border_h      < 0)) border_h      = undefined;
    */
-   border_top    = undefined;
-   border_bottom = undefined;
-   border_h      = undefined;
+   border_top    = 24;
+   border_bottom = 24;
+   border_h      = 24*2;
 
    BORDER_V        = (border_top    !== undefined ? border_top    : 0);
    BORDER_V_BOTTOM = (border_bottom !== undefined ? border_bottom : 0);   
@@ -47,7 +47,7 @@ function calculateGeometry() {
    BORDER_H = border_h !== undefined ? border_h : 0;    
    SCREEN_W = BORDER_H + TEXT_W + BORDER_H;
    SCREEN_H = BORDER_V + TEXT_H + BORDER_V_BOTTOM;
-   DOUBLE_SCANLINES = false;
+   DOUBLE_SCANLINES = true;
    TOTAL_SCANLINES = HIDDEN_SCANLINES_TOP + BORDER_V + TEXT_H + BORDER_V_BOTTOM + HIDDEN_SCANLINES_BOTTOM;
 
    // canvas is the outer canvas where the aspect ratio is corrected

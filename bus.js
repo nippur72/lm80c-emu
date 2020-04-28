@@ -19,11 +19,12 @@ function io_read(ioport) {
       
       // tms9918 0x30-0x33
       /*
+      // old tms
       case 0b00110000:  return tms.lePortaDados();
       case 0b00110010:  return tms.lePortaComandos();
       */
-     case 0b00110000:  return tms9928a.vram_read();
-     case 0b00110010:  return tms9928a.register_read();
+      case 0b00110000:  return tms9928a.vram_read();
+      case 0b00110010:  return tms9928a.register_read();
 
       // psg 0x40-0x43   
       //case 0x40:         
@@ -89,12 +90,12 @@ function io_write(port, value) {
 
       // TMS9918: 0x30-0x33   
       case 0b00110000:
-         tms.escrevePortaDados(value);
+         // old tms.escrevePortaDados(value);
          tms9928a.vram_write(value);
          break;
 
       case 0b00110010:
-         tms.escrevePortaComandos(value);
+         // old tms.escrevePortaComandos(value);
          tms9928a.register_write(value);
          break;
          
