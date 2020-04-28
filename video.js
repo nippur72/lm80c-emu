@@ -25,9 +25,6 @@ let canvas, canvasContext;
 let screenCanvas, screenContext;
 let imageData, bmp;
 
-let rgbmask_opacity = 0; //0.15;
-let rgbmask_size = 3;
-
 let saturation = 1.0;
 
 function calculateGeometry() { 
@@ -36,9 +33,9 @@ function calculateGeometry() {
    if(border_bottom !== undefined && (border_bottom > 56 || border_bottom < 0)) border_bottom = undefined;
    if(border_h      !== undefined && (border_h      > 40 || border_h      < 0)) border_h      = undefined;
    */
-   border_top    = 24;
-   border_bottom = 24;
-   border_h      = 24*2;
+   border_top    = 22;
+   border_bottom = 22;
+   border_h      = 8*2;
 
    BORDER_V        = (border_top    !== undefined ? border_top    : 0);
    BORDER_V_BOTTOM = (border_bottom !== undefined ? border_bottom : 0);   

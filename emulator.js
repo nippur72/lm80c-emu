@@ -95,7 +95,7 @@ let tms9928a_update = buffer => {
    ptr += (342 * 4)*2;
 }
 
-  tms9928a_context.putImageData(tms9928a_imagedata, -32, -32)
+  tms9928a_context.putImageData(tms9928a_imagedata, -60, -40)
 };
 
 let tms9928a = new TMS9928A({
@@ -142,15 +142,13 @@ let options = {
    saturation: 1.0,
    bt: undefined,
    bb: undefined,
-   bh: undefined,
-   rgbmaskopacity: 0,
-   rgbmasksize: 3   
+   bh: undefined
 };
 
 let CTC_counter = 0;
 
 // scanline version
-function renderLines(nlines, hidden) {
+function renderLines(nlines) {
    for(let t=0; t<nlines; t++) {
       // run cpu
       while(true) {         
@@ -164,13 +162,15 @@ function renderLines(nlines, hidden) {
          if(csaving) csaveAudioSamples(elapsed);       
          
          // CTC emulation TODO improve
-         CTC_counter += elapsed;
-         if(total_cycles > 10000000) 
-         {
-            if(CTC_counter > (cpuSpeed / 100)) {
-               CTC_counter -= (cpuSpeed / 100);  // 10 msec (100Hz)
-               cpu.interrupt(false, 0x16);               
-            }            
+         if(CTC_enabled) {
+            CTC_counter += elapsed;
+            if(total_cycles > 10000000)
+            {
+               if(CTC_counter > (cpuSpeed / 100)) {
+                  CTC_counter -= (cpuSpeed / 100);  // 10 msec (100Hz)
+                  cpu.interrupt(false, 0x16);
+               }
+            }
          }
 
          if(cycle>=cyclesPerLine) {
@@ -180,7 +180,6 @@ function renderLines(nlines, hidden) {
       }
 
       tms9928a.drawline();
-
    }
 }
 
@@ -188,9 +187,13 @@ function renderAllLines() {
    // VDP interrupt triggers a NMI
    cpu.interrupt(true, 0x16);      
 
+   /*
    renderLines(HIDDEN_SCANLINES_TOP, true);               
    renderLines(SCREEN_H, false);                    
    renderLines(HIDDEN_SCANLINES_BOTTOM, true);
+   */
+
+   renderLines(262, false);
 
    // old TMS
    // tms.montaUsandoMemoria();
@@ -201,6 +204,16 @@ function renderAllLines() {
    }
    */
    tms9928a_update(tms9928a.m_tmpbmp);
+
+
+   /*
+   // patch SIO
+   if(buffer_sio.length > 0) {
+      sio.receiveChar(buffer_sio[0]);
+      buffer_sio = buffer_sio.slice(1);
+   }
+   */
+
 }
 
 let nextFrame;
