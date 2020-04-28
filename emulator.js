@@ -27,6 +27,53 @@ let psg = new psg8910();
 
 tms.reset();
 
+// TMS9928A
+let tms9928a_canvas = document.getElementById("canvas2");
+let tms9928a_context = tms9928a_canvas.getContext('2d');
+let tms9928a_imagedata = tms9928a_context.getImageData(0, 0, 342, 313);
+
+/*
+let buf = new ArrayBuffer(tms9928a_imagedata);
+let buf8 = new Uint8ClampedArray(buf);
+*/
+
+let tms9928a_buffer = new Uint32Array(342*313);
+
+let tms9928a_update = buffer => {
+
+   let ptr = 0;
+   let ptr1 = 0;
+   let data = tms9928a_imagedata.data;
+   for(let y=0;y<313;y++) {
+      for(let x=0;x<342;x++) {
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         ptr1++;
+      }
+   }
+
+   tms9928a_context.putImageData(tms9928a_imagedata, 0, 0)
+
+   //tms9928a_imagedata.data.set(buf8);
+   //tms9928a_context.putImageData(tms9928a_imagedata, 0, 0)
+   //console.log("VSYNC");
+};
+
+let tms9928a = new TMS9928A({
+   vram_size: 16384,
+   isPal: true,
+   int_line_cb: undefined,
+   gromclk_cb: undefined,
+   buffer: tms9928a_buffer,
+   screen_update_cb: undefined,
+   family99: true,
+   reva: true
+});
+
+tms9928a.reset();
+
 let sio = new SIO();
  
 /******************/
@@ -93,7 +140,7 @@ function renderLines(nlines, hidden) {
             cycle-=cyclesPerLine;
             break;            
          }
-      } 
+      }
 
    }
 }
@@ -104,9 +151,15 @@ function renderAllLines() {
 
    renderLines(HIDDEN_SCANLINES_TOP, true);               
    renderLines(SCREEN_H, false);                    
-   renderLines(HIDDEN_SCANLINES_BOTTOM, true);       
-   
-   tms.montaUsandoMemoria();   
+   renderLines(HIDDEN_SCANLINES_BOTTOM, true);
+
+   tms.montaUsandoMemoria();
+
+  for(let i=0;i<16384;i++) tms9928a.m_vram_space[i] = tms.vidMem[i];
+  for(let i=0; i<313; i++) {
+      tms9928a.drawline();
+  }
+  tms9928a_update(tms9928a.m_tmpbmp);
 }
 
 let nextFrame;
