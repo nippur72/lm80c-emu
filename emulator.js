@@ -44,6 +44,7 @@ let tms9928a_buffer = new Uint32Array(342*262);
 let tms9928a_update = buffer => {
 
    /*
+   // non doubled pixel render
    let ptr = 0;
    let ptr1 = 0;
    let data = tms9928a_imagedata.data;
@@ -95,7 +96,7 @@ let tms9928a_update = buffer => {
    ptr += (342 * 4)*2;
 }
 
-  tms9928a_context.putImageData(tms9928a_imagedata, -60, -40)
+   tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
 };
 
 let tms9928a = new TMS9928A({
@@ -137,12 +138,7 @@ let throttle = false;
 let options = {
    load: undefined,
    restore: false,
-   notapemonitor: false,
-   scanlines: false,
-   saturation: 1.0,
-   bt: undefined,
-   bb: undefined,
-   bh: undefined
+   notapemonitor: false
 };
 
 let CTC_counter = 0;
@@ -187,12 +183,6 @@ function renderAllLines() {
    // VDP interrupt triggers a NMI
    cpu.interrupt(true, 0x16);      
 
-   /*
-   renderLines(HIDDEN_SCANLINES_TOP, true);               
-   renderLines(SCREEN_H, false);                    
-   renderLines(HIDDEN_SCANLINES_BOTTOM, true);
-   */
-
    renderLines(262, false);
 
    // old TMS
@@ -205,7 +195,6 @@ function renderAllLines() {
    */
    tms9928a_update(tms9928a.m_tmpbmp);
 
-
    /*
    // patch SIO
    if(buffer_sio.length > 0) {
@@ -213,7 +202,6 @@ function renderAllLines() {
       buffer_sio = buffer_sio.slice(1);
    }
    */
-
 }
 
 let nextFrame;

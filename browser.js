@@ -20,8 +20,6 @@ function onResize(e) {
    }
 
    const trueHeight = canvas.offsetHeight
-   hide_scanlines = (trueHeight < 512);
-   buildPalette();
 }
 
 function goFullScreen() 
@@ -148,18 +146,6 @@ function parseQueryStringCommands() {
 
    if(options.notapemonitor === true) {
       tape_monitor = false;      
-   }
-
-   if(options.scanlines === true) {
-      show_scanlines = true;   
-      buildPalette();   
-   }   
-
-   if(options.saturation !== undefined) {
-           if(options.saturation < 0) saturation = 0;
-      else if(options.saturation > 1) saturation = 1;
-      else saturation = options.saturation;   
-      buildPalette();   
    }
 
    if(options.bt !== undefined || 
