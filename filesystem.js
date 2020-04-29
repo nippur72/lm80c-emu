@@ -73,9 +73,6 @@ async function save(filename, p1, p2) {
    else console.log("give filename .prg or .emu extension");
 }
 
-let TEXT = 0x80AE;
-let VARTAB = 0x8136;
-
 function loadBytes(bytes, address, fileName) {
    const startAddress = (address === undefined) ? mem_read_word(TEXT) : address;
    const endAddress = startAddress + bytes.length - 1;

@@ -5,6 +5,16 @@
 // TODO implement CTC interrupt
 // TODO fix autoload
 
+// firmware 3.6
+let TEXT = 0x80AE;
+let VARTAB = 0x8136;
+
+/*
+// mod
+TEXT = 0x80AE + 0x03;
+VARTAB = 0x8136 + 0x03;
+*/
+
 // 32K ROM is defined in roms.js
 const ram = new Uint8Array(32768).fill(0x00); 
 
@@ -180,10 +190,13 @@ function renderLines(nlines) {
 }
 
 function renderAllLines() {   
-   // VDP interrupt triggers a NMI
-   cpu.interrupt(true, 0x16);      
 
-   renderLines(262, false);
+   renderLines(192+40, false);
+
+   // VDP interrupt triggers a NMI
+   cpu.interrupt(true, 0x16);
+
+   renderLines(262-(192+40), false);
 
    // old TMS
    // tms.montaUsandoMemoria();
