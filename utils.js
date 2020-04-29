@@ -1,6 +1,7 @@
 /**** utility functions ****/
 
 function dumpMem(start, end, rows) {
+   if(end==undefined) end=start+15;
    if(rows==undefined) rows=16;
    let s="\r\n";
    for(let r=start;r<=end;r+=rows) {
