@@ -118,19 +118,12 @@ function keyDown(e) {
 
    // *** special (non characters) keys ***   
 
-   // RESET key is mapped as ALT+R, CTRL+Break or Pause
-   if(e.key=="Cancel" || e.key=="Pause" || (e.code == "KeyR" && e.altKey)) {
+   // RESET key is CTRL+ALT+BREAK
+   if(e.code === "Pause" && e.altKey && e.ctrlKey) {
       cpu.reset();      
       e.preventDefault(); 
       return;
    }
-
-   // ALT+P is power OFF/ON
-   if(e.code == "KeyP" && e.altKey) {
-      power();
-      e.preventDefault();
-      return;
-   }   
 
    // ALT+Left is rewind tape
    if(e.code == "ArrowLeft" && e.altKey) {
@@ -145,32 +138,24 @@ function keyDown(e) {
       e.preventDefault(); 
       return;
    }      
-   
-   // remap shift+home into Cls
-   const hardware_key = pckey_to_hwkey(e.code);   
-   
-   // unhandled keys
-   if(hardware_key === undefined) {       
-      // if(key !== "Shift" && key !== "AltGraph" && key !== "Alt") {
-      //    console.warn(`unhandled key '${key}'`);
-      // }
-      return;
+
+   // const hardware_key = pckey_to_hwkey(e.code);
+
+   // if keyboard ITA
+   {
+      const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
+      if(hardware_keys.length === 0) return;
+      keyboardReset();
+      hardware_keys.forEach((k) => keyPress(k));
+      e.preventDefault();
    }
-
-   // do the keypress on the hardware keyboard matrix
-   keyPress(hardware_key);   
-
-   e.preventDefault();         
 }
 
-function keyUp(e) { 
-
-   const hardware_key = pckey_to_hwkey(e.code);
-
-   if(hardware_key === undefined) return;
-
-   keyRelease(hardware_key); 
-         
+function keyUp(e) {
+   const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
+   if(hardware_keys.length === 0) return;
+   keyboardReset();
+   //laser_keys.forEach((k) => keyRelease(k));
    e.preventDefault();
 }
 

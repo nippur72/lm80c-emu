@@ -159,6 +159,10 @@ mapKey( KEY_1         , KB0, KA0 );
 // keyboard matrix (8x8)
 KAX = new Uint8Array(8).fill(0b11111111);
 
+function keyboardReset() {
+   KAX = new Uint8Array(8).fill(0b11111111);
+}
+
 function keyPress(hardware_key) {   
    const { row, col } = key_row_col[hardware_key];   
    KAX[row] = reset_bit(KAX[row], col);
