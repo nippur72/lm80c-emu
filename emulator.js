@@ -1,7 +1,6 @@
 "use strict";
 
-// TODO rename to gh-pages
-// TODO fix cpu speed
+// TODO check cpu speed, is it too fast?
 // TODO implement CTC interrupt
 // TODO fix autoload
 
