@@ -175,9 +175,9 @@ function restoreState() {
 
 function dumpPointers() {
    console.log(`
-   +------------------------+ <- VARTAB (0x${hex(VARTAB,4)}) ${hex(mem_read_word(VARTAB),4)}
+   +------------------------+ <-  (0x${hex(PROGND,4)}) ${hex(mem_read_word(PROGND),4)}
    |     BASIC program      |
-   +------------------------+ <- TXTTAB (0x${hex(TEXT,4)}) ${hex(mem_read_word(TEXT),4)}
+   +------------------------+ <- TXTTAB (0x${hex(BASTXT,4)}) ${hex(mem_read_word(BASTXT),4)}
    |    System variables    |
    +------------------------+ 0x8000
 `);

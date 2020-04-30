@@ -6,9 +6,11 @@ function hex(value) {
 
 function makeEprom() {
 
-   const eprom = fs.readFileSync("LM80C-firmware-r36.rom");
+   const file_name = "LM80C-firmware-r37.rom";
 
-   let s = "// LM80C 32K EPROM\r\n\r\n";
+   const eprom = fs.readFileSync(file_name);
+
+   let s = `// '${file_name}' 32K EPROM\r\n\r\n`;
    
    s += "const rom = new Uint8Array([\n   ";
 
