@@ -74,7 +74,7 @@ async function save(filename, p1, p2) {
 }
 
 function loadBytes(bytes, address, fileName) {
-   const startAddress = (address === undefined) ? mem_read_word(TEXT) : address;
+   const startAddress = (address === undefined) ? mem_read_word(BASTXT) : address;
    const endAddress = startAddress + bytes.length - 1;
 
    for(let i=0,t=startAddress;t<=endAddress;i++,t++) {
@@ -82,7 +82,7 @@ function loadBytes(bytes, address, fileName) {
    }
 
    // modify end of basic program pointer   
-   if(startAddress === mem_read_word(TEXT)) mem_write_word(VARTAB, endAddress+1);   
+   if(startAddress === mem_read_word(BASTXT)) mem_write_word(PROGND, endAddress+1);
 
    if(fileName === undefined) fileName = "autoload";
    console.log(`loaded "${fileName}" ${bytes.length} bytes from ${hex(startAddress,4)}h to ${hex(endAddress,4)}h`);
@@ -95,8 +95,8 @@ async function load_file(fileName, address) {
 }
 
 async function save_file(filename, start, end) {
-   if(start === undefined) start = mem_read_word(TEXT);
-   if(end === undefined) end = mem_read_word(VARTAB)-1;
+   if(start === undefined) start = mem_read_word(BASTXT);
+   if(end === undefined) end = mem_read_word(PROGND)-1;
 
    const prg = [];
    for(let i=0,t=start; t<=end; i++,t++) {
