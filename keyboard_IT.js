@@ -126,11 +126,13 @@ function pckey_to_hardware_keys_ITA(code, key, e) {
    if(code === "ArrowDown")    hardware_keys.push( KEY_DOWN  );
    if(code === "ArrowLeft")    hardware_keys.push( KEY_LEFT  );
    if(code === "ArrowRight")   hardware_keys.push( KEY_RIGHT  );
-   if(code === "Pause")        hardware_keys.push( KEY_RUN_STOP  );
 
    if(code === "Space")        hardware_keys.push( KEY_SPACE  );
-   if(code === "Tab")          hardware_keys.push( KEY_CTRL );
+   if(code === "Tab")          hardware_keys.push( KEY_RUN_STOP );
    if(key === "\\")            hardware_keys.push( KEY_ESC  );
+
+   // disabled because of brower bug
+   //if(code === "Pause")        hardware_keys.push( KEY_RUN_STOP );
 
    //if(key === "{")             hardware_keys.push(  );
    //if(key === "}")             hardware_keys.push(  );

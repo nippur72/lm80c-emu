@@ -152,6 +152,7 @@ function keyDown(e) {
 }
 
 function keyUp(e) {
+   console.log(e);
    const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
    if(hardware_keys.length === 0) return;
    keyboardReset();
