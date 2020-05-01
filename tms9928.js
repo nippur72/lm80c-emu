@@ -140,7 +140,7 @@ class TMS9928A
    update_backdrop() {
       // update backdrop colour to transparent if EXTVID bit is set
       if ((this.m_Regs[7] & 15) == 0)
-         set_pen_color(0, rgb_t(this.m_Regs[0] & 1 ? 0 : 255,0,0,0));
+         this.palette[0] = this.m_Regs[0] & 1 ? 0x00000000 : 0xFF000000;
    }
 
    update_table_masks() {
