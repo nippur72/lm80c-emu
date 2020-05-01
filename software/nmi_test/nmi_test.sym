@@ -1,0 +1,18 @@
+Symbols:
+                       $: 0x904C
+                      $$: 0x904C
+                    $ofs: 0x004C
+                   $$ofs: 0x004C
+              READ_VSTAT: 0x061E
+              WRITE_VREG: 0x0613
+                  NMIUSR: 0x8061
+                  NMISET: 0x2617
+                    PTR1: 0x9011
+                    PTR2: 0x901E
+                 INSTALL: 0x9000
+               MYROUTINE: 0x9006
+                      P1: 0x9010
+                      P2: 0x901D
+                    wait: 0x9032
+                 counter: 0x9038
+              MYROUTINE2: 0x903A
