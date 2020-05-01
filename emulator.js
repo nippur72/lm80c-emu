@@ -2,6 +2,7 @@
 
 // TODO check cpu speed, is it too fast?
 // TODO implement CTC interrupt
+// TODO implement SIO-CTC-PIO daisy chain
 // TODO fix autoload
 
 // firmware 3.6
@@ -126,11 +127,11 @@ let sio = new SIO();
  
 /******************/
 
-const cpuSpeed = 3686400; 
+const cpuSpeed = 3685000;//3686400;
 const vdcSpeed = 10700000;
 const frameRate = vdcSpeed/(342*262*2); // ~60 Hz
 const frameDuration = 1000/frameRate;   // duration of 1 frame in msec
-const cyclesPerLine = 280; 
+const cyclesPerLine = cpuSpeed / vdcSpeed * 342 * 2;
 const HIDDEN_LINES = 0;
 
 let stopped = false; // allows to stop/resume the emulation
