@@ -210,3 +210,25 @@ function endsWith(s, value) {
 function copyArray(source, dest) {
    source.forEach((e,i)=>dest[i] = e);
 }
+
+function make_lm(start, end, rows) {
+   let s;
+   s = `10 FOR T=&H${hex(start,4)} TO &H${hex(end,4)}\n`;
+   s+= `20 READ B:POKE T,B\n`;
+   s+= `30 NEXT\n`;
+   s+= `40 SYS &H${hex(start,4)}\n`;
+   s+= `50 END\n`;
+   let nline = 1000;
+   if(rows==undefined) rows=8;
+   for(let r=start;r<=end;r+=rows) {
+      s+= `${nline} DATA `;
+      for(let c=0;c<rows && (r+c)<=end;c++) {
+         const byte = mem_read(r+c);
+         s+= `${byte}`;
+         if(c!=rows-1 && (r+c)!=end) s+=",";
+      }
+      s+="\n";
+      nline += 10;
+   }
+   console.log(s);
+}
