@@ -20,6 +20,8 @@ let caps_lock_bit = 0;
 
 let tape_monitor = true;
 
+let NMI_triggered = false;
+
 let cpu = new Z80({ mem_read, mem_write, io_read, io_write });
 
 let psg = new psg8910();
@@ -102,10 +104,15 @@ let tms9928a_update = buffer => {
    tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
 };
 
+let tms9928a_interrupt_cb = (m_INT)=> {
+   if(m_INT === 1) NMI_triggered = true;
+   //console.log(`NMI triggered at line ${tms9928a.vpos}`);
+};
+
 let tms9928a = new TMS9928A({
    vram_size: 16384,
    isPal: false,
-   int_line_cb: undefined,
+   int_line_cb: tms9928a_interrupt_cb,
    gromclk_cb: undefined,
    buffer: tms9928a_buffer,
    screen_update_cb: undefined,
@@ -179,26 +186,22 @@ function renderLines(nlines) {
       }
 
       tms9928a.drawline();
+
+      if(NMI_triggered) {
+         cpu.interrupt(true, 0x16);
+         NMI_triggered = false;
+      }
+
    }
 }
 
 function renderAllLines() {   
 
-   renderLines(192+40, false);
-
-   // VDP interrupt triggers a NMI
-   cpu.interrupt(true, 0x16);
-
-   renderLines(262-(192+40), false);
+   renderLines(262);
 
    // old TMS
    // tms.montaUsandoMemoria();
 
-   /*
-   for(let i=0; i<262; i++) {
-      tms9928a.drawline();
-   }
-   */
    tms9928a_update(tms9928a.m_tmpbmp);
 
    /*
