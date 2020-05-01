@@ -6,7 +6,7 @@ function hex(value) {
 
 function makeEprom() {
 
-   const file_name = "LM80C-firmware-r37.rom";
+   const file_name = "LM80C-firmware-r38.rom";
 
    const eprom = fs.readFileSync(file_name);
 
