@@ -127,8 +127,8 @@ let sio = new SIO();
  
 /******************/
 
-const cpuSpeed = 3685000;//3686400;
-const vdcSpeed = 10700000;
+const cpuSpeed = 7372800/2;
+const vdcSpeed = 10738635;
 const frameRate = vdcSpeed/(342*262*2); // ~60 Hz
 const frameDuration = 1000/frameRate;   // duration of 1 frame in msec
 const cyclesPerLine = cpuSpeed / vdcSpeed * 342 * 2;
