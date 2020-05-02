@@ -82,19 +82,22 @@ function paste(text) {
 }
 
 function pasteLine(line) {
+   ctc.enable(false);
+   renderLines(262);
+
    for(let t=0;t<line.length;t++) {
       let c = line.charCodeAt(t);
       pasteChar(c);
    }
+
+   ctc.enable(true);
+   renderLines(262);
 }
 
-let CTC_enabled = true;
-
 function pasteChar(c) {
-   CTC_enabled = false;
    sio.receiveChar(c);
-   renderLines(262*4);
-   CTC_enabled = true;
+   while(sio.busy) renderLines(262);
+   while(mem_read(CRSR_STATE)==0) renderLines(262);
 }
 
 function wait(time) {

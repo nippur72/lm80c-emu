@@ -5,9 +5,10 @@
 // TODO implement SIO-CTC-PIO daisy chain
 // TODO fix autoload
 
-// firmware 3.6
+// firmware 3.8
 let BASTXT = 0x80AE;
 let PROGND = 0x8136;
+let CRSR_STATE = 0x81dd;
 
 // 32K ROM is defined in roms.js
 const ram = new Uint8Array(32768).fill(0x00); 
@@ -21,7 +22,7 @@ let caps_lock_bit = 0;
 
 let tape_monitor = true;
 
-let NMI_triggered = false;
+let VDP_triggered_NMI = false;
 
 let cpu = new Z80({ mem_read, mem_write, io_read, io_write });
 
@@ -106,8 +107,7 @@ let tms9928a_update = buffer => {
 };
 
 let tms9928a_interrupt_cb = (m_INT)=> {
-   if(m_INT === 1) NMI_triggered = true;
-   //console.log(`NMI triggered at line ${tms9928a.vpos}`);
+   if(m_INT === 1) VDP_triggered_NMI = true;
 };
 
 let tms9928a = new TMS9928A({
@@ -123,12 +123,10 @@ let tms9928a = new TMS9928A({
 
 tms9928a.reset();
 
-let sio = new SIO();
- 
 /******************/
 
-const cpuSpeed = 7372800/2;
-const vdcSpeed = 10738635;
+const cpuSpeed = 7372800/2;  // number given by @leomil72
+const vdcSpeed = 10738635;   // number given by @leomil72
 const frameRate = vdcSpeed/(342*262*2); // ~60 Hz
 const frameDuration = 1000/frameRate;   // duration of 1 frame in msec
 const cyclesPerLine = cpuSpeed / vdcSpeed * 342 * 2;
@@ -152,14 +150,26 @@ let options = {
    notapemonitor: false
 };
 
-let CTC_counter = 0;
+let ctc = new CTC();
+let sio = new SIO();
 
+sio.IEI_cb = ()=>{ return 1; }
+ctc.IEI_cb = ()=>{ return sio.IEO(); }
+
+let ctc_initial_start = false;
 // scanline version
 function renderLines(nlines) {
    for(let t=0; t<nlines; t++) {
       // run cpu
       while(true) {         
-         if(debugBefore !== undefined) debugBefore();         
+         if(debugBefore !== undefined) debugBefore();
+
+         if(mem_read_word(cpu.getState().pc) === 0x4ded ) {
+            // console.log(`${total_cycles} RETI found ${hex(cpu.getState().pc,4)}`);
+            ctc.cpu_found_RETI();
+            sio.cpu_found_RETI();
+         }
+
          let elapsed = cpu.run_instruction();                  
          if(debugAfter !== undefined) debugAfter(elapsed);
          cycle += elapsed;
@@ -167,18 +177,13 @@ function renderLines(nlines) {
          writeAudioSamples(elapsed);
          cloadAudioSamples(elapsed); 
          if(csaving) csaveAudioSamples(elapsed);       
-         
-         // CTC emulation TODO improve
-         if(CTC_enabled) {
-            CTC_counter += elapsed;
-            if(total_cycles > 10000000)
-            {
-               if(CTC_counter > (cpuSpeed / 100)) {
-                  CTC_counter -= (cpuSpeed / 100);  // 10 msec (100Hz)
-                  cpu.interrupt(false, 0x16);
-               }
-            }
+
+         if(total_cycles > (cpuSpeed * 2.5) && !ctc_initial_start) {
+            ctc.enable(true);
+            ctc_initial_start = true;
          }
+
+         ctc.advance(elapsed);
 
          if(cycle>=cyclesPerLine) {
             cycle-=cyclesPerLine;
@@ -188,11 +193,10 @@ function renderLines(nlines) {
 
       tms9928a.drawline();
 
-      if(NMI_triggered) {
-         cpu.interrupt(true, 0x16);
-         NMI_triggered = false;
+      if(VDP_triggered_NMI) {
+         cpu.interrupt(true);
+         VDP_triggered_NMI = false;
       }
-
    }
 }
 
