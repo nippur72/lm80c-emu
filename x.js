@@ -1,3 +1,4 @@
+// paste fake basic program
 (function() {
    let c=0;
    let s="";
