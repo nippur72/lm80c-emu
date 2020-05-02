@@ -6,9 +6,9 @@
 // TODO fix autoload
 
 // firmware 3.8
-let BASTXT = 0x80AE;
-let PROGND = 0x8136;
-let CRSR_STATE = 0x81dd;
+let BASTXT = 0x8133;
+let PROGND = 0x81BB;
+let CRSR_STATE = 0x81E9;
 
 // 32K ROM is defined in roms.js
 const ram = new Uint8Array(32768).fill(0x00); 
