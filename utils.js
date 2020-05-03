@@ -82,7 +82,7 @@ function paste(text) {
 }
 
 function pasteLine(line) {
-   ctc.enable(false);
+   ctc.enable(0);
    renderLines(262);
 
    for(let t=0;t<line.length;t++) {
@@ -90,7 +90,7 @@ function pasteLine(line) {
       pasteChar(c);
    }
 
-   ctc.enable(true);
+   ctc.enable(1);
    renderLines(262);
 }
 

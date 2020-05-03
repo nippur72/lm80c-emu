@@ -12,6 +12,11 @@ function io_read(ioport) {
    const port = ioport & 0xFF;
    switch(port) {
 
+      case 0x10: return ctc.read(port & 3);  // CTC
+      case 0x11: return ctc.read(port & 3);  // CTC
+      case 0x12: return ctc.read(port & 3);  // CTC
+      case 0x13: return ctc.read(port & 3);  // CTC
+
       case 0x20: return sio.readPortDA();  // SIO_DA equ %00100000
       case 0x21: return sio.readPortDB();  // SIO_DB equ %00100001
       case 0x22: return sio.readPortCA();  // SIO_CA equ %00100010
@@ -62,25 +67,11 @@ function io_write(port, value) {
          // TODO implement
          return;
 
-      // CTC CH0   
-      case 0x10:
-         // TODO implement
-         return;
-
-      // CTC CH1   
-      case 0x11:
-         // TODO implement
-         return;
-
-      // CTC CH2  
-      case 0x12:
-         // TODO implement
-         return;
-
-      // CTC CH3   
-      case 0x13:
-         // TODO implement
-         return;
+      // CTC CH0-3
+      case 0x10: ctc.write(port & 3, value); return;
+      case 0x11: ctc.write(port & 3, value); return;
+      case 0x12: ctc.write(port & 3, value); return;
+      case 0x13: ctc.write(port & 3, value); return;
 
       // SIO 0x20-23
       case 0x20: sio.writePortDA(value); return; // SIO_DA equ %00100000

@@ -178,11 +178,6 @@ function renderLines(nlines) {
          cloadAudioSamples(elapsed); 
          if(csaving) csaveAudioSamples(elapsed);       
 
-         if(total_cycles > (cpuSpeed * 2.5) && !ctc_initial_start) {
-            ctc.enable(true);
-            ctc_initial_start = true;
-         }
-
          ctc.advance(elapsed);
 
          if(cycle>=cyclesPerLine) {
