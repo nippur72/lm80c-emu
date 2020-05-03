@@ -32,7 +32,7 @@ class CTC
    }
 
    advance_counter(i, ticks) {
-      let max = 144*256; // this.limits[i] * this.dividers[i];
+      let max = this.limits[i] * this.dividers[i];
       this.counters[i] += ticks;
       if(this.counters[i] > max) {
          this.counters[i] -= max;
