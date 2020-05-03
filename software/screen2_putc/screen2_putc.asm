@@ -3,7 +3,7 @@ VDP_DAT    equ $0030   ; VDP data port
 CHRST88    equ $427B   ; start of 8x8 font in firmware ROM
 SETVDPADRS equ $05E0   ; firmware routine that sets VDP address in HL
 
-org $A000
+ORG $A000
 
 ;
 ; Prints a character in screen 2 mode
@@ -11,13 +11,16 @@ org $A000
 ; formula is:
 ; SOURCE_ADDRESS = CHRST88 + character*8
 ; DEST_BMP_ADDRESS = X*8 + Y*256
-; DEST_COLOR_ADDRES = &H2000 + X*8 + Y*256
+; DEST_COLOR_ADDRESS = &H2000 + X*8 + Y*256
+;
+; the A register is not preserved
 ;
 
-CH:  db 0   ; B = character
-COL: db 0   ; C = color (fg+bg)
-X:   db 0   ; D = x coordinate (column 0-31)
-Y:   db 0   ; E = y coordinate (row 0-23)
+; these could be passed in registers HL, DE
+CH:  db 0   ; character to print
+COL: db 0   ; color (bg|fg)
+X:   db 0   ; x coordinate (column 0-31)
+Y:   db 0   ; y coordinate (row 0-23)
 
 SCREEN2_PUTC:
    PUSH BC
