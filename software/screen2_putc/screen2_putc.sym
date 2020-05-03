@@ -1,0 +1,17 @@
+Symbols:
+                       $: 0xA051
+                      $$: 0xA051
+                    $ofs: 0x0051
+                   $$ofs: 0x0051
+                 VDP_DAT: 0x0030
+                 CHRST88: 0x427B
+              SETVDPADRS: 0x05E0
+                      CH: 0xA000
+                     COL: 0xA001
+                       X: 0xA002
+                       Y: 0xA003
+            SCREEN2_PUTC: 0xA004
+                fill_col: 0xA02B
+              fill_col_1: 0xA035
+               copia_bmp: 0xA03C
+             copia_bmp_1: 0xA045

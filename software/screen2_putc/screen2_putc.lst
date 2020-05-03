@@ -1,0 +1,98 @@
+                                ; firmware v3.8
+                                VDP_DAT    equ $0030   ; VDP data port
+                                CHRST88    equ $427B   ; start of 8x8 font in firmware ROM
+                                SETVDPADRS equ $05E0   ; firmware routine that sets VDP address in HL
+                                
+                                org $A000
+                                
+                                ;
+                                ; Prints a character in screen 2 mode
+                                ;
+                                ; formula is:
+                                ; SOURCE_ADDRESS = CHRST88 + character*8
+                                ; DEST_BMP_ADDRESS = X*8 + Y*256
+                                ; DEST_COLOR_ADDRES = &H2000 + X*8 + Y*256
+                                ;
+                                
+A000: 00                        CH:  db 0   ; B = character
+A001: 00                        COL: db 0   ; C = color (fg+bg)
+A002: 00                        X:   db 0   ; D = x coordinate (column 0-31)
+A003: 00                        Y:   db 0   ; E = y coordinate (row 0-23)
+                                
+                                SCREEN2_PUTC:
+A004: C5                           PUSH BC
+A005: D5                           PUSH DE
+A006: E5                           PUSH HL
+                                
+                                   ; calculate source address
+A007: 3A 00 A0                     LD    A, (CH)      ;
+A00A: 6F                           LD    L, A         ;
+A00B: 26 00                        LD    H, 0         ;
+A00D: 29                           ADD   HL, HL       ;
+A00E: 29                           ADD   HL, HL       ;
+A00F: 29                           ADD   HL, HL       ; HL = ch * 8
+A010: 11 7B 42                     LD    DE, CHRST88  ; DE = start of 8x8 fonts in ROM
+A013: 19                           ADD   HL, DE       ; HL = start of character in ROM
+                                
+A014: E5                           PUSH  HL           ; save calculated address
+                                
+                                   ; calculate dest address in bitmap vram
+A015: 3A 02 A0                     LD    A, (X)       ;
+A018: 6F                           LD    L, A         ;
+A019: 26 00                        LD    H, 0         ; HL = X
+A01B: 29                           ADD   HL, HL       ;
+A01C: 29                           ADD   HL, HL       ;
+A01D: 29                           ADD   HL, HL       ; HL = X*8
+A01E: 3A 03 A0                     LD    A, (Y)
+A021: 57                           LD    D, A         ;
+A022: 1E 00                        LD    E, 0         ; DE = Y * 256
+A024: 19                           ADD   HL, DE       ; HL = X*8 + Y*256
+                                
+A025: E5                           PUSH  HL           ; save dest
+                                
+                                   ; calculate dest address in color vram
+A026: 11 00 20                     LD    DE, $2000     ;
+A029: 19                           ADD   HL, DE        ; HL = $2000 + X*8 + Y*256
+                                
+A02A: F3                           DI
+                                ;----------------------
+                                
+                                fill_col:
+                                   ; HL contains the address
+A02B: CD E0 05                     CALL  SETVDPADRS
+A02E: 06 08                        LD    B, 8            ; repeat for 8 rows
+A030: 0E 30                        LD    C, VDP_DAT      ; VDP data mode
+A032: 3A 01 A0                     LD    A, (col)
+                                fill_col_1:
+A035: ED 79                        OUT   (C), A
+A037: 00                           NOP
+A038: 00                           NOP
+A039: 00                           NOP
+A03A: 10 F9                        DJNZ  fill_col_1
+                                
+                                copia_bmp:
+A03C: E1                           POP   HL              ; dest address was saved in stack
+A03D: CD E0 05                     CALL  SETVDPADRS
+A040: E1                           POP   HL              ; source address was saved in stack
+A041: 06 08                        LD    B, 8            ; repeat for 8 rows
+A043: 0E 30                        LD    C, VDP_DAT      ; VDP data mode
+                                
+                                copia_bmp_1:
+A045: ED A3                        OUTI
+A047: 00                           NOP                   ; wait...
+A048: 00                           NOP                   ; ...a while
+A049: 00                           NOP                   ;
+A04A: 20 F9                        JR   NZ, copia_bmp_1
+                                
+                                ;----------------------
+                                
+A04C: FB                           EI
+                                
+A04D: E1                           POP HL
+A04E: D1                           POP DE
+A04F: C1                           POP BC
+A050: C9                           RET
+                                
+                                
+
+A051:
