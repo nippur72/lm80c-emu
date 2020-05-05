@@ -10,6 +10,16 @@ function mem_write(address, value) {
 
 function io_read(ioport) {  
    const port = ioport & 0xFF;
+
+   /*
+   if(port ===  0b00110000 || port === 0b00110010) {
+      if(total_cycles - last_vdp_op < 31) {
+         console.log(`vpd timings ${total_cycles - last_vdp_op} at PC=${hex(cpu.getState().pc,4)}`);
+      }
+      last_vdp_op = total_cycles;
+   }
+   */
+
    switch(port) {
 
       case 0x10: return ctc.read(port & 3);  // CTC
@@ -44,8 +54,20 @@ function io_read(ioport) {
    }
 }
 
-function io_write(port, value) { 
-   // console.log(`io write ${hex(port)} ${hex(value)}`)  
+let last_vdp_op = 0;
+
+function io_write(port, value) {
+
+   /*
+   if(port ===  0b00110000 || port === 0b00110010) {
+      if(total_cycles - last_vdp_op < 31) {
+         console.log(`vpd timings ${total_cycles - last_vdp_op} at PC=${hex(cpu.getState().pc,4)}`);
+      }
+      last_vdp_op = total_cycles;
+   }
+   */
+
+   // console.log(`io write ${hex(port)} ${hex(value)}`)
    switch(port & 0xFF) {
       // PIO DATAREGA
       case 0x01:
@@ -80,15 +102,8 @@ function io_write(port, value) {
       case 0x23: sio.writePortCB(value); return; // SIO_CB equ %00100011
 
       // TMS9918: 0x30-0x33   
-      case 0b00110000:
-         // old tms.escrevePortaDados(value);
-         tms9928a.vram_write(value);
-         break;
-
-      case 0b00110010:
-         // old tms.escrevePortaComandos(value);
-         tms9928a.register_write(value);
-         break;
+      case 0b00110000: tms9928a.vram_write(value);     return;
+      case 0b00110010: tms9928a.register_write(value); return;
          
       // psg 0x40-0x43   
       case 0x40:

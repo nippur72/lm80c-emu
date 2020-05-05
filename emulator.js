@@ -1,9 +1,11 @@
 "use strict";
 
+// TODO investigate why dropping "screen2_putc.prg" hangs it
 // TODO check cpu speed, is it too fast?
 // TODO implement CTC interrupt
 // TODO implement SIO-CTC-PIO daisy chain
 // TODO fix autoload
+// TODO tms timings check 30 T states
 
 // firmware 3.8
 let BASTXT = 0x8133;
@@ -17,8 +19,6 @@ const ram = new Uint8Array(32768).fill(0x00);
 let cassette_bit_in; 
 let cassette_bit_out; 
 let speaker_A = 0;
-let speaker_B = 0;
-let caps_lock_bit = 0;
 
 let tape_monitor = true;
 
@@ -28,23 +28,10 @@ let cpu = new Z80({ mem_read, mem_write, io_read, io_write });
 
 let psg = new psg8910();
 
-// old TMS 9918
-/*
-let mycanvas = document.getElementById('canvas');
-let mycanvasctx = mycanvas.getContext('2d');
-let tms = new tms9918(mycanvasctx);
-tms.reset();
-*/
-
 // new TMS9928A
 let tms9928a_canvas = document.getElementById("canvas");
 let tms9928a_context = tms9928a_canvas.getContext('2d');
 let tms9928a_imagedata = tms9928a_context.getImageData(0, 0, 342*2, 262*2);
-
-/*
-let buf = new ArrayBuffer(tms9928a_imagedata);
-let buf8 = new Uint8ClampedArray(buf);
-*/
 
 let tms9928a_buffer = new Uint32Array(342*262);
 
@@ -66,42 +53,42 @@ let tms9928a_update = buffer => {
    }
    */
 
-  let ptr = 0;
-  let ptr1 = 0;
-  let data = tms9928a_imagedata.data;
-  for(let y=0;y<262;y++) {
-     for(let x=0;x<342;x++) {
-        data[ptr++] = buffer[ptr1] & 0xFF;
-        data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
-        data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
-        data[ptr++] = 0xFF;
-        data[ptr++] = buffer[ptr1] & 0xFF;
-        data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
-        data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
-        data[ptr++] = 0xFF;
-        ptr1++;
+   let ptr = 0;
+   let ptr1 = 0;
+   let data = tms9928a_imagedata.data;
+   for(let y=0;y<262;y++) {
+      for(let x=0;x<342;x++) {
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         ptr1++;
 
-     }
-     ptr += (342 * 4)*2;
-  }
-
-  ptr = (342 * 4)*2;
-  ptr1 = 0;
-
-  for(let y=0;y<262;y++) {
-   for(let x=0;x<342;x++) {
-      data[ptr++] = buffer[ptr1] & 0xFF;
-      data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
-      data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
-      data[ptr++] = 0xFF;
-      data[ptr++] = buffer[ptr1] & 0xFF;
-      data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
-      data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
-      data[ptr++] = 0xFF;
-      ptr1++;
+      }
+      ptr += (342 * 4)*2;
    }
-   ptr += (342 * 4)*2;
-}
+
+   ptr = (342 * 4)*2;
+   ptr1 = 0;
+
+   for(let y=0;y<262;y++) {
+      for(let x=0;x<342;x++) {
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         ptr1++;
+      }
+      ptr += (342 * 4)*2;
+   }
 
    tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
 };
@@ -156,7 +143,6 @@ let sio = new SIO();
 sio.IEI_cb = ()=>{ return 1; }
 ctc.IEI_cb = ()=>{ return sio.IEO(); }
 
-let ctc_initial_start = false;
 // scanline version
 function renderLines(nlines) {
    for(let t=0; t<nlines; t++) {
@@ -195,22 +181,9 @@ function renderLines(nlines) {
    }
 }
 
-function renderAllLines() {   
-
+function renderAllLines() {
    renderLines(262);
-
-   // old TMS
-   // tms.montaUsandoMemoria();
-
    tms9928a_update(tms9928a.m_tmpbmp);
-
-   /*
-   // patch SIO
-   if(buffer_sio.length > 0) {
-      sio.receiveChar(buffer_sio[0]);
-      buffer_sio = buffer_sio.slice(1);
-   }
-   */
 }
 
 let nextFrame;
@@ -316,7 +289,6 @@ function audioContextResume() {
 }
 
 goAudio();
-
 
 /*********************************************************************************** */
 
