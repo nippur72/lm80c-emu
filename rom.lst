@@ -1,6 +1,6 @@
               	; --------------------------------------
               	; zasm: assemble "rom.asm"
-              	; date: 2020-05-02 12:36:26
+              	; date: 2020-05-09 09:35:34
               	; --------------------------------------
 
 
@@ -153,9 +153,9 @@
 00E4: 2E392032	
 00E8: 3032302D	
 00EC: 30352D30	
-00F0: 32203132	
-00F4: 3A33363A	
-00F8: 323600  	
+00F0: 39203039	
+00F4: 3A33353A	
+00F8: 333400  	
               	;------------------------------------------------------------------------------
               	; interrupt driven routine to get chars from Z80 SIO
 00FB: FFFFFFFF	                org     $0100
@@ -9800,6 +9800,9 @@
               	; starts at $0000 (the address reached by Z80 upon reset)
 0000:         	#code BOOT, $0000
               	
+              	; ------------------------------------------------------------------------------
+              	; include the latest version of the bootloader: this sets up the address aliases
+              	; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
               	
               	; END OF ASSEMBLY SOURCE
               	#end
