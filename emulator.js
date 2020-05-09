@@ -7,7 +7,7 @@
 // TODO fix autoload
 // TODO tms timings check 30 T states
 
-// firmware 3.8
+// firmware 3.10
 let BASTXT = 0x8133;
 let PROGND = 0x81BB;
 let CRSR_STATE = 0x81E9;
