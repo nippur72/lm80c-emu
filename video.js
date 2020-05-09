@@ -38,3 +38,88 @@ function calculateGeometry() {
 calculateGeometry();
 
 
+
+/**************************************************/
+
+// new TMS9928A
+let tms9928a_canvas = document.getElementById("canvas");
+let tms9928a_context = tms9928a_canvas.getContext('2d');
+let tms9928a_imagedata = tms9928a_context.getImageData(0, 0, 342*2, 262*2);
+
+let tms9928a_buffer = new Uint32Array(342*262);
+
+let tms9928a_update = buffer => {
+
+   /*
+   // non doubled pixel render
+   let ptr = 0;
+   let ptr1 = 0;
+   let data = tms9928a_imagedata.data;
+   for(let y=0;y<262;y++) {
+      for(let x=0;x<342;x++) {
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         ptr1++;
+      }
+   }
+   */
+
+   let ptr = 0;
+   let ptr1 = 0;
+   let data = tms9928a_imagedata.data;
+   for(let y=0;y<262;y++) {
+      for(let x=0;x<342;x++) {
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         ptr1++;
+
+      }
+      ptr += (342 * 4)*2;
+   }
+
+   ptr = (342 * 4)*2;
+   ptr1 = 0;
+
+   for(let y=0;y<262;y++) {
+      for(let x=0;x<342;x++) {
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         data[ptr++] = buffer[ptr1] & 0xFF;
+         data[ptr++] = (buffer[ptr1] & 0xFF00) >> 8;
+         data[ptr++] = (buffer[ptr1] & 0xFF0000) >> 16;
+         data[ptr++] = 0xFF;
+         ptr1++;
+      }
+      ptr += (342 * 4)*2;
+   }
+
+   tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
+};
+
+let VDP_triggered_NMI = false;
+
+let tms9928a_interrupt_cb = (m_INT)=> {
+   if(m_INT === 1) VDP_triggered_NMI = true;
+};
+
+let tms9928a = new TMS9928A({
+   vram_size: 16384,
+   isPal: false,
+   int_line_cb: tms9928a_interrupt_cb,
+   gromclk_cb: undefined,
+   buffer: tms9928a_buffer,
+   screen_update_cb: undefined,
+   family99: true,
+   reva: true
+});
+
