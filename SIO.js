@@ -77,7 +77,7 @@ class SIO {
       //console.log(`DA write 0x${hex(value)} -- ${bin(value)}`);
       this.A = value; 
    }
-   writePortCB(value) { c
+   writePortCB(value) {
       //console.log(`CB write 0x${hex(value)} -- ${bin(value)}`);
    }
    writePortDB(value) { 
