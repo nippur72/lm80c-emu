@@ -65,6 +65,7 @@
 // topaz font
 for(let t=0;t<topaz.length/2;t++) rom[0x4383+t] = topaz[t*2];
 
+// laser 500 fonts
 (function() {
    function reverse(b) {
       b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;

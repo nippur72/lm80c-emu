@@ -61,6 +61,8 @@ let sio = new SIO();
 sio.IEI_cb = ()=>{ return 1; }
 //ctc.IEI_cb = ()=>{ return sio.IEO(); }
 
+let ctc_enabled = true;
+
 // scanline version
 function renderLines(nlines) {
    for(let t=0; t<nlines; t++) {
@@ -85,11 +87,13 @@ function renderLines(nlines) {
          //cloadAudioSamples(elapsed);
          //if(csaving) csaveAudioSamples(elapsed);
 
-         if(ctc_ticks(elapsed)) {            
-            let vector = ctc_int_ack();
-            cpu.interrupt(false, vector);            
+         if(ctc_enabled)
+         {
+            if(ctc_ticks(elapsed)) {
+               let vector = ctc_int_ack();
+               cpu.interrupt(false, vector);
+            }
          }
-
          // psg_ticks(elapsed);
 
          if(cycle>=cyclesPerLine) {

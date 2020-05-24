@@ -82,7 +82,7 @@ function paste(text) {
 }
 
 function pasteLine(line) {
-   //ctc.enable(0);
+   ctc_enabled = false;
    renderLines(262);
 
    for(let t=0;t<line.length;t++) {
@@ -90,7 +90,8 @@ function pasteLine(line) {
       pasteChar(c);
    }
 
-   //ctc.enable(1);
+   renderLines(262);
+   ctc_enabled = true;
    renderLines(262);
 }
 
@@ -98,6 +99,7 @@ function pasteChar(c) {
    sio.receiveChar(c);
    while(sio.busy) renderLines(262);
    while(mem_read(CRSR_STATE)==0) renderLines(262);
+   renderLines(262);
 }
 
 function wait(time) {
