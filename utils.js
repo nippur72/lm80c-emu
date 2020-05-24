@@ -77,6 +77,7 @@ function paste(text) {
       console.log(linea);
       pasteLine(linea);
       pasteChar(13);   // CR
+      pasteChar(13);   // CR
    }
    console.log("pasted!");
 }
@@ -98,6 +99,7 @@ function pasteLine(line) {
 function pasteChar(c) {
    sio.receiveChar(c);
    while(sio.busy) renderLines(262);
+   while(mem_read(CRSR_STATE)==0) renderLines(262);
    while(mem_read(CRSR_STATE)==0) renderLines(262);
    renderLines(262);
 }
