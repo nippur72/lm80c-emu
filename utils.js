@@ -82,7 +82,7 @@ function paste(text) {
 }
 
 function pasteLine(line) {
-   ctc.enable(0);
+   //ctc.enable(0);
    renderLines(262);
 
    for(let t=0;t<line.length;t++) {
@@ -90,7 +90,7 @@ function pasteLine(line) {
       pasteChar(c);
    }
 
-   ctc.enable(1);
+   //ctc.enable(1);
    renderLines(262);
 }
 
@@ -121,6 +121,7 @@ function power() {
 }
 
 function stop() {   
+   stopAudio();
    stopped = true;
    console.log("emulation stopped");
 }
@@ -234,4 +235,25 @@ function make_lm(start, end, rows) {
       nline += 10;
    }
    console.log(s);
+}
+
+function tmr()
+{
+   return mem_read_word(TMRCNT) + (mem_read_word(TMRCNT+2) << 16);
+}
+
+let counter = 0;
+let counter_avg = 0;
+
+function start_counter(x) {
+   counter = new Date().valueOf();
+}
+
+function stop_counter(x) {
+   let now = new Date().valueOf();
+   let cnt = counter;
+   if(cnt === 0) cnt = now
+   let elapsed = now - cnt;   
+   counter_avg = 0.99 * counter_avg + 0.01 * elapsed;
+   return counter_avg;
 }

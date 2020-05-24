@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -32,6 +31,7 @@
    <script type="text/javascript" src="CTC.js"></script>
    <script type="text/javascript" src="tms9928.js"></script>
    <script type="text/javascript" src="ay-3-8910.js"></script>
+   <script type="text/javascript" src="video.js"></script>
    <script type="text/javascript" src="utils.js"></script>
    <script type="text/javascript" src="filesystem.js"></script>
    <script type="text/javascript" src="bus.js"></script>
@@ -42,3 +42,13 @@
    <script type="text/javascript" src="emulator.js"></script>
 </body>
 </html>
+
+<script type="text/javascript" src="emscripten_module.wasm.array.js"></script>
+<script type="text/javascript" src="emscripten_module.js"></script>
+<script type="text/javascript" src="emscripten_wrapper.js"></script>
+
+<script>
+   load_wasm(main);
+   // main();
+</script>
+

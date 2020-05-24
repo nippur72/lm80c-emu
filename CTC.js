@@ -1,3 +1,5 @@
+// CTC is now implemented in WASM (floooh/chips)
+/*
 class CTC
 {
    busy = false;            // interrupt is in course
@@ -46,14 +48,12 @@ class CTC
          return;
       }
 
-      // TODO fix
-      /*
-      if(this.busy) {
-         //console.log(`${total_cycles} CTC: can't trigger, previous INT call not finshed`);
-         console.log(`CTC: can't trigger, previous INT call not finshed`);
-         return;
-      }
-      */
+      // TODO fix      
+      //if(this.busy) {
+      //   //console.log(`${total_cycles} CTC: can't trigger, previous INT call not finshed`);
+      //   console.log(`CTC: can't trigger, previous INT call not finshed`);
+      //   return;
+      //}      
 
       this.busy = true;
       let vector = 0x40 + i * 2;
@@ -96,4 +96,4 @@ class CTC
       return;
    }
 }
-
+*/

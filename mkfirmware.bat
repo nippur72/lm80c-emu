@@ -1,5 +1,5 @@
 set DEST=rom.asm
-set VER=r39
+set VER=r312
 set LM80CPATH=..\LM80C
 echo ; > %DEST%
 type %LM80CPATH%\include\bootloader\bootloader-%VER%.asm >> %DEST%

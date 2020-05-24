@@ -21,34 +21,39 @@ function io_read(ioport) {
    */
 
    switch(port) {
+      case 0x00: return 0x00;  // PIO
+      case 0x01: return 0x00;  // PIO
+      case 0x02: return 0x00;  // PIO
+      case 0x03: return 0x00;  // PIO      
 
-      case 0x10: return ctc.read(port & 3);  // CTC
-      case 0x11: return ctc.read(port & 3);  // CTC
-      case 0x12: return ctc.read(port & 3);  // CTC
-      case 0x13: return ctc.read(port & 3);  // CTC
+      case 0x10: 
+      case 0x11: 
+      case 0x12: 
+      case 0x13: return ctc_read(port & 3);  // CTC
 
-      case 0x20: return sio.readPortDA();  // SIO_DA equ %00100000
-      case 0x21: return sio.readPortDB();  // SIO_DB equ %00100001
-      case 0x22: return sio.readPortCA();  // SIO_CA equ %00100010
-      case 0x23: return sio.readPortCB();  // SIO_CB equ %00100011      
-      
-      // tms9918 0x30-0x33
+      case 0x20: return sio.readPortDA();  // SIO_DA
+      case 0x21: return sio.readPortDB();  // SIO_DB
+      case 0x22: return sio.readPortCA();  // SIO_CA
+      case 0x23: return sio.readPortCB();  // SIO_CB
+
+      case 0x030:  return tms9928a.vram_read();
+      case 0x031:  return tms9928a.register_read();
+      case 0x032:  return tms9928a.vram_read();
+      case 0x033:  return tms9928a.register_read();
+
       /*
-      // old tms
-      case 0b00110000:  return tms.lePortaDados();
-      case 0b00110010:  return tms.lePortaComandos();
+      case 0x40: return psg.read(port);
+      case 0x41: return psg.read(port);
+      case 0x42: return psg.read(port);
+      case 0x43: return psg.read(port);
       */
-      case 0b00110000:  return tms9928a.vram_read();
-      case 0b00110010:  return tms9928a.register_read();
 
-      // psg 0x40-0x43   
-      //case 0x40:         
-      //   return psg.read;
+      case 0x40:
+      case 0x41:
+      case 0x42:
+      case 0x43: return psg_read(port);
 
-      case 0x40:         
-         return psg.readDataPort();
-
-      default:
+     default:
          console.warn(`read from unknown port ${hex(port)}h`);
          return 0xFF; // TODO what does it in the real HW
    }
@@ -70,30 +75,15 @@ function io_write(port, value) {
    // console.log(`io write ${hex(port)} ${hex(value)}`)
    switch(port & 0xFF) {
       // PIO DATAREGA
-      case 0x01:
-         // TODO implement
-         return;
+      case 0x00: return;
+      case 0x01: return;
+      case 0x02: return;
+      case 0x03: return;
 
-      // PIO DATAREGB
-      case 0x01:
-         // TODO implement
-         return;
-
-      // PIO CTRLREGA
-      case 0x02:
-         // TODO implement
-         return;
-
-         // PIO CTRLREGA
-      case 0x03:
-         // TODO implement
-         return;
-
-      // CTC CH0-3
-      case 0x10: ctc.write(port & 3, value); return;
-      case 0x11: ctc.write(port & 3, value); return;
-      case 0x12: ctc.write(port & 3, value); return;
-      case 0x13: ctc.write(port & 3, value); return;
+      case 0x10: 
+      case 0x11: 
+      case 0x12: 
+      case 0x13: ctc_write(port & 3, value); return;
 
       // SIO 0x20-23
       case 0x20: sio.writePortDA(value); return; // SIO_DA equ %00100000
@@ -104,16 +94,20 @@ function io_write(port, value) {
       // TMS9918: 0x30-0x33   
       case 0b00110000: tms9928a.vram_write(value);     return;
       case 0b00110010: tms9928a.register_write(value); return;
-         
-      // psg 0x40-0x43   
-      case 0x40:
-         psg.writeRegPort(value);
-         return;
 
-      case 0x41:         
-         psg.writeDataPort(value);
-         return;
-                     
+      /*
+      // psg 0x40-0x43   
+      case 0x40: psg.write(port, value); return;
+      case 0x41: psg.write(port, value); return;
+      case 0x42: psg.write(port, value); return;
+      case 0x43: psg.write(port, value); return;
+      */
+     
+      case 0x40:
+      case 0x41:
+      case 0x42:
+      case 0x43: psg_write(port, value); return;
+
       default:
          console.warn(`write on unknown port ${hex(port)}h value ${hex(value)}h`);
    }   

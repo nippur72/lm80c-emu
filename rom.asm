@@ -1,6 +1,6 @@
 ; 
 ; ------------------------------------------------------------------------------
-; LM80C - BOOTLOADER - R3.9
+; LM80C - BOOTLOADER - R3.12
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -131,7 +131,7 @@ RST18:          jp      CKINCHAR
                 defb    $20,$62,$79,$00,$00,$00,$00,$00
                 defb    $4C,$65,$6F,$6E,$61,$72,$64,$6F
                 defb    $20,$4D,$69,$6C,$69,$61,$6E,$69
-FWVER:          defm    'FW 3.9',$20,__date__,$20,__time__,$00
+FWVER:          defm    'FW 3.12',$20,__date__,$20,__time__,$00
 ;------------------------------------------------------------------------------
 ; interrupt driven routine to get chars from Z80 SIO
                 org     $0100
@@ -141,6 +141,7 @@ RX_CHA_AVAIL:   push    AF              ; store A
                 in      A,(SIO_DA)      ; read char from RX buffer into A
                 ld      (TMPKEYBFR),A   ; store it into the temp key buffer
                 call    CHARINTOBFR     ; sub-routine to put the char into the input buffer
+                jp      NC,LVRXCHA      ; if buffer is full, then leave without doing anything else
                 ld      A,(TMPKEYBFR)   ; retrieve char
                 ld      (CHR4VID),A     ; write into buffer for video printing
                 cp      CR              ; is it RETURN?
@@ -166,7 +167,7 @@ LVRXCHA:        pop     HL              ; retrieve HL
 CHARINTOBFR:    push    AF              ; store it
                 ld      A,(serBufUsed)  ; load buffer size
                 cp      SER_BUFSIZE     ; if buffer is not full
-                jr      NZ,NOTFULL      ; then store the char
+                jp      C,NOTFULL       ; then store the char
                 pop     AF              ; else drop it
                 ret                     ; and exit
 NOTFULL:        ld      HL,(serInPtr)   ; buffer is not full, can store the char
@@ -186,6 +187,7 @@ NOTWRAP:        ld      (serInPtr),HL   ; store the new pointer
                 ld      A,(SERIALS_EN)  ; check if serial 1 is open
                 rra                     ; bit 0 into Carry: if Carry is 1 then serial 0 is open and...
                 call    C,A_RTS_OFF     ; ...stop receiving further chars
+                xor     A               ; clear Carry to set a buffer full condition
                 ret
 
 ;-------------------------------------------------------------------------------
@@ -356,7 +358,9 @@ INCTMR3:        inc     (HL)            ; increment timer
                 djnz    INCTMR3         ; repeat for 4 bytes
 CHKCRSR:        call    FLASHCURSOR     ; call the flashing cursor routine
                 call    MNGSNDS         ; call the tone managemenet
-                call    KEYBOARD        ; read the keyboard inputs
+                ld      A,(TMRCNT)      ; check for keyboard management
+                rra                     ; bit 0 = 1 ?
+                call    NC,KEYBOARD     ; no, so read the keyboard inputs
                 pop     HL              ; retrieve HL,
                 pop     DE              ; DE,
                 pop     BC              ; BC,
@@ -504,11 +508,11 @@ CTCCONF:        defb    $FB,$ED,$4D     ; CTC0 interrupt vector (ei; reti)
                 jp      CH3_TIMER       ; CTC3 interrupt vector (sys tick timer)
 ;------------------------------------------------------------------------------
 MSGTXT1:        defm    "LM80C by Leonardo Miliani",CR
-                defm    "Firmware R3.9",CR,0
+                defm    "Firmware R3.12",CR,0
 MSGTXT2:        defb    CR
                 defm    "<C>old or <W>arm start? ",0
 ; ------------------------------------------------------------------------------
-; LM80C - VDP ROUTINES - R3.9
+; LM80C - VDP ROUTINES - R3.12
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -535,7 +539,7 @@ MSGTXT2:        defb    CR
 initVDP:        push    DE              ; store E
                 call    EMPTY_VRAM      ; reset VRAM
                 call    SET_GFX_MODE    ; load register settings
-                call    EMPTY_RAM       ; reset RAM registers
+                call    CLR_RAM_REG     ; reset RAM registers
                 pop     DE              ; restore reg. E
                 xor     A               ; reset A
                 ld      B,A             ; reset B (will be used later)
@@ -1439,11 +1443,10 @@ EMPTVRM:        out     (C),A           ; after first byte, the VDP autoincremen
                 djnz    EMPTVRM         ; repeat for $40 pages
                 ret                     ; return to caller
 
-; empty video registers in SRAM
-EMPTY_RAM:      ld      HL,SCR_SIZE_W   ; address of first register
+; clear video registers in SRAM
+CLR_RAM_REG:    ld      HL,SCR_SIZE_W   ; address of first register
                 xor     A               ; $00 to clean the registers
-                ld      B,CHASNDDTN-SCR_SIZE_W; how many bytes to clean (this is calculated dinamically
-                                        ; since we can add/remove some registers)
+                ld      B,CHASNDDTN-SCR_SIZE_W; how many bytes (registers) to clean (dinamically calculated)
 RSTVDPRAMREG:   ld      (HL),A          ; reset register
                 inc     HL              ; next register
                 djnz    RSTVDPRAMREG    ; repeat
@@ -1556,7 +1559,7 @@ LM80CLOGO       ; patterns to compose the splash screen logo
                 defb    0,0,13,0,0,12,0,0,0,1,4,4,0,1,0,0,3,5,9,20,19,8,9,20,19,8,9,1,1,8,0,0
                 defb    0,0,14,18,18,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
                 defb    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; ------------------------------------------------------------------------------
-; LM80C - PSG ROUTINES - R3.9
+; LM80C - PSG ROUTINES - R3.12
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1580,7 +1583,7 @@ LM80CLOGO       ; patterns to compose the splash screen logo
 ;------------------------------------------------------------------------------
 ; configure the PSG
 initPSG:        ld      HL,CHASNDDTN    ; starting address of sound & keyboard RAM registers
-                ld      B,$0A           ; # of PSG sound & keyboard registers
+                ld      B,SERIALS_EN-CHASNDDTN; # of PSG sound & keyboard registers
                 xor     A               ; reset A
 EMPTSNDBFR:     ld      (HL),A          ; reset RAM register
                 inc     HL              ; next register
@@ -1597,12 +1600,12 @@ RSTPSG:         ld      A,D             ; register value
                 djnz    RSTPSG          ; repeat for each register
                 ret                     ; return to caller
 
-SNDREGCFG:      defb $00,$00,$00,$00,$00,$00,$00,%01111111
+SNDREGCFG:      defb $00,$00,$00,$00,$00,$00,$00,%10111111
                 defb $00,$00,$00,$00,$00,$00,$ff,$ff
                 ; reg. 7: set I/O ch.A to OUTPUT, I/O ch.B to INPUT; set noise to OFF; set audio to OFF
 
 
-; routines to play a welcome beep on channel C (tone 4010) and to shut it off
+; routine to play a welcome beep on channel C (tone 4010) and to shut it off
 WLCMBEEP:       ld      HL,WLCBPDAT     ; data address
                 jp      SENDSND
 NOBEEP:         ld      HL,NOBPDAT      ; data address
@@ -1683,12 +1686,12 @@ CNTCHKSND:      inc     IX              ; set for...
 ; read a specific row of the keyboard matrix, set by A
 ; return read into A
 READKBLN:       push    BC
-                ld      B,$0E           ; reg #14
+                ld      B,$0F           ; reg #14
                 ld      C,PSG_REG       ; PSG register port
                 out     (C),B           ; select reg #14
                 ld      C,PSG_DAT       ; PSG data port
-                out     (C),A           ; activate SHIFT row
-                ld      B,$0F           ; register #15 (port B)
+                out     (C),A           ; activate the row
+                ld      B,$0E           ; register #15 (port B)
                 ld      C,PSG_REG       ; PSG register port
                 out     (C),B           ; select reg. 15 (port B)
                 in      A,(C)           ; read register #15
@@ -1700,8 +1703,8 @@ KEYBOARD:       ld      C,PSG_REG       ; PSG register port
                 ld      B,$07           ; set register #7...
                 out     (C),B           ; ...to work with
                 in      A,(C)           ; read register #7
-                set     6,A             ; port A set to output
-                res     7,A             ; port B set to input
+                set     7,A             ; port A set to output
+                res     6,A             ; port B set to input
                 out     (C),B           ; set register #7
                 ld      C,PSG_DAT       ; PSG data port
                 out     (C),A           ; set I/O ports w/o altering the rest of the mixer
@@ -1726,13 +1729,13 @@ CHECKCTRL:      ld      A,%11111110     ; select CTRL row
                 ld      (HL),%00000010  ; set CTRL flag, reset SHIFT & ALT flags (currently multiply control keys are NOT supported)
 CHECKKBD:       ld      B,$08           ; 8 lines
                 ld      A,%01111111     ; start from the last line of the matrix
-RPTKBDRD:       ld      D,$0E           ; register #14 (port A)
+RPTKBDRD:       ld      D,$0F           ; register #14 (port A)
                 ld      C,PSG_REG       ; PSG register port
                 out     (C),D           ; select reg. #14
                 ld      C,PSG_DAT       ; PSG data port
                 out     (C),A           ; activate 1 line (active line is grounded, i.e. with a LOW signal)
                 ld      E,A             ; save current line into E
-                ld      D,$0F           ; register #15 (port B)
+                ld      D,$0E           ; register #15 (port B)
                 ld      C,PSG_REG       ; PSG register port
                 out     (C),D           ; select reg. 15 (port B)
                 nop
@@ -1831,7 +1834,7 @@ PNT2VD:         call    CHAR2VID        ; send char to video
 LVKBRDCHK2:     xor     A
                 ld      (CONTROLKEYS),A ; reset control key flags
 LVKBRDCHK:      ret                     ; return to caller: the current key code is into TMPKEYBFR    
-                                        ; manage FN keys          
+                ; manage FN keys          
 PRNTFNKEY:      ld      D,A             ; copy A into D
                 ld      HL,(LINEAT)     ; Get current line number
                 inc     HL              ; -1 means direct statement
@@ -1917,7 +1920,7 @@ KBMAP_CTRL:     defb '1',25,14,3,' ',16,154,'2'         ; 25=HOME  14=CTRL  3=RU
                 defb 31,163,173,',','.',':',186,30      ; 31=CURSOR DOWN  30=CURSOR UP
                 defb 28,225,';','/',27,212,185,29       ; 28=CURSOR LEFT  27=ESCAPE  212=π  29=CURSOR RIGHT
                 defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP; ------------------------------------------------------------------------------
-; LM80C - BASIC32K - R3.9
+; LM80C BASIC - R3.12
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1977,7 +1980,7 @@ CRSDN           equ     $1F             ; cursor down
 ; AND SO ON. THE FIRST CELLS ARE FILLED WITH VALUES STORED INTO ROM AT $(INITAB) ADDRESS
 WRKSPC          equ     basicStarted+$01; (3) BASIC Work space
 NMIUSR          equ     WRKSPC+$03      ; (3) NMI exit point routine
-USR             equ     NMIUSR+$03      ; (3) "USR (x)" jump  <-- in $8049/804A the user can store the address of a specific machine language routine
+USR             equ     NMIUSR+$03      ; (3) "USR (x)" jump  <-- in $8065/8066 the user can store the address of a specific machine language routine
 OUTSUB          equ     USR+$03         ; (1) "out p,n"
 OTPORT          equ     OUTSUB+$01      ; (2) Port (p)
 DIVSUP          equ     OTPORT+$02      ; (1) Division support routine
@@ -2061,7 +2064,7 @@ VIDEOBUFF       equ     TMPBFR4+$02     ; (40) buffer used for video scrolling a
 VIDTMP1         equ     VIDEOBUFF+$28   ; (2) temporary video word
 VIDTMP2         equ     VIDTMP1+$02     ; (2) temporary video word
 ; - - - - - - - - - - - - - - - - - - -   ...TO HERE. DO NOT ADD ANYTHING RELATED TO VPD OUT OF THIS RANGE,
-                                        ; OTHERWISE YOU WILL HAVE TO CHECK THE POINTER IN "EMPTY_RAM" FUNCTION
+                                        ; OTHERWISE YOU WILL HAVE TO CHECK THE POINTER IN "CLR_RAM_REG" FUNCTION
 ; - - - - - - - - - - - - - - - - - - -   SOUND & KEYBOARD REGISTERS - FROM HERE...
 CHASNDDTN       equ     VIDTMP2+$02     ; (2) sound Ch.A duration (1/100s)
 CHBSNDDTN       equ     CHASNDDTN+$02   ; (2) sound Ch.B duration (1/100s)
@@ -2072,7 +2075,7 @@ TMPKEYBFR       equ     KBTMP+$01       ; (1) temp buffer for last key pressed
 LASTKEYPRSD     equ     TMPKEYBFR+$01   ; (1) last key code pressed
 CONTROLKEYS     equ     LASTKEYPRSD+$01 ; (1) flags for control keys (bit#0=SHIFT; bit#1=CTRL; bit#2=C=)
 ; - - - - - - - - - - - - - - - - - - -   ...TO HERE. DO NOT ADD ANYTHING RELATED TO PSG OUT OF THIS RANGE,
-                                        ; OTHERWISE YOU WILL HAVE TO CHANGE THE POINTER IN "INIT_PSG" FUNCTION
+                                        ; OTHERWISE YOU WILL HAVE TO CHANGE THE POINTER IN "initPSG" FUNCTION
 SERIALS_EN      equ     CONTROLKEYS+$01 ; (1) serial ports status: bit 0 for Port1(A), bit 1 for Port2(B): 0=OFF, 1=ON
 SERABITS        equ     SERIALS_EN+$01  ; (1) serial port A data bits
 PBUFF           equ     SERABITS+$01    ; (13) Number print buffer
@@ -2289,6 +2292,7 @@ WORDS:  defb    'E'+$80,"ND"            ; from here the list contains the COMMAN
         defb    'C'+$80,"LS"            ; restored command
         defb    'K'+$80,"EY"            ; added by Leonardo Miliani
         defb    'N'+$80,"MI"            ; added by Leonardo Miliani
+        defb    'G'+$80,"PRINT"         ; added by Leonardo Miliani
         defb    'W'+$80,"IDTH"
         defb    'S'+$80,"YS"            ; added by Leonardo Miliani
         defb    'R'+$80,"ESET"          ; changed by Leonardo Miliani
@@ -2401,6 +2405,7 @@ WORDTB: defw    PEND
         defw    CLS
         defw    KEY         ; added by Leonardo Miliani
         defw    NMI         ; added by Leonardo Miliani
+        defw    GPRINT      ; added by Leonardo Miliani
         defw    WIDTH
         defw    SYS
         defw    RESET       ; new behaviour: now it resets the system
@@ -2429,32 +2434,32 @@ ZDATA   equ     $83             ; DATA
 ZGOTO   equ     $88             ; GOTO
 ZGOSUB  equ     $8C             ; GOSUB
 ZREM    equ     $8E             ; REM
-ZPRINT  equ     $AB             ; PRINT
-ZNEW    equ     $B1             ; NEW
+ZPRINT  equ     $AC             ; PRINT
+ZNEW    equ     $B2             ; NEW
 
-ZTAB    equ     $B2             ; TAB
-ZTO     equ     $B3             ; TO
-ZFN     equ     $B4             ; FN
-ZSPC    equ     $B5             ; SPC
-ZTHEN   equ     $B6             ; THEN
-ZNOT    equ     $B7             ; NOT
-ZSTEP   equ     $B8             ; STEP
+ZTAB    equ     $B3             ; TAB
+ZTO     equ     $B4             ; TO
+ZFN     equ     $B5             ; FN
+ZSPC    equ     $B6             ; SPC
+ZTHEN   equ     $B7             ; THEN
+ZNOT    equ     $B8             ; NOT
+ZSTEP   equ     $B9             ; STEP
 
-ZPLUS   equ     $B9             ; +         <-- from here, there are the math operators
-ZMINUS  equ     $BA             ; -
-ZTIMES  equ     $BB             ; *
-ZDIV    equ     $BC             ; /
-ZMOD    equ     $BD             ; %
-ZDINT   equ     $BE             ; #
-ZOR     equ     $C2             ; OR
-ZGTR    equ     $C3             ; >
-ZEQUAL  equ     $C4             ; M
-ZLTH    equ     $C5             ; <
+ZPLUS   equ     $BA             ; +         <-- from here, there are the math operators
+ZMINUS  equ     $BB             ; -
+ZTIMES  equ     $BC             ; *
+ZDIV    equ     $BD             ; /
+ZMOD    equ     $BE             ; %
+ZDINT   equ     $BF             ; #
+ZOR     equ     $C3             ; OR
+ZGTR    equ     $C4             ; >
+ZEQUAL  equ     $C5             ; M
+ZLTH    equ     $C6             ; <
 
-ZSGN    equ     $C6             ; SGN       <-- from here, there are the functions
-ZPOINT  equ     $DC             ; ZPOINT    <-- if the user enters a custom function, between
+ZSGN    equ     $C7             ; SGN       <-- from here, there are the functions
+ZPOINT  equ     $DD             ; ZPOINT    <-- if the user enters a custom function, between
                                 ;               SGN and POINT, he/she must increment this pointer by 1
-ZLEFT   equ     $E4             ; LEFT$     <-- if the user enters a custom function anywhere,
+ZLEFT   equ     $E5             ; LEFT$     <-- if the user enters a custom function anywhere,
                                 ;               he/she must increment this pointer by 1
 
 ; ARITHMETIC PRECEDENCE TABLE
@@ -3091,7 +3096,7 @@ PUTBUF: cp      SPC             ; Is it a control code?
         jp      C,MORINP        ; Yes - Ignore
 PUTCTL: ld      A,B             ; Get number of bytes in buffer
         cp      $58+$01         ; Test for line overflow
-        ld      A,CTRLG         ; Set a bell
+        ld      A,BKSP          ; Set a bell
         jp      NC,OUTNBS       ; Ring bell if buffer full
         ld      A,C             ; Get character
         ld      (HL),C          ; Save in buffer
@@ -3101,8 +3106,9 @@ PUTCTL: ld      A,B             ; Get number of bytes in buffer
 OUTIT:  jp      MORINP          ; Get another character
 
 OUTNBS: call    OUTC            ; Output bell and back over it
-        ld      A,BKSP          ; Set back space
-        jp      OUTIT           ; Output it and get more
+        ;ld      A,BKSP          ; send back space
+        ;call    OUTC            ;
+        jp      OUTIT           ; get more chars
 
 CPDEHL: ld      A,H             ; Get H
         sub     D               ; Compare with D
@@ -4595,21 +4601,22 @@ FNDELP: pop     HL              ; Address of next dim' size
 ENDDIM: ld      HL,(NXTOPR)     ; Got code string address
         ret
 
-TMR:    call    TSTNUM          ; Make sure it's a number
-        call    DEINT           ; Get integer -32768 to 32767
-        di                      ; we must work with INTs disabled
-        ld      HL,TMRCNT       ; load the address of the first byte of the counter
-        ld      A,E             ; move param into A
-        and     A               ; is it 0?
-        jr      Z,LSBTMR        ; print the 2 LSBytes of timer
-        inc     HL              ; else print the 2 MSBytes of timer
-        inc     HL
-LSBTMR: ld      B,(HL)          ; Get LSB of contents
-        inc     HL
-        ld      A,(HL)          ; Get MSB of contents
-        ei                      ; re-enable INTs
-        jp      ABPASS          ;return word into AB
 
+; returns the value of the 32-bit system tick counter as
+; two 16-bit words
+TMR:    call    TSTNUM          ; Make sure it's a number
+        call    DEINT           ; Get integer (-32768 to 32767)
+        ld      HL,(TMRCNT)     ; load the LSBytes of timer
+        ld      A,E
+        or      D               ; is it 0?
+        jp      Z,ENDTMR        ; yes, jump over
+        ld      HL,(TMRCNT+2)   ; load the MSBytes of timer
+ENDTMR: ld      B,L             ; move bytes...
+        ld      A,H             ; ...into AB
+        jp      ABPASS          ; return word into AB
+
+
+; returns the free space for BASIC or into the string pool
 FRE:    ld      HL,(ARREND)     ; Start of free memory
         ex      DE,HL           ; To DE
         ld      HL,$0000        ; End of free memory
@@ -5282,31 +5289,31 @@ NMIVR1: push    HL              ; store HL
 ; execute a machine language routine, eventually passing a param into A
 SYS:    call    GETNUM          ; Get memory address
         call    DEINT           ; Get integer -32768 to 32767
-        push    DE              ; store address
+        ld      (TMPBFR2),DE    ; store user routine's address
         xor     A               ; reset A
         ld      (TMPBFR1),A     ; store into temp buffer
         dec     HL              ; dec 'cos GETCHR INCs
-        call    GETCHR          ; Get next character
+        call    GETCHR          ; check next character
         jr      Z,NOSYSPR       ; jump if nothing follows
         call    CHKSYN          ; Make sure ',' follows
         defb    ','
-        call    GETINT          ; get value if something follows
+        call    GETINT          ; get byte value (0~255) if something follows
         ld      (TMPBFR1),A     ; store into temp buffer
 NOSYSPR:ld      A,(TMPBFR1)     ; recover A
-        pop     DE              ; recover user routine's address
-        push    HL              ; save current HL
-        ex      DE,HL           ; move address into HL
-        ld      DE,SYSRET       ; recover point to return to after the user routine
+        ld      DE,(TMPBFR2)    ; recover user routine's address
+        push    HL              ; save code string address
+        ex      DE,HL           ; move user routine's address into HL
+        ld      DE,SYSRET       ; set point of return after the user routine
         push    DE              ; store into stack
-        jp      HL              ; execute user routine
-SYSRET: pop     HL              ; retrieve HL
+        jp      (HL)            ; call user routine
+SYSRET: pop     HL              ; retrieve code string address
         ret                     ; return to caller
 
 
 ; read the contents of a byte from RAM
-PEEK:   call    DEINT           ; Get memory address
-        ld      A,(DE)          ; Get byte in memory
-        jp      PASSA           ; Return integer A
+PEEK:   call    DEINT           ; Get memory address into DE
+        ld      A,(DE)          ; Read value of memory cell
+        jp      PASSA           ; Return into A
 
 ; read the contents of a byte from VRAM
 VPEEK:  call    DEINT           ; Get VRAM address into DE
@@ -5501,9 +5508,14 @@ NOISUP: cp      $07             ; is channel in range 4 to 6 (for a noise)?
         jp      NC,FCERR        ; no, so ILLEGAL FUNCTION CALL
         call    CHKSYN          ; yes, continue checking by making sure ',' follows
         defb    ','
-        call    GETINT          ; get integer 0-255 (recover frequency)
+        call    GETINT          ; get integer 0-255 (frequency)
         cp      $20             ; make sure it's in range 0~31
         jp      NC,FCERR        ; no, so Illegal function call
+        ld      (TMPBFR2),A     ; store freq.
+        dec     HL              ; dec 'cos GETCHR INCs
+        call    GETCHR          ; check that nothing follows
+        jp      NZ,SNERR        ; error if no empty line
+        ld      A,(TMPBFR2)     ; retrieve freq.
         ld      E,A             ; store freq into E
         ld      A,(TMPBFR1)     ; retrieve channel
         sub     $03             ; subtract 3 to get channel in range 1~3
@@ -6993,6 +7005,138 @@ CHKG2M: ld      A,(SCR_MODE)    ; check screen mode
         ret                     ; return to caller
 
 
+; print a text in screen 2
+; GPRINT text,x,y[,fc[,bc]]
+; where "text" is an expression that can be converted into a sequence of ASCII chars,
+; x & y are the coordinates (0<=x<=32, 0<=y<=23), fc & bc are foreground and background
+; colors (1~15), resp.
+; (portions of code are from nippur72)
+GX      equ     TMPBFR3
+GY      equ     TMPBFR4
+MIXCOL  equ     TMPBFR1
+CHRPNT  equ     TMPBFR2
+GPRINT: call    CHKG2M          ; check if in graphic mode 2
+        dec     HL              ; dec 'cos GETCHR INCs
+        call    GETCHR          ; check if something follows
+        jp      Z,SNERR         ; if anything else, raise a syntax error
+        ld      (VIDEOBUFF),HL  ; save current code string pointer into BC
+        call    EVAL            ; Evaluate expression
+        call    TSTSTR          ; Make sure it's a string
+        call    CHKSYN          ; Make sure ',' follows
+        defb    ','
+        call    GETINT          ; get X coord.
+        cp      $20             ; is it in rage 0~31?
+        jp      NC,FCERR        ; Illegal function call error
+        ld      (GX),A          ; store into temp. buffer
+        call    CHKSYN          ; Make sure ',' follows
+        defb    ','
+        call    GETINT          ; get Y coord.
+        cp      $18             ; is it in range 0~23?
+        jp      NC,FCERR        ; Illegal function call error
+        ld      (GY),A          ; store into temp. buffer
+        ld      DE,TMPBFR2
+        ld      A,(BKGNDCLR)    ; load background color
+        ld      (DE),A          ; store into temp buff
+        ld      A,(FRGNDCLR)    ; load foreground color
+        dec     DE
+        dec     DE
+        ld      (DE),A          ; store into temp buff
+        call    CKCOL           ; check color
+        jp      Z,CNTGPT2       ; if anything follows, jump over
+        inc     DE
+        inc     DE
+        call    CKCOL           ; check background color
+CNTGPT2:call    MIXCLRS         ; mix foreground & background colors
+        ld      (MIXCOL),A      ; store mixed colors
+        ex      DE,HL           ; save code string address into DE
+        ld      HL,(VIDEOBUFF)  ; retrieve pointer to string
+        push    DE              ; store code string address
+        call    EVAL            ; re-evaluate string
+        call    GSTRCU          ; Current string to pool
+        call    LOADFP          ; Move string block to BCDE (BC=pointer, E=length)
+        ld      (CHRPNT),BC
+        inc     E               ; Length + 1
+        call    GPNT            ; print on G2
+        pop     HL              ; recover HL
+        ret                     ; return to caller
+GPNT:   push    DE              ; store string lenght (E)
+        ; calculate VRAM address of first char
+        LD      A,(GX)          ; load X
+        ld      L,A             ;
+        ld      H,0             ; HL = X
+        add     HL,HL           ;
+        add     HL,HL           ;
+        add     HL,HL           ; HL = X*8
+        ld      A,(GY)          ; load Y
+        ld      D,A             ;
+        ld      E,0             ; DE = Y * 256
+        add     HL,DE           ; address = X*8 + Y*256
+        ld      (VIDEOBUFF),HL  ; store VRAM address of first VRAM cell
+        pop     DE              ; retrieve # of chars to be printed yet (E)
+RPGPNT: dec     E               ; Count characters
+        ret     Z               ; End of string - return
+        push    DE              ; store chars counter
+        ; calculate dest address in color vram
+        ld      HL,(VIDEOBUFF)  ; recover VRAM address 
+        ld      DE,$2000        ; color map address
+        add     HL,DE           ; HL = $2000 + XY address
+        di                      ; disable INTs
+        ; send color settings
+GPNTCOL:call    SETVDPADRS      ; set VRAM address for color cell
+        ld      A,(MIXCOL)      ; load color settings
+        ld      B,$08           ; repeat for 8 rows
+        ld      C,VDP_DAT       ; VDP data mode
+GPNTCO1:out     (C),A           ; send data (VRAM pointer auto-increments)
+        nop                     ; wait...
+        nop                     ; ...a...
+        nop                     ; ...while
+        djnz    GPNTCO1         ; repeat for 8 cells
+        ; calculate source address
+        ld      HL,(CHRPNT)     ; load char pointer
+        ld      A,(HL)          ; get char
+        inc     HL              ; increment char pointer
+        ld      (CHRPNT),HL     ; store char pointer
+        ld      L,A             ;
+        ld      H,0             ; char into HL
+        add     HL,HL           ;
+        add     HL,HL           ;
+        add     HL,HL           ; get offset of char into ROM (charcode * 8)
+        ld      DE,CHRST88      ; DE = start of 8x8 fonts in ROM
+        add     HL,DE           ; HL = start of characters in ROM
+        ex      DE,HL           ; store address into DE
+GPCPCHR:ld      HL,(VIDEOBUFF)  ; load VRAM address
+        call    SETVDPADRS      ; send it to VDP
+        ex      DE,HL           ; restore address into HL
+        ld      B,$08           ; repeat for 8 rows
+        ld      C,VDP_DAT       ; VDP data mode
+GPCPCH1:outi                    ; load a byte from ROM and send to VRAM
+        nop                     ; wait...
+        nop                     ; ...a...
+        nop                     ; ...while
+        jr      NZ,GPCPCH1      ; repeat for 8 chars
+        ei                      ; re-enable INTs
+        ld      DE,$0008        ; 8 bytes to go to the next video ell
+        ld      HL,(VIDEOBUFF)  ; load VRAM address
+        add     HL,DE           ; get address of next VRAM cell
+        ld      (VIDEOBUFF),HL  ; store new VRAM address
+        ld      DE,$1800        ; forbidden address
+        call    CMP16           ; check if the printing has gone out of the screen
+        pop     DE              ; retrieve number of chars to be printed
+        ret     NC              ; if HL>=$1800 then leave
+        jp      RPGPNT          ; otherwise, check if more chars to output
+        
+CKCOL:  dec     HL              ; dec 'cos GETCHR INCs
+        call    GETCHR          ; Get next character
+        ret     Z               ; return if nothing follows
+        call    CHKSYN          ; Make sure ',' follows
+        defb    ','
+        push    DE              ; store DE
+        call    GETINT          ; get value
+        call    CHKCLR          ; check if color is in range 1~15
+        pop     DE              ; retrieve DE
+        ld      (DE),A          ; store color into temp buffer
+        ret                     ; return to caller
+        
 ; POINT(x,y): return if a pixel is set (1) or reset (0)
 POINT:  call    CHKG2M          ; check if in graphic mode 2
         call    CHKSYN          ; make sure "(" follows
@@ -7657,7 +7801,7 @@ SET_P1: ;init CTC CH0: CH0 provides RX/TX clock to SIO port A
         di                      ; disable INTs
         ld      B,$00           ; reset B
         ld      HL,CTC_CFG      ; address of first CTC divider
-        add     HL,BC           ; adjust for corret CTC divider
+        add     HL,BC           ; adjust for correct CTC divider
         ld      A,%01000111     ; interrupt off, counter mode, prsc=16 (doesn't matter), ext. start,
                                 ; start upon loading time constant, time constant follows, sw reset, command word
         out     (CTC_CH0),A     ; configure CTC channel 0
@@ -8801,9 +8945,9 @@ CHRST88 equ $
         defb %00111000,%01000100,%11110000,%01000000,%11110000,%01000100,%00111000,%00000000 ; char 211 (euro)
         defb %00000000,%00000010,%01111100,%10101000,%00101000,%00101000,%00101000,%00000000 ; char 212 (greek pi)
         defb %00000000,%00000000,%00000000,%00000111,%00001000,%00010000,%00010000,%00010000 ; char 213
-        defb %00000000,%00000000,%00000000,%11100000,%00010000,%00001000,%00001000,%00001000 ; char 214
-        defb %00001000,%00001000,%00001000,%00010000,%11100000,%00000000,%00000000,%00000000 ; char 215
-        defb %00010000,%00010000,%00010000,%00001000,%00000111,%00000000,%00000000,%00000000 ; char 216
+        defb %00000000,%00000000,%00000000,%11000000,%00100000,%00010000,%00010000,%00010000 ; char 214
+        defb %00010000,%00010000,%00100000,%11000000,%00000000,%00000000,%00000000,%00000000 ; char 215
+        defb %00010000,%00010000,%00001000,%00000111,%00000000,%00000000,%00000000,%00000000 ; char 216
         defb %00000000,%00000000,%00000000,%00000111,%00001111,%00011100,%00011000,%00011000 ; char 217
         defb %00000000,%00000000,%00000000,%11100000,%11110000,%00111000,%00011000,%00011000 ; char 218
         defb %00011000,%00011000,%00111000,%11110000,%11100000,%00000000,%00000000,%00000000 ; char 219
@@ -8882,7 +9026,7 @@ LOGOFONT:   equ $
             defb %11111111,%11111111,%11111111,%11111111,%00001111,%00001111,%00001111,%00001111 ; 22
             defb %00000000,%00110000,%01111000,%01111000,%00110000,%00000000,%00000000,%00000000 ; 23
             ; ------------------------------------------------------------------------------
-; LM80C - FIRMWARE - R3.9
+; LM80C - FIRMWARE - R3.12
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -8945,9 +9089,6 @@ LOGOFONT:   equ $
 ; starts at $0000 (the address reached by Z80 upon reset)
 #code BOOT, $0000
 
-; ------------------------------------------------------------------------------
-; include the latest version of the bootloader: this sets up the address aliases
-; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
 
 ; END OF ASSEMBLY SOURCE
 #end
