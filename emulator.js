@@ -91,7 +91,8 @@ function renderLines(nlines) {
                cpu.interrupt(false, vector);
             }
          }
-         // psg_ticks(elapsed);
+
+         psg_ticks(elapsed);
 
          if(cycle>=cyclesPerLine) {
             cycle-=cyclesPerLine;

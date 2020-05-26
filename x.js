@@ -46,21 +46,6 @@
    console.log(psg_query_addr());
 })();
 
-   /*
-   r = psg_generic_io_write(1,1,7); // latch reg 7
-   console.log(r);
-
-   r = psg_generic_io_write(1,0,PORT_A_WR|PORT_B_RD ); // enable io
-   console.log(r);
-
-   r = psg_generic_io_write(1,1,15); // latch reg 15
-   console.log(r);
-
-   r = psg_generic_io_read(0,1); // read
-   console.log(r);
-   */
-
-
 
 // topaz font
 for(let t=0;t<topaz.length/2;t++) rom[0x4383+t] = topaz[t*2];

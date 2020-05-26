@@ -249,15 +249,15 @@ function tmr()
 let counter = 0;
 let counter_avg = 0;
 
-function start_counter(x) {
+function start_counter() {
    counter = new Date().valueOf();
 }
 
-function stop_counter(x) {
+function stop_counter() {
    let now = new Date().valueOf();
    let cnt = counter;
    if(cnt === 0) cnt = now
    let elapsed = now - cnt;   
-   counter_avg = 0.99 * counter_avg + 0.01 * elapsed;
+   counter_avg = 0.9 * counter_avg + 0.1 * elapsed;
    return counter_avg;
 }

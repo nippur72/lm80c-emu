@@ -4,6 +4,10 @@
 
 #include "chips/ay38910.h"
 
+#define CPU_CLOCK     3686400
+#define AUDIO_BUFSIZE 4096
+#define SAMPLE_RATE   48000 * 2
+
 ay38910_t ay38910;
 ay38910_desc_t ay38910_desc;
 uint8_t portB;
@@ -30,9 +34,9 @@ EMSCRIPTEN_KEEPALIVE
 void psg_init() {
    // fill the chip description
    ay38910_desc.type = AY38910_TYPE_8910;
-   ay38910_desc.tick_hz = 3686400;
-   ay38910_desc.sound_hz = 48000;
-   ay38910_desc.magnitude = 0.75;
+   ay38910_desc.tick_hz = CPU_CLOCK;
+   ay38910_desc.sound_hz = SAMPLE_RATE;
+   ay38910_desc.magnitude = 0.5;
    ay38910_desc.in_cb = ay38910_port_in_cb;
    ay38910_desc.out_cb = ay38910_port_out_cb;
    ay38910_desc.user_data = NULL;
@@ -50,7 +54,6 @@ void psg_reset() {
    ay38910_reset(&ay38910);
 }
 
-#define AUDIO_BUFSIZE 4096
 
 float audio_buf[AUDIO_BUFSIZE];
 int audio_buf_ptr = 0;
@@ -70,7 +73,7 @@ void psg_ticks(int ticks) {
                audio_buf_ptr = 0;
                uint8_t risp = (uint8_t) EM_ASM_INT({ return ay38910_audio_buf_ready($0, $1); }, audio_buf, AUDIO_BUFSIZE);
             }
-         };
+         }
       }
    }
 }
@@ -111,64 +114,9 @@ uint8_t psg_read(uint8_t port) {
    return AY38910_GET_DATA(pins);
 }
 
+
 #define LO(c) ( c & 0xFFFFFFFF)
 #define HI(c) ( (c >> 32) & 0xFFFFFFFF)
-
-EMSCRIPTEN_KEEPALIVE
-uint64_t psg_generic_io_read(uint8_t BDIR, uint8_t BC1) {
-
-   uint64_t pins = 0;
-
-   if(BC1)   pins = pins | AY38910_BC1;
-   if(BDIR)  pins = pins | AY38910_BDIR;
-
-   pins = ay38910_iorq(&ay38910, pins);
-
-   return pins;
-}
-
-EMSCRIPTEN_KEEPALIVE
-uint64_t psg_generic_io_write(uint8_t BDIR, uint8_t BC1, uint8_t data) {
-
-   uint64_t pins = 0;
-
-   AY38910_SET_DATA(pins, data);
-
-   if(BC1)   pins |= AY38910_BC1;
-   if(BDIR)  pins |= AY38910_BDIR;
-
-   pins = ay38910_iorq(&ay38910, pins);
-
-   return pins;
-}
-
-EMSCRIPTEN_KEEPALIVE
-uint8_t psg_query_reg(int n) {
-   return ay38910.reg[n];
-}
-
-EMSCRIPTEN_KEEPALIVE
-uint64_t psg_query_addr(uint8_t n) {
-   return ay38910.addr;
-}
-
-/*
-#define SOUND_BUFSIZE 2048;
-float sound_buffer[SOUND_BUFSIZE];
-int sound_buffer_ptr;
-
-EMSCRIPTEN_KEEPALIVE
-void psg_ticks(int ticks) {
-   for(int t=0; t<ticks; t++) {
-      if(ay38910_tick(&ay)) {
-         sound_buffer[sound_buffer_ptr++] = ay.sample;
-         if(sound_buffer_ptr === SOUND_BUFSIZE) {
-            sound_buffer_ptr = 0;
-         }
-      }
-   }
-}
-*/
 
 EMSCRIPTEN_KEEPALIVE
 int test_function() {

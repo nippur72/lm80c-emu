@@ -8,12 +8,6 @@ let psg_ticks;
 let psg_read;
 let psg_write;
 
-let psg_generic_io_read;
-let psg_generic_io_write;
-
-let psg_query_reg;
-let psg_query_addr;
-
 let ctc_init;
 let ctc_reset;
 let ctc_ticks;
@@ -35,11 +29,6 @@ function load_wasm(ready_cb) {
       psg_ticks = instance.cwrap("psg_ticks", 'void', ['number']);
       psg_read  = instance.cwrap("psg_read", 'number', ['number']);
       psg_write = instance.cwrap("psg_write", null, ['number', 'number']);
-
-      psg_generic_io_read  = instance.cwrap("psg_generic_io_read", 'number', ['number', 'number']);
-      psg_generic_io_write = instance.cwrap("psg_generic_io_write", 'number' , ['number', 'number', 'number']);
-      psg_query_reg = instance.cwrap("psg_query_reg", 'number' , ['number']);
-      psg_query_addr = instance.cwrap("psg_query_addr", 'number');
 
       ctc_init     = instance.cwrap("ctc_init");
       ctc_reset    = instance.cwrap("ctc_reset");      
