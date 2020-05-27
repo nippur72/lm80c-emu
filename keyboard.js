@@ -145,8 +145,11 @@ function keyDown(e) {
    {
       const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
       if(hardware_keys.length === 0) return;
+      /*
       keyboardReset();
       hardware_keys.forEach((k) => keyPress(k));
+      */
+      keyboard_buffer.push({ type: "press", hardware_keys });
       e.preventDefault();
    }
 }
@@ -154,8 +157,11 @@ function keyDown(e) {
 function keyUp(e) {
    const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
    if(hardware_keys.length === 0) return;
+   /*
    keyboardReset();
    //laser_keys.forEach((k) => keyRelease(k));
+   */
+   keyboard_buffer.push({ type: "release", hardware_keys });
    e.preventDefault();
 }
 
@@ -164,3 +170,4 @@ const element = document;
 element.onkeydown = keyDown;
 element.onkeyup = keyUp;
 
+let keyboard_buffer = [];

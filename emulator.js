@@ -68,6 +68,7 @@ let ctc_enabled = true;
 
 // scanline version
 function renderLines(nlines) {
+
    for(let t=0; t<nlines; t++) {
       // run cpu
       while(true) {         
@@ -110,6 +111,18 @@ function renderLines(nlines) {
 }
 
 function renderAllLines() {
+
+   // poll keyboard
+   if(keyboard_buffer.length > 0) {
+      let key_event = keyboard_buffer[0];
+      keyboard_buffer = keyboard_buffer.slice(1);
+
+      keyboardReset();
+      if(key_event.type === "press") {
+         key_event.hardware_keys.forEach((k) => keyPress(k));
+      }
+   }
+
    renderLines(262);  // frame linee pari
    renderLines(262);  // frame linee dispari
    tms9928a_update(tms9928a.m_tmpbmp);
