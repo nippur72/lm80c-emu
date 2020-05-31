@@ -1,6 +1,6 @@
 ; 
 ; ------------------------------------------------------------------------------
-; LM80C - BOOTLOADER - R3.12
+; LM80C - BOOTLOADER - R3.13
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -131,7 +131,7 @@ RST18:          jp      CKINCHAR
                 defb    $20,$62,$79,$00,$00,$00,$00,$00
                 defb    $4C,$65,$6F,$6E,$61,$72,$64,$6F
                 defb    $20,$4D,$69,$6C,$69,$61,$6E,$69
-FWVER:          defm    'FW 3.12',$20,__date__,$20,__time__,$00
+FWVER:          defm    'FW 3.13',$20,__date__,$20,__time__,$00
 ;------------------------------------------------------------------------------
 ; interrupt driven routine to get chars from Z80 SIO
                 org     $0100
@@ -508,11 +508,11 @@ CTCCONF:        defb    $FB,$ED,$4D     ; CTC0 interrupt vector (ei; reti)
                 jp      CH3_TIMER       ; CTC3 interrupt vector (sys tick timer)
 ;------------------------------------------------------------------------------
 MSGTXT1:        defm    "LM80C by Leonardo Miliani",CR
-                defm    "Firmware R3.12",CR,0
+                defm    "Firmware R3.13",CR,0
 MSGTXT2:        defb    CR
                 defm    "<C>old or <W>arm start? ",0
 ; ------------------------------------------------------------------------------
-; LM80C - VDP ROUTINES - R3.12
+; LM80C - VDP ROUTINES - R3.13
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1559,7 +1559,7 @@ LM80CLOGO       ; patterns to compose the splash screen logo
                 defb    0,0,13,0,0,12,0,0,0,1,4,4,0,1,0,0,3,5,9,20,19,8,9,20,19,8,9,1,1,8,0,0
                 defb    0,0,14,18,18,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
                 defb    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; ------------------------------------------------------------------------------
-; LM80C - PSG ROUTINES - R3.12
+; LM80C - PSG ROUTINES - R3.13
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1655,8 +1655,16 @@ CHKSNDCH:       ld      E,(IX+0)        ; load LSB into E
                 or      D               ; ...do another check to see if DE=0
                 jr      NZ,CNTCHKSND    ; no, so jump over
                                         ; if yes, let's shut down the corresponding channel
-                                        ; to shut down a tone we set 0 into tone register
-                                        ; and disable the channel into mixer
+                                        ; to shut down a tone we disable it into the mixer
+                                        ; then set 0 into its tone registers
+                ld      D,$07           ; mixer register
+                ld      C,PSG_REG       ; PSG register selector port
+                out     (C),D           ; set mixer register
+                in      A,(C)           ; load current value
+                or      H               ; set off the channel into the mixer (remember that 1=OFF)
+                out     (C),D           ; select mixer register
+                ld      C,PSG_DAT       ; PSG data port
+                out     (C),A           ; send new value for the mixer
                 ld      A,$03           ; three channels
                 sub     B               ; find current channel (0->A, 1->B, 2->C)
                 add     A,A             ; and find first register (A=>0, B=>2, C=>4)
@@ -1670,12 +1678,6 @@ CHKSNDCH:       ld      E,(IX+0)        ; load LSB into E
                 out     (C),A           ; select second tone register of channel
                 ld      C,PSG_DAT       ; PSG data selector port
                 out     (C),L           ; write 0 into register
-                ld      A,$07           ; mixer register
-                ld      C,PSG_REG       ; PSG register selector port
-                out     (C),A           ; set mixer register
-                in      A,(C)           ; load current value
-                or      H               ; set off the channel into the mixer (remember that 1=OFF)
-                out     (C),A           ; send new value for the mixer
 CNTCHKSND:      inc     IX              ; set for...
                 inc     IX              ; ...next channel...
                 sla     H               ; shift left H 1 bit
@@ -1920,7 +1922,7 @@ KBMAP_CTRL:     defb '1',25,14,3,' ',16,154,'2'         ; 25=HOME  14=CTRL  3=RU
                 defb 31,163,173,',','.',':',186,30      ; 31=CURSOR DOWN  30=CURSOR UP
                 defb 28,225,';','/',27,212,185,29       ; 28=CURSOR LEFT  27=ESCAPE  212=π  29=CURSOR RIGHT
                 defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP; ------------------------------------------------------------------------------
-; LM80C BASIC - R3.12
+; LM80C BASIC - R3.13
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1974,7 +1976,7 @@ CRSDN           equ     $1F             ; cursor down
 
 
 ; BASIC WORK SPACE LOCATIONS
-; BY STARTING FROM $8045 THE INTERPRETER ALLOCATES THE FOLLOWING RAM CELLS
+; BY STARTING FROM $805E THE INTERPRETER ALLOCATES THE FOLLOWING RAM CELLS
 ; TO STORE IMPORTANT VALUES USED FOR SOME SPECIFIC FUNCTIONS:
 ; THEY CAN BE VECTOR (ADDRESSES) FUNCTIONS, SYSTEM DATAS (I.E. VARIABLES)
 ; AND SO ON. THE FIRST CELLS ARE FILLED WITH VALUES STORED INTO ROM AT $(INITAB) ADDRESS
@@ -2237,6 +2239,7 @@ FNCTAB: defw    SGN
         defw    SSTAT       ; added by Leonardo Miliani
         defw    INKEY       ; added by Leonardo Miliani
         defw    POINT       ; added by Leonardo Miliani
+        defw    INSTR       ; added by Leonardo Miliani
         defw    LEN
         defw    STR
         defw    VAL
@@ -2350,6 +2353,7 @@ WORDS:  defb    'E'+$80,"ND"            ; from here the list contains the COMMAN
         defb    'S'+$80,"STAT"          ; added by Leonardo Miliani
         defb    'I'+$80,"NKEY"          ; added by Leonardo Miliani
         defb    'P'+$80,"OINT"          ; added by Leonardo Miliani
+        defb    'I'+$80,"NSTR"          ; added by Leonardo Miliani
         defb    'L'+$80,"EN"
         defb    'S'+$80,"TR$"
         defb    'V'+$80,"AL"
@@ -2459,7 +2463,8 @@ ZLTH    equ     $C6             ; <
 ZSGN    equ     $C7             ; SGN       <-- from here, there are the functions
 ZPOINT  equ     $DD             ; ZPOINT    <-- if the user enters a custom function, between
                                 ;               SGN and POINT, he/she must increment this pointer by 1
-ZLEFT   equ     $E5             ; LEFT$     <-- if the user enters a custom function anywhere,
+ZINSTR  equ     $DE             ; ZINSTR    <-- same here
+ZLEFT   equ     $E6             ; LEFT$     <-- if the user enters a custom function anywhere,
                                 ;               he/she must increment this pointer by 1
 
 ; ARITHMETIC PRECEDENCE TABLE
@@ -4172,6 +4177,8 @@ FNOFST: ld      B,$00           ; Get address of function
         ld      A,C             ; Get adjusted token value
         cp      2*(ZPOINT-ZSGN) ; "POINT" token?
         jp      Z,POINT         ; Yes, do "POINT"
+        cp      2*(ZINSTR-ZSGN) ; "INSTR" token?
+        jp      Z,INSTR         ; Yes, do "INSTR"
         cp      2*(ZLEFT-ZSGN)-1; Adj' LEFT$,RIGHT$ or MID$ ?
         jp      C,FNVAL         ; No - Do function
         call    OPNPAR          ; Evaluate expression  (X,...
@@ -5106,6 +5113,138 @@ ALLFOL: ld      C,$00           ; First byte of string
         call    GSTRDE          ; Move to string pool if needed
         jp      TSTOPL          ; Temporary string to pool
 
+
+; INSTR statement - look for a string inside another string
+; usage: INSTR(A$,B$) -> search for B$ into A$
+; return 0 if B$ is not contained into A$ or LEN(A$)<LEN(B$)
+; return 1~255 to indicate the starting position of B$ into A$
+; ex.: INSTR("HELLO","LO") returns 4
+;PT=0
+;DO
+;  TF=0:TP=0
+;  IF S1(PT)=S2(0) THEN
+;    TF=1:TP=PT:PT1=PT:PT2=0
+;    DO
+;      IF S1(PT1)<>S2(PT2) THEN TF=0:EXIT
+;      PT1=PT1+1
+;      PT2=PT2+1
+;    LOOP UNTIL PT2=LEN(S2)
+;  IF TF<>0 THEN EXIT
+;  PT=PT+1
+;LOOP UNTIL PT>=LEN(S1)-LEN(S2)
+;IF TF=0 THEN RETURN 0 ELSE RETURN TP
+LNS1    equ     TMPBFR1
+ADRS1   equ     TMPBFR2
+LNS2    equ     TMPBFR3
+ADRS2   equ     TMPBFR4
+PT      equ     VIDEOBUFF
+PT1     equ     VIDEOBUFF+2
+PT2     equ     VIDEOBUFF+4
+TP      equ     VIDEOBUFF+6
+TF      equ     VIDEOBUFF+8
+INSTR:  call    CHKSYN          ; make sure "(" follows
+        defb    '('
+        dec     HL
+        call    GETCHR          ; check if something follows
+        jp      Z,SNERR         ; if nothing else, raise a syntax error
+        call    EVAL            ; Evaluate expression
+        call    TSTSTR          ; Make sure it's a string
+        ld      (VIDEOBUFF),HL  ; store code string pointer into a temp buffer
+        call    GSTRCU          ; check that a string follows
+        call    LOADFP          ; Move string block to BCDE (BC=pointer, E=length)
+        ld      (LNS1),DE       ; store values into
+        ld      (ADRS1),BC      ; temp buffers
+        ld      HL,(VIDEOBUFF)  ; retrieve code string pointer from temp buffer
+        call    CHKSYN          ; Make sure ',' follows
+        defb    ','
+        dec     HL
+        call    GETCHR          ; check if something follows
+        jp      Z,SNERR         ; if nothing else, raise a syntax error
+        call    EVAL            ; Evaluate expression
+        call    TSTSTR          ; Make sure it's a string
+        ld      (VIDEOBUFF),HL  ; store code string pointer into a temp buffer
+        call    GSTRCU          ; check that a string follows
+        call    LOADFP          ; Move string block to BCDE (BC=pointer, E=length)
+        ld      (LNS2),DE       ; store values into
+        ld      (ADRS2),BC      ; temp buffers
+        ld      HL,(VIDEOBUFF)  ; retrieve code string pointer from temp buffer
+        call    CHKSYN          ; make sure ")" follows
+        defb    ')'
+        push    HL              ; store current code string pointer (the point after the ")" ) ...
+        pop     IY              ; ...into IY
+        xor     A               ; reset 10 RAM cells
+        ld      B,$0A           ; (INSTR registers)
+        ld      HL,PT           ; first cell
+EMPTINS:ld      (HL),A          ; reset cell
+        inc     HL              ; next cell
+        djnz    EMPTINS         ; repeat
+        ld      DE,(LNS2)       ; load len(S2) into DE
+        ld      HL,(LNS1)       ; load len(S1) into HL
+        call    CMP16           ; check that len(S1)>=len(S2)
+        jp      C,RZINSTR       ; if len(S2)>len(S1) then return 0
+RPTINST:xor     A               ; reset...
+        ld      (TP),A          ; ...TP...
+        ld      (TF),A          ; ...and TF
+        ld      BC,(PT)         ; pointer to S1
+        ld      HL,(ADRS1)      ; first cell of S1
+        add     HL,BC           ; get current position into RAM
+        ld      A,(HL)          ; load S1(PT)
+        ld      HL,(ADRS2)      ; pointer to first char of S2
+        cp      (HL)            ; is S1(PT)=S2(0)?
+        jr      NZ,CNT1INS      ; no, continue
+        ld      A,(PT)          ; load current PT
+        ld      (TP),A          ; TP=PT
+        ld      (PT1),A         ; P1=PT
+        xor     A               ; set...
+        ld      (PT2),A         ; ...PT2=0
+        inc     A               ;
+        ld      (TF),A          ; set TF=1
+RP2INST:ld      BC,(PT1)        ; load pointer PT1
+        ld      HL,(ADRS1)      ; load address of S1
+        add     HL,BC           ; find char of S1 pointed by PT1
+        ld      A,(HL)          ; load S1(PT1)
+        ld      BC,(PT2)        ; load pointer PT2
+        ld      HL,(ADRS2)      ; load char of S2 pointed by PT2
+        add     HL,BC           ; find S2(PT2)
+        cp      (HL)            ; is S1(PT1)=S2(PT2)?
+        jr      NZ,CNTZIN       ; no, exit inner loop
+        ld      HL,PT1
+        inc     (HL)            ; increment PT1
+        ld      A,(PT2)
+        inc     A               ; increment PT2
+        ld      (PT2),A
+        jp      Z,CNT1INS       ; if PT2>255 then exit
+        ld      HL,LNS2         ; len(S2)
+        cp      (HL)            ; PT2=len(S2)?
+        jp      C,RP2INST       ; no (PT2<len(S2) - repeat
+CNT1INS:ld      A,(TF)          ; check TF
+        and     A               ; TF=0? (clears also Carry for next SBC)
+        jr      NZ,RZINSTR      ; no, exit
+        ld      HL,(LNS1)       ; load len(S1)
+        ld      BC,(LNS2)       ; load len(S2)
+        sbc     HL,BC           ; HL=len(S1)-len(S2)
+        ld      DE,(PT)         ; load pointer
+        inc     E               ; PT=PT+1
+        ld      (PT),DE         ; store new value
+        ex      DE,HL           ; invert registers
+        call    CMP16           ; check if PT>len(S1)-len(S2)
+        jp      C,RPTINST       ; repeat if <
+        jp      Z,RPTINST       ; repeat if =
+RZINSTR:ld      A,(TF)          ; current value of TF
+        and     A               ; is it 0?
+        jp      Z,LVINSTR       ; yes, return 0
+        ld      A,(TP)          ; return TP...
+        inc     A               ; ...incremented by 1
+LVINSTR:pop     HL              ; drop original return point
+        push    IY              ; load current string address from IY into stack
+        ld      DE,RETNUM       ; Address of Return number from function...
+        push    DE              ; ...saved on stack
+        jp      PASSA           ; return TP
+CNTZIN: xor     A               ; set...
+        ld      (TF),A          ; TF=0
+        jp      CNT1INS         ; continue
+
+
 RIGHT:  call    LFRGNM          ; Get number and ending ")"
         pop     DE              ; Get string length
         push    DE              ; And re-save
@@ -5595,7 +5734,7 @@ SSTAT:  call    DEINT           ; get integer -32768 to 32767
 ; read the temp key buffer and return the value of the current key being pressed
 ; can wait for the number of 100thds of second before to return
 INKEY:  call    IDTEST          ; Test for illegal direct
-        call    DEINT           ; get number param (100thds of second to wait)
+        call    DEINT           ; get number param (100thds of second to wait) into DE
         push    BC              ; store BC
         ld      A,(TMRCNT)      ; Load current value of system timer
         ld      B,A             ; move it into B
@@ -5603,19 +5742,25 @@ CMP_A:  ld      A,(TMRCNT)      ; make a little delay of 1/100 sec...
         cp      B               ; ...to let the sniffer collect...
         jr      NZ,CMP_A        ; ...at least 1 char before to continue
         ld      A,D             ; check the param
-        xor     E               ; if DE<>0 then...
+        or      E               ; if DE<>0 then...
         jr      NZ,INKEY2       ; ...jump over...
         ld      A,(TMPKEYBFR)   ; ...else read the buffer and...
         jr      ENDINK          ; ...return it
 INKEY2: ld      A,D             ; check if param>1023
         cp      $04             ; to do this we check if MSB>3
         jp      NC,FCERR        ; if MSB >=4 then error
-        ld      A,(TMRCNT)      ; Load current value of system timer
+        push    HL              ; store HL
+        ld      HL,$0009        ; check if value
+        call    CMP16           ; is < 10
+        pop     HL              ; retrieve HL
+        jp      C,SRTINK        ; if value >= 10 then jump over
+        ld      DE,$000A        ; else, use 10 (no intervals shorter than 10/100s)
+SRTINK: ld      A,(TMRCNT)      ; Load the first byte of the system timer
         ld      B,A             ; move it into B
-CHKINK: ld      A,(TMPKEYBFR)   ; load current value
+CHKINK: ld      A,(TMPKEYBFR)   ; load char code from buffer
         and     A               ; is it 0?
         jr      NZ,ENDINK       ; no, so we can return it
-        ld      A,(TMRCNT)      ; load current value of system timer
+        ld      A,(TMRCNT)      ; load the first byte of the system timer
         cp      B               ; is it the same value?
         jr      Z,CHKINK        ; yes, so read again
         ld      B,A             ; store new value
@@ -7018,8 +7163,8 @@ CHRPNT  equ     TMPBFR2
 GPRINT: call    CHKG2M          ; check if in graphic mode 2
         dec     HL              ; dec 'cos GETCHR INCs
         call    GETCHR          ; check if something follows
-        jp      Z,SNERR         ; if anything else, raise a syntax error
-        ld      (VIDEOBUFF),HL  ; save current code string pointer into BC
+        jp      Z,SNERR         ; if nothing else, raise a syntax error
+        ld      (VIDEOBUFF),HL  ; save current code string pointer
         call    EVAL            ; Evaluate expression
         call    TSTSTR          ; Make sure it's a string
         call    CHKSYN          ; Make sure ',' follows
@@ -7151,22 +7296,22 @@ POINT:  call    CHKG2M          ; check if in graphic mode 2
         ld      (TMPBFR2),A     ; store into a temp buffer
         call    CHKSYN          ; make sure ")" follows
         defb    ')'
-        push    HL              ; store current string address (the point after the ")")...
+        push    HL              ; store current string address - the point after the ")" - ...
         pop     IY              ; ...into IY
         call    XY2HL           ; find HL address of pixel at X,Y
         ld      D,A             ; store pixel index
         di                      ; disable INTs
         call    READ_VIDEO_LOC  ; read contents of VRAM cell addressed by HL
         ei                      ; re-enable INTs
-        and     D               ; is the pixel ON or OFF?
+        and     D               ; is the pixel ON or OFF? (will be checked later)
         pop     HL              ; drop original return point
         push    IY              ; load current string address from IY into stack
-        ld      DE,RETNUM       ; Return number from function
-        push    DE              ; Save on stack
-        LD      A,$00
-        LD      B,$00           ; Integer AB = 0
-        jp      Z,ABPASS        ; return AB
-        inc     B               ; otherwise, AB = 1
+        ld      DE,RETNUM       ; Address of Return number from function...
+        push    DE              ; ...saved on stack
+        LD      A,$00           ; A=0 (reset A w/o altering flags)
+        LD      B,A             ; and B=0, so integer AB = 0
+        jp      Z,ABPASS        ; if pixel is off, return AB=0
+        inc     B               ; otherwise, return AB=1
 PNTEND: jp      ABPASS          ; return AB
 
 
@@ -8423,7 +8568,7 @@ DIV_16_8LP: add     HL,HL
             inc     L
             djnz    DIV_16_8LP
             ret; ------------------------------------------------------------------------------
-; LM80C - 6x8 CHARSET - R1.4
+; LM80C - 6x8 CHARSET - R1.5
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -8435,6 +8580,7 @@ DIV_16_8LP: add     HL,HL
 ; R1.2 - 20191209 - Start adding graphic chars to be coherent with 8x8 fonts
 ; R1.3 - 20191226 - Added extended char codes (128-255)
 ; R1.4 - 20200228 - adopted more usual hexadecimal & binary prefixes
+; R1.5 - 20200524 - New style for char #252
 ; ------------------------------------------------------------------------------
 ;
 ;-------------------------------------------------------------------------------
@@ -8501,7 +8647,7 @@ CHRST68 equ $
         defb $f8,$10,$20,$10,$08,$88,$70,$00 ; char 51: 3
         defb $10,$30,$50,$90,$f8,$10,$10,$00 ; char 52: 4
         defb $f8,$80,$f0,$08,$08,$88,$70,$00 ; char 53: 5
-        defb $30,$40,$80,$f8,$88,$88,$70,$00 ; char 54: 6
+        defb $30,$40,$80,$f0,$88,$88,$70,$00 ; char 54: 6
         defb $f8,$08,$10,$20,$40,$40,$40,$00 ; char 55: 7
         defb $70,$88,$88,$70,$88,$88,$70,$00 ; char 56: 8
         defb $70,$88,$88,$78,$08,$10,$60,$00 ; char 57: 9
@@ -8699,13 +8845,13 @@ CHRST68 equ $
         defb %00100000,%01100000,%11100000,%11100000,%11100000,%01100000,%00100000,%00000000 ; char 249 (audio off)
         defb %10000000,%11000000,%11100000,%11110000,%11111000,%11111100,%11110000,%10010000 ; char 250 (pointer)
         defb %01111000,%10000100,%10110100,%10100100,%10110100,%10000100,%01111000,%00000000 ; char 251 (©)
-        defb %00110000,%01001000,%01000000,%01000000,%11100000,%01000000,%01000100,%10111000 ; char 252 (£)
+        defb %00110000,%01001000,%01000000,%11100000,%01000000,%01000100,%10111000,%00000000 ; char 252 (£)
         defb %01111000,%10000100,%11110000,%01001000,%01001000,%00111100,%10000100,%01111000 ; char 253 (§)
         defb %00000000,%00000000,%00100000,%00000000,%11111000,%00000000,%00100000,%00000000 ; char 254 (÷)
         defb %11111100,%11111100,%11111100,%11111100,%11111100,%11111100,%11111100,%11111100 ; char 255 (cursor)
         ; here ends the ASCII table
 ; ------------------------------------------------------------------------------
-; LM80C - 8x8 CHARSET - R1.7
+; LM80C - 8x8 CHARSET - R1.8
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -8720,6 +8866,7 @@ CHRST68 equ $
 ; R1.5 - 20191210 - Changed several graphic chars
 ; R1.6 - 20200125 - Removed double chars, changed with new ones
 ; R1.7 - 20200228 - adopted more usual hexadecimal & binary prefixes
+; R1.8 - 20200524 - New style for char #252
 ; ------------------------------------------------------------------------------
 ;
 ;-------------------------------------------------------------------------------
@@ -8983,7 +9130,7 @@ CHRST88 equ $
         defb %00010000,%00110000,%11110000,%11110000,%11110000,%11110000,%00110000,%00010000 ; char 249 (audio off)
         defb %01000000,%01100000,%01110000,%01111000,%01111100,%01111110,%01111000,%01001000 ; char 250 (pointer)
         defb %00111100,%01000010,%10011001,%10100001,%10100001,%10011001,%01000010,%00111100 ; char 251 (©)
-        defb %00110000,%01001000,%01000000,%01000000,%11110000,%01000000,%01000010,%10111100 ; char 252 (£)
+        defb %00011000,%00100100,%00100000,%01111000,%00100000,%00100010,%01011100,%00000000 ; char 252 (£)
         defb %00111100,%01000010,%01111000,%00100100,%00100100,%00011110,%01000010,%00111100 ; char 253 (§)
         defb %00000000,%00000000,%00010000,%00000000,%01111100,%00000000,%00010000,%00000000 ; char 254 (÷)
         defb %11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111,%11111111 ; char 255 (cursor)
@@ -9026,7 +9173,7 @@ LOGOFONT:   equ $
             defb %11111111,%11111111,%11111111,%11111111,%00001111,%00001111,%00001111,%00001111 ; 22
             defb %00000000,%00110000,%01111000,%01111000,%00110000,%00000000,%00000000,%00000000 ; 23
             ; ------------------------------------------------------------------------------
-; LM80C - FIRMWARE - R3.12
+; LM80C - FIRMWARE - R3.13
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -9088,7 +9235,6 @@ LOGOFONT:   equ $
 ; this line instructs the assembler to compile taking account that code
 ; starts at $0000 (the address reached by Z80 upon reset)
 #code BOOT, $0000
-
 
 ; END OF ASSEMBLY SOURCE
 #end
