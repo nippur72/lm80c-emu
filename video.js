@@ -1,5 +1,5 @@
 
-let aspect = 1.2;
+let aspect = 1.25;
 
 const TEXT_W = 256;
 const TEXT_H = 192;
