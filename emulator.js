@@ -1,5 +1,5 @@
 "use strict";
-
+// TODO stereo audio: A right, B left, C common
 // TODO fix AY-3-8910
 // TODO keyboard buffering
 // TODO check actual timings (elapsed)

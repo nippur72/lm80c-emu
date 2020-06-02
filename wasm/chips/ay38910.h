@@ -234,6 +234,7 @@ typedef struct {
     float mag;
     float sample;
     float dcadj_sum;
+    float yv[5],xv[5],filtered_sample;
     uint32_t dcadj_pos;
     float dcadj_buf[AY38910_DCADJ_BUFLEN];
 } ay38910_t;
@@ -468,10 +469,8 @@ bool ay38910_tick(ay38910_t* ay) {
         }
     }
 
-    /* generate new sample? */
-    ay->sample_counter -= AY38910_FIXEDPOINT_SCALE;
-    if (ay->sample_counter <= 0) {
-        ay->sample_counter += ay->sample_period;
+    /* generate samples at / 16 frequency */
+    if ((ay->tick & 15) == 0) {
         float sm = 0.0f;
         for (int i = 0; i < AY38910_NUM_CHANNELS; i++) {
             const ay38910_tone_t* chn = &ay->tone[i];
@@ -489,7 +488,33 @@ bool ay38910_tick(ay38910_t* ay) {
                 sm += vol;
             }
         }
-        ay->sample = _ay38910_dcadjust(ay, sm) * ay->mag;
+
+        // 4 poles from 6 to 6.1 khz butt
+        // https://www-users.cs.york.ac.uk/~fisher/cgi-bin/mkfscript
+        #define GAIN   2.068605944e+03
+
+        ay->xv[0] = ay->xv[1];
+        ay->xv[1] = ay->xv[2];
+        ay->xv[2] = ay->xv[3];
+        ay->xv[3] = ay->xv[4];
+        ay->xv[4] = sm / GAIN;
+        ay->yv[0] = ay->yv[1];
+        ay->yv[1] = ay->yv[2];
+        ay->yv[2] = ay->yv[3];
+        ay->yv[3] = ay->yv[4];
+        ay->yv[4] = (ay->xv[0] + ay->xv[4]) + 4 * (ay->xv[1] + ay->xv[3]) + 6 * ay->xv[2]
+                     + ( -0.4233056407 * ay->yv[0]) + (  2.0544540617 * ay->yv[1])
+                     + ( -3.7855156890 * ay->yv[2]) + (  3.1466325904 * ay->yv[3]);
+
+       ay->filtered_sample = ay->yv[4];
+    }
+
+    /* generate new sample? */
+    ay->sample_counter -= AY38910_FIXEDPOINT_SCALE;
+    if (ay->sample_counter <= 0) {
+        ay->sample_counter += ay->sample_period;
+
+        ay->sample = _ay38910_dcadjust(ay, ay->filtered_sample) * ay->mag;
         return true;    /* new sample is ready */
     }
     /* fallthrough: no new sample ready yet */
