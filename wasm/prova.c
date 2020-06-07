@@ -50,4 +50,21 @@ uint16_t lm80c_tick() {
    return ticks;
 }
 
+EMSCRIPTEN_KEEPALIVE
+uint16_t lm80c_tick_line(float cyclesPerLine) {
+   static float counter = 0;
 
+   uint16_t elapsed = 0;
+   uint16_t ticks = 0;
+
+   while(true) {
+      ticks = lm80c_tick();
+      elapsed += ticks;
+      counter += (float) ticks;
+      if(counter>=cyclesPerLine) {
+         counter-=cyclesPerLine;
+         break;
+      }
+   }
+   return elapsed;
+}

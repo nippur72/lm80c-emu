@@ -32,11 +32,11 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
    }
    else if(pins & Z80_IORQ) {
       if(pins & Z80_RD) {
-         uint8_t data = EM_ASM_INT({ return io_read($0); }, Z80_GET_ADDR(pins));         
+         uint8_t data = io_read(Z80_GET_ADDR(pins));
          Z80_SET_DATA(pins, data);         
       }
       else if(pins & Z80_WR) {         
-         EM_ASM({ io_write($0,$1) }, Z80_GET_ADDR(pins), Z80_GET_DATA(pins));
+         io_write(Z80_GET_ADDR(pins), Z80_GET_DATA(pins));
       }
    }
 

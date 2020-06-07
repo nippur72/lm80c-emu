@@ -90,6 +90,7 @@ let io_read;
 let io_write;
 
 let lm80c_tick;
+let lm80c_tick_line;
 let lm80c_set_debug;
 let lm80c_ctc_enable;
 
@@ -191,6 +192,8 @@ function load_wasm(ready_cb) {
       lm80c_tick         = instance.cwrap("lm80c_tick", 'number');
       lm80c_set_debug    = instance.cwrap("lm80c_set_debug", null, ['bool']);
       lm80c_ctc_enable   = instance.cwrap("lm80c_ctc_enable", null, ['bool']);
+
+      lm80c_tick_line    = instance.cwrap("lm80c_tick_line", 'number', ['number']);
 
       // export instance globally (not strictly required)
       wasm_instance = instance;

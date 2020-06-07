@@ -57,17 +57,7 @@ sio.IEI_cb = ()=>{ return 1; }
 function renderLines(nlines) {
 
    for(let t=0; t<nlines; t++) {
-      // run cpu
-      while(true) {
-         let elapsed = lm80c_tick();
-         cycle += elapsed;
-         total_cycles += elapsed;
-
-         if(cycle>=cyclesPerLine) {
-            cycle-=cyclesPerLine;
-            break;            
-         }
-      }
+      total_cycles += lm80c_tick_line(cyclesPerLine);
 
       tms9928a.drawline();
 
