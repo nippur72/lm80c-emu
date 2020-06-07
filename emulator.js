@@ -59,32 +59,6 @@ function renderLines(nlines) {
    for(let t=0; t<nlines; t++) {
       // run cpu
       while(true) {
-         /*
-         if(debugBefore !== undefined) debugBefore();
-
-         // detects the RETI instruction for interrupt acknowledgment
-         if(mem_read_word(cpu.getState().pc) === 0x4ded ) {
-            sio.cpu_found_RETI();
-            ctc_set_reti();
-         }
-         
-         let elapsed = cpu.run_instruction();
-         if(debugAfter !== undefined) debugAfter(elapsed);
-
-         cycle += elapsed;         
-         total_cycles += elapsed;
-
-         if(ctc_enabled)
-         {
-            if(ctc_ticks(elapsed)) {
-               let vector = ctc_int_ack();
-               cpu.interrupt(false, vector);
-            }
-         }
-
-         psg_ticks(elapsed);
-         */
-
          let elapsed = lm80c_tick();
          cycle += elapsed;
          total_cycles += elapsed;
