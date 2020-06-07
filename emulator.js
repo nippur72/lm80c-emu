@@ -22,8 +22,6 @@ let TMRCNT     = 0x81CE;
 // 32K ROM is defined in roms.js
 const ram = new Uint8Array(32768).fill(0x00); 
 
-let tape_monitor = true;
-
 let cpu = new Z80({ mem_read, mem_write, io_read, io_write });
 
 //let psg = new psg8910();
@@ -50,8 +48,7 @@ let throttle = false;
 
 let options = {
    load: undefined,
-   restore: false,
-   notapemonitor: false
+   restore: false
 };
 
 let sio = new SIO();
