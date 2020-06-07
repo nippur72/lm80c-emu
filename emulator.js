@@ -22,11 +22,6 @@ let TMRCNT     = 0x81CE;
 // 32K ROM is defined in roms.js
 const ram = new Uint8Array(32768).fill(0x00); 
 
-// these for future extensions
-let cassette_bit_in; 
-let cassette_bit_out; 
-let speaker_A = 0;
-
 let tape_monitor = true;
 
 let cpu = new Z80({ mem_read, mem_write, io_read, io_write });
@@ -80,7 +75,7 @@ function renderLines(nlines) {
             ctc_set_reti();
          }
          
-         let elapsed = cpu.run_instruction();                  
+         let elapsed = cpu.run_instruction();
          if(debugAfter !== undefined) debugAfter(elapsed);
          cycle += elapsed;         
          total_cycles += elapsed;

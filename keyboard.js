@@ -125,20 +125,6 @@ function keyDown(e) {
       return;
    }
 
-   // ALT+Left is rewind tape
-   if(e.code == "ArrowLeft" && e.altKey) {
-      rewind_tape();
-      e.preventDefault(); 
-      return;
-   }   
-
-   // ALT+Up or ALT+Down is stop tape
-   if((e.code == "ArrowUp" && e.altKey) || (e.code == "ArrowDown" && e.altKey)) {
-      stop_tape();
-      e.preventDefault(); 
-      return;
-   }      
-
    // const hardware_key = pckey_to_hwkey(e.code);
 
    // if keyboard ITA

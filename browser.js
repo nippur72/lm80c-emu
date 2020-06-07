@@ -82,26 +82,7 @@ dropZone.addEventListener('drop', e => {
    }
 });
 
-function droppedFile(outName, bytes) {   
-
-   const wav = /\.wav$/i;
-   if(wav.test(outName)) {
-      // WAV files
-      //console.log("WAV file dropped");
-      const info = decodeSync(bytes.buffer);
-      tapeSampleRate = info.sampleRate;
-      //console.log(info.channelData);
-      tapeBuffer = info.channelData[0];
-      tapeLen = tapeBuffer.length;
-      tapePtr = 0;
-      tapeHighPtr = 0;      
-
-      // CRUN run only if in immediate mode
-      // if(mem_read_word(0x803f) === 0xffff) pasteLine("CRUN\r\n");
-            
-      return;
-   }
-
+function droppedFile(outName, bytes) {
    const prg = /\.prg$/i;
    if(prg.test(outName)) {     
       writeFile(outName, bytes)
@@ -142,10 +123,6 @@ function parseQueryStringCommands() {
    if(options.load !== undefined) {
       const name = options.load;      
       fetchProgramAll(name);            
-   }
-
-   if(options.notapemonitor === true) {
-      tape_monitor = false;      
    }
 
    if(options.bt !== undefined || 
@@ -196,13 +173,4 @@ async function fetchProgram(name)
    {
       return false;      
    }
-}
-
-function rewind_tape() {   
-   tapePtr = 0;
-   tapeHighPtr = 0;
-}
-
-function stop_tape() {   
-   tapePtr = tapeLen;   
 }
