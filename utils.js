@@ -83,7 +83,7 @@ function paste(text) {
 }
 
 function pasteLine(line) {
-   ctc_enabled = false;
+   lm80c_ctc_enable(false);
    renderLines(262);
 
    for(let t=0;t<line.length;t++) {
@@ -92,7 +92,7 @@ function pasteLine(line) {
    }
 
    renderLines(262);
-   ctc_enabled = true;
+   lm80c_ctc_enable(true);
    renderLines(262);
 }
 

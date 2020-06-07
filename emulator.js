@@ -22,9 +22,7 @@ let TMRCNT     = 0x81CE;
 // 32K ROM is defined in roms.js
 const ram = new Uint8Array(32768).fill(0x00); 
 
-let cpu = new Z80({ mem_read, mem_write, io_read, io_write });
-
-//let psg = new psg8910();
+let cpu;
 
 /******************/
 
@@ -54,16 +52,14 @@ let options = {
 let sio = new SIO();
 
 sio.IEI_cb = ()=>{ return 1; }
-//ctc.IEI_cb = ()=>{ return sio.IEO(); }
-
-let ctc_enabled = true;
 
 // scanline version
 function renderLines(nlines) {
 
    for(let t=0; t<nlines; t++) {
       // run cpu
-      while(true) {         
+      while(true) {
+         /*
          if(debugBefore !== undefined) debugBefore();
 
          // detects the RETI instruction for interrupt acknowledgment
@@ -74,6 +70,7 @@ function renderLines(nlines) {
          
          let elapsed = cpu.run_instruction();
          if(debugAfter !== undefined) debugAfter(elapsed);
+
          cycle += elapsed;         
          total_cycles += elapsed;
 
@@ -86,6 +83,11 @@ function renderLines(nlines) {
          }
 
          psg_ticks(elapsed);
+         */
+
+         let elapsed = lm80c_tick();
+         cycle += elapsed;
+         total_cycles += elapsed;
 
          if(cycle>=cyclesPerLine) {
             cycle-=cyclesPerLine;
@@ -155,7 +157,28 @@ function main() {
 
    parseQueryStringCommands();
 
+   // loads the eprom
+   rom.forEach((v,i)=>rom_load(i,v));
+
+   //cpu = new Z80({ mem_read, mem_write, io_read, io_write });
+
+   cpu =
+   {
+      init: cpu_init,
+      reset: cpu_reset,
+      run_instruction: cpu_run_instruction,
+      interrupt: cpu_interrupt,
+      getState: ()=>{
+         return {
+            pc: get_z80_pc()
+         }
+      }
+   };
+
+   cpu.init();
+
    cpu.reset();
+
    tms9928a.reset();
 
    psg_init();

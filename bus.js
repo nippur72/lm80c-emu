@@ -1,4 +1,5 @@
-function mem_read(address) {   
+/*
+function mem_read(address) {
    if(address < 32768) return rom[address];
    else return ram[address-32768];
 }
@@ -7,18 +8,20 @@ function mem_write(address, value) {
    if(address < 32768) return;
    else ram[address-32768] = value;
 }
+*/
 
+/*
 function io_read(ioport) {  
    const port = ioport & 0xFF;
 
-   /*
-   if(port ===  0b00110000 || port === 0b00110010) {
-      if(total_cycles - last_vdp_op < 31) {
-         console.log(`vpd timings ${total_cycles - last_vdp_op} at PC=${hex(cpu.getState().pc,4)}`);
-      }
-      last_vdp_op = total_cycles;
-   }
-   */
+
+   //if(port ===  0b00110000 || port === 0b00110010) {
+   //   if(total_cycles - last_vdp_op < 31) {
+   //      console.log(`vpd timings ${total_cycles - last_vdp_op} at PC=${hex(cpu.getState().pc,4)}`);
+   //   }
+   //   last_vdp_op = total_cycles;
+   //}
+
 
    switch(port) {
       case 0x00: return 0x00;  // PIO
@@ -41,13 +44,6 @@ function io_read(ioport) {
       case 0x032:  return tms9928a.vram_read();
       case 0x033:  return tms9928a.register_read();
 
-      /*
-      case 0x40: return psg.read(port);
-      case 0x41: return psg.read(port);
-      case 0x42: return psg.read(port);
-      case 0x43: return psg.read(port);
-      */
-
       case 0x40:
       case 0x41:
       case 0x42:
@@ -55,7 +51,7 @@ function io_read(ioport) {
 
      default:
          console.warn(`read from unknown port ${hex(port)}h`);
-         return 0xFF; // TODO what does it in the real HW
+         return port; // checked on the real HW
    }
 }
 
@@ -63,14 +59,12 @@ let last_vdp_op = 0;
 
 function io_write(port, value) {
 
-   /*
-   if(port ===  0b00110000 || port === 0b00110010) {
-      if(total_cycles - last_vdp_op < 31) {
-         console.log(`vpd timings ${total_cycles - last_vdp_op} at PC=${hex(cpu.getState().pc,4)}`);
-      }
-      last_vdp_op = total_cycles;
-   }
-   */
+   // if(port ===  0b00110000 || port === 0b00110010) {
+   //    if(total_cycles - last_vdp_op < 31) {
+   //       console.log(`vpd timings ${total_cycles - last_vdp_op} at PC=${hex(cpu.getState().pc,4)}`);
+   //    }
+   //    last_vdp_op = total_cycles;
+   // }
 
    // console.log(`io write ${hex(port)} ${hex(value)}`)
    switch(port & 0xFF) {
@@ -94,14 +88,6 @@ function io_write(port, value) {
       // TMS9918: 0x30-0x33   
       case 0b00110000: tms9928a.vram_write(value);     return;
       case 0b00110010: tms9928a.register_write(value); return;
-
-      /*
-      // psg 0x40-0x43   
-      case 0x40: psg.write(port, value); return;
-      case 0x41: psg.write(port, value); return;
-      case 0x42: psg.write(port, value); return;
-      case 0x43: psg.write(port, value); return;
-      */
      
       case 0x40:
       case 0x41:
@@ -112,3 +98,4 @@ function io_write(port, value) {
          console.warn(`write on unknown port ${hex(port)}h value ${hex(value)}h`);
    }   
 }
+*/
