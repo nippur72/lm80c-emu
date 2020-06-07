@@ -1,10 +1,10 @@
 function mem_read(address) {   
-   if(address<32768) return rom[address];
+   if(address < 32768) return rom[address];
    else return ram[address-32768];
 }
 
 function mem_write(address, value) {
-   if(address<32768) return rom[address] = value;
+   if(address < 32768) return;
    else ram[address-32768] = value;
 }
 
