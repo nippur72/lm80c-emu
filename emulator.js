@@ -49,26 +49,10 @@ let options = {
    restore: false
 };
 
-/*
-let sio = new SIO();
-
-sio.IEI_cb = ()=>{ return 1; }
-*/
-
 // scanline version
 function renderLines(nlines) {
-
    for(let t=0; t<nlines; t++) {
       total_cycles += lm80c_tick_line(cyclesPerLine);
-
-      /*
-      tms9928a.drawline();
-
-      if(VDP_triggered_NMI) {
-         cpu.interrupt(true);
-         VDP_triggered_NMI = false;
-      }
-      */
    }
 }
 
