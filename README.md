@@ -29,11 +29,13 @@ You can plug your own Javascript debug functions by defining
 `debugBefore()` and `debugAfter(elapsed)` in the JavaScript console.
 
 `debugBefore` is executed before any Z80 instruction; `debugAfter` is executed
-after the istruction and the number of occurred T-states is passed in the `elapsed` argument.
+after.
 
-Within the debug functions you can access all the emulator variables, most likely 
-you'll want to read the Z80 state with `cpu.getState()` or the memory content 
+To activate the debug mode use `lm80c_set_debug(true)` and `lm80c_set_debug(false)`  
+to deactivate it. Within the debug functions you can access all the emulator variables,
+most likely you'll want to read the Z80 state with `cpu.getState()` or the memory content
 with `mem_read()` and `mem_write()`.
+
 
 AUTOLOADING
 =================
