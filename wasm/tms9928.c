@@ -397,7 +397,7 @@ void tms9928_drawline(tms9928_t *vdp)
          int sprite_size = ( vdp->m_Regs[1] & 0x02 ) ? 16 : 8;
          int sprite_mag = vdp->m_Regs[1] & 0x01;
          int sprite_height = sprite_size * ( sprite_mag + 1 );
-         uint8_t spr_drawn[32+256+32]; memset(&spr_drawn, 0, 1);
+         uint8_t spr_drawn[32+256+32] = { 0 };
          int num_sprites = 0;
          int fifth_encountered = false;
 
