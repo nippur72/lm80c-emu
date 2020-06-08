@@ -71,6 +71,8 @@ class TMS9928A
 	m_top_border;
    m_vertical_size;
 
+   m_frames;
+
    vpos;
 
    palette;
@@ -564,7 +566,8 @@ class TMS9928A
 
       if(this.vpos === this.m_vertical_size) {
          this.vpos = 0;
-         if(this.screen_update_cb !== undefined)
+         this.m_frames++;
+         if(this.screen_update_cb !== undefined && this.m_frames % 2 == 1)
             this.screen_update_cb(this.m_tmpbmp);
       }
    }
@@ -682,6 +685,7 @@ class TMS9928A
       this.screen_update_cb = screen_update_cb;
 
       this.vpos = 0;  // line counter
+      this.m_frames = 0;
 
       // TODO implement timers
       // m_line_timer = timer_alloc(TIMER_LINE);

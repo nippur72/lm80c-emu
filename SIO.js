@@ -1,3 +1,4 @@
+/*
 class SIO {
 
    busy = false;
@@ -44,7 +45,7 @@ class SIO {
 
    readPortCA() {
       //console.log("CA read");
-      return 0x00; /*return this.A & FF;*/
+      return 0x00; //return this.A & FF;
    }
    readPortDA() {
       //console.log("DA read");
@@ -52,7 +53,7 @@ class SIO {
    }
    readPortCB() { 
       //console.log("CB read");
-      return 0x00; /* return this.A & FF;*/ 
+      return 0x00; / return this.A & FF;
    }
    readPortDB() { 
       //console.log("DB read");
@@ -60,17 +61,17 @@ class SIO {
    }
 
    writePortCA(value) {
-      /*
-      if(value == 0x2a) {
-         // hack
-         if(buffer_sio.length > 0) {
-            setTimeout(()=>{
-               sio.receiveChar(buffer_sio[0]);
-               buffer_sio = buffer_sio.slice(1);
-            },1000);
-         }
-      }
-      */
+
+      //if(value == 0x2a) {
+      //   // hack
+      //   if(buffer_sio.length > 0) {
+      //      setTimeout(()=>{
+      //         sio.receiveChar(buffer_sio[0]);
+      //         buffer_sio = buffer_sio.slice(1);
+      //      },1000);
+      //   }
+      //}
+
       //console.log(`CA write 0x${hex(value)} -- ${bin(value)}`);
    }
    writePortDA(value) { 
@@ -85,4 +86,4 @@ class SIO {
       this.B = value; 
    }
 }
-
+*/

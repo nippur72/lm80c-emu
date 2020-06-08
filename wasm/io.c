@@ -1,5 +1,6 @@
 #include "lm80c.h"
 
+/*
 byte sio_readPortDA() { return (byte) EM_ASM_INT({ return sio.readPortDA(); }, 0);}
 byte sio_readPortDB() { return (byte) EM_ASM_INT({ return sio.readPortDB(); }, 0);}
 byte sio_readPortCA() { return (byte) EM_ASM_INT({ return sio.readPortCA(); }, 0);}
@@ -9,6 +10,7 @@ void sio_writePortDA(value) { byte unused = (byte) EM_ASM_INT({ sio.writePortDA(
 void sio_writePortDB(value) { byte unused = (byte) EM_ASM_INT({ sio.writePortDB($0);}, value); }
 void sio_writePortCA(value) { byte unused = (byte) EM_ASM_INT({ sio.writePortCA($0);}, value); }
 void sio_writePortCB(value) { byte unused = (byte) EM_ASM_INT({ sio.writePortCB($0);}, value); }
+*/
 
 byte tms9928a_vram_read()     { return (byte) EM_ASM_INT({ return tms9928a.vram_read();     }, 0);}
 byte tms9928a_register_read() { return (byte) EM_ASM_INT({ return tms9928a.register_read(); }, 0);}
@@ -31,10 +33,10 @@ byte io_read(word ioport) {
       case 0x12:
       case 0x13: return ctc_read(port & 3);  // CTC
 
-      case 0x20: return sio_readPortDA();    // SIO_DA
-      case 0x21: return sio_readPortDB();    // SIO_DB
-      case 0x22: return sio_readPortCA();    // SIO_CA
-      case 0x23: return sio_readPortCB();    // SIO_CB
+      case 0x20: return SIO_readPortDA();    // SIO_DA
+      case 0x21: return SIO_readPortDB();    // SIO_DB
+      case 0x22: return SIO_readPortCA();    // SIO_CA
+      case 0x23: return SIO_readPortCB();    // SIO_CB
 
       case 0x030:  return tms9928a_vram_read();
       case 0x031:  return tms9928a_register_read();
@@ -69,10 +71,10 @@ void io_write(word port, byte value) {
       case 0x13: ctc_write(port & 3, value); return;
 
       // SIO 0x20-23
-      case 0x20: sio_writePortDA(value); return; // SIO_DA equ %00100000
-      case 0x21: sio_writePortDB(value); return; // SIO_DB equ %00100001
-      case 0x22: sio_writePortCA(value); return; // SIO_CA equ %00100010
-      case 0x23: sio_writePortCB(value); return; // SIO_CB equ %00100011
+      case 0x20: SIO_writePortDA(value); return; // SIO_DA equ %00100000
+      case 0x21: SIO_writePortDB(value); return; // SIO_DB equ %00100001
+      case 0x22: SIO_writePortCA(value); return; // SIO_CA equ %00100010
+      case 0x23: SIO_writePortCB(value); return; // SIO_CB equ %00100011
 
       // TMS9918: 0x30-0x33
       case 0b00110000: tms9928a_vram_write(value);     return;

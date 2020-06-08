@@ -49,9 +49,11 @@ let options = {
    restore: false
 };
 
+/*
 let sio = new SIO();
 
 sio.IEI_cb = ()=>{ return 1; }
+*/
 
 // scanline version
 function renderLines(nlines) {
@@ -83,13 +85,51 @@ function renderAllLines() {
 
    renderLines(262);  // frame linee pari
    renderLines(262);  // frame linee dispari
-   tms9928a_update(tms9928a.m_tmpbmp);
 }
+
+/*
+function oneFrame() {
+   renderAll_2(0);
+}
+
+let cpu_timer = 0;
+let delta;
+
+function renderAll_2(timer) {
+
+   delta = timer - cpu_timer;
+   if(delta > 200) {
+      delta = 200;
+      cpu_timer = timer;
+   }
+
+   let line_time = cyclesPerLine / cpuSpeed * 1000 * 100;
+   let n_lines = delta * line_time;
+
+
+   // poll keyboard
+   if(keyboard_buffer.length > 0) {
+      let key_event = keyboard_buffer[0];
+      keyboard_buffer = keyboard_buffer.slice(1);
+
+      keyboardReset();
+      if(key_event.type === "press") {
+         key_event.hardware_keys.forEach((k) => keyPress(k));
+      }
+   }
+   renderLines(n_lines);
+   //console.log(timer, cpu_timer, delta, n_lines);
+
+   cpu_timer += n_lines * line_time;
+
+   requestAnimationFrame(renderAll_2);
+}
+*/
 
 let nextFrame;
 let end_of_frame_hook = undefined;
 
-function oneFrame() {   
+function oneFrame() {
    const startTime = new Date().getTime();      
 
    if(nextFrame === undefined) nextFrame = startTime;
@@ -144,6 +184,8 @@ function main() {
    cpu.reset();
 
    tms9928a.reset();
+
+   keyboard_reset();
 
    psg_init();
    psg_reset();

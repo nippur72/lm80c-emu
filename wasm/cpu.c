@@ -4,7 +4,7 @@
 
 #include "chips/z80.h"
 
-void sio_cpu_found_RETI() { byte unused = (byte) EM_ASM_INT({ sio.cpu_found_RETI();  }, 0); }
+//void sio_cpu_found_RETI() { /*byte unused = (byte) EM_ASM_INT({ sio.cpu_found_RETI();  }, 0);*/ }
 
 z80_t cpu;
 z80_desc_t desc;
@@ -48,7 +48,7 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
    // if RETI is found use the virtual pin to ack other chips
    if(pins & Z80_RETI) {
       ctc_set_reti();
-      sio_cpu_found_RETI();
+      SIO_cpu_found_RETI();
    }
 
    return pins;

@@ -97,8 +97,8 @@ function pasteLine(line) {
 }
 
 function pasteChar(c) {
-   sio.receiveChar(c);
-   while(sio.busy) renderLines(262);
+   SIO_receiveChar(c);
+   while(sio_is_busy()) renderLines(262);
    while(mem_read(CRSR_STATE)==0) renderLines(262);
    while(mem_read(CRSR_STATE)==0) renderLines(262);
    renderLines(262);

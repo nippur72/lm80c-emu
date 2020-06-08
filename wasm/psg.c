@@ -14,11 +14,8 @@ uint8_t portB;
 
 uint8_t ay38910_port_in_cb(int port_id, void* user_data)
 {
-   // uint8_t risp = (uint8_t) EM_ASM_INT({ console.log("in_cb",$0); return 0; }, port_id);
-
    if(port_id == AY38910_PORT_A) {
-      uint8_t data = (uint8_t) EM_ASM_INT({ return keyboard_poll($0); }, portB);
-      return data; // keyboard_poll(portB);
+      return keyboard_poll(portB);
    }
    return 0x00;
 }

@@ -157,22 +157,26 @@ mapKey( KEY_CLR_HOME  , KB0, KA1 );
 mapKey( KEY_1         , KB0, KA0 );
 
 // keyboard matrix (8x8)
-KAX = new Uint8Array(8).fill(0b11111111);
+// KAX = new Uint8Array(8).fill(0b11111111);
 
 function keyboardReset() {
-   KAX = new Uint8Array(8).fill(0b11111111);
+   //KAX = new Uint8Array(8).fill(0b11111111);
+   keyboard_reset();
 }
 
 function keyPress(hardware_key) {   
-   const { row, col } = key_row_col[hardware_key];   
-   KAX[row] = reset_bit(KAX[row], col);
+   const { row, col } = key_row_col[hardware_key];
+   keyboard_press(row,col);
+   //KAX[row] = reset_bit(KAX[row], col);
 }
 
 function keyRelease(hardware_key) {
-   const { row, col } = key_row_col[hardware_key];   
-   KAX[row] = set_bit(KAX[row], col);
+   const { row, col } = key_row_col[hardware_key];
+   keyboard_release(row,col);
+   //KAX[row] = set_bit(KAX[row], col);
 }
 
+/*
 function keyboard_poll(address) 
 {
    KB = address & 0xFF; 
@@ -188,3 +192,4 @@ function keyboard_poll(address)
    
    return KA;
 }
+*/

@@ -109,7 +109,7 @@ let tms9928a = new TMS9928A({
    int_line_cb: tms9928a_interrupt_cb,
    gromclk_cb: undefined,
    buffer: tms9928a_buffer,
-   screen_update_cb: undefined,
+   screen_update_cb: ()=>tms9928a_update(tms9928a.m_tmpbmp),
    family99: true,
    reva: true
 });

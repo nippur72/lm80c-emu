@@ -1,6 +1,8 @@
 #include "lm80c.h"
 
+#include "keyboard.c"
 #include "ctc.c"
+#include "sio.c"
 #include "psg.c"
 #include "mem.c"
 #include "io.c"
@@ -68,3 +70,4 @@ uint16_t lm80c_tick_line(float cyclesPerLine) {
    }
    return elapsed;
 }
+

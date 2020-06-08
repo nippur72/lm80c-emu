@@ -94,6 +94,14 @@ let lm80c_tick_line;
 let lm80c_set_debug;
 let lm80c_ctc_enable;
 
+let keyboard_reset;
+let keyboard_press;
+let keyboard_release;
+let keyboard_poll;
+
+let SIO_receiveChar;
+let sio_is_busy;
+
 function load_wasm(ready_cb) {
 
    // emscripten_module.js exports "emscripten_module" globally
@@ -194,6 +202,14 @@ function load_wasm(ready_cb) {
       lm80c_ctc_enable   = instance.cwrap("lm80c_ctc_enable", null, ['bool']);
 
       lm80c_tick_line    = instance.cwrap("lm80c_tick_line", 'number', ['number']);
+
+      keyboard_reset     = instance.cwrap("keyboard_reset"  , null );
+      keyboard_press     = instance.cwrap("keyboard_press"  , null, ['number', 'number'] );
+      keyboard_release   = instance.cwrap("keyboard_release", null, ['number', 'number'] );
+      keyboard_poll      = instance.cwrap("keyboard_poll"   , 'number', ['number'] );
+
+      SIO_receiveChar    = instance.cwrap("SIO_receiveChar"   , null, ['number'] );
+      sio_is_busy        = instance.cwrap("sio_is_busy"       , 'bool' );
 
       // export instance globally (not strictly required)
       wasm_instance = instance;
