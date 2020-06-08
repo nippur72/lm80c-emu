@@ -12,8 +12,12 @@ void vdp_interrupt_called() {
    vdp_triggered_NMI = true;
 }
 
+int cnt = 0;
 void vdp_screen_update_called(uint32_t *buffer) {
-   byte unused = (byte) EM_ASM_INT({ vdp_screen_update($0); }, buffer );
+   cnt++;
+   if((cnt & 1) == 1) {
+      byte unused = (byte) EM_ASM_INT({ vdp_screen_update($0); }, buffer );
+   }
 }
 
 void vdp_init() {
