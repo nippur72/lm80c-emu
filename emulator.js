@@ -150,8 +150,6 @@ function main() {
    // loads the eprom
    rom.forEach((v,i)=>rom_load(i,v));
 
-   //cpu = new Z80({ mem_read, mem_write, io_read, io_write });
-
    cpu =
    {
       init: cpu_init,
@@ -167,9 +165,7 @@ function main() {
 
    cpu.init();
 
-   cpu.reset();
-
-   //tms9928a.reset();
+   cpu.reset();   
 
    keyboard_reset();
 
