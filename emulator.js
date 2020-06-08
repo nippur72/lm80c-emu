@@ -61,12 +61,14 @@ function renderLines(nlines) {
    for(let t=0; t<nlines; t++) {
       total_cycles += lm80c_tick_line(cyclesPerLine);
 
+      /*
       tms9928a.drawline();
 
       if(VDP_triggered_NMI) {
          cpu.interrupt(true);
          VDP_triggered_NMI = false;
       }
+      */
    }
 }
 
@@ -183,7 +185,7 @@ function main() {
 
    cpu.reset();
 
-   tms9928a.reset();
+   //tms9928a.reset();
 
    keyboard_reset();
 
@@ -192,6 +194,9 @@ function main() {
 
    ctc_init();
    ctc_reset();
+
+   lm80c_init();
+   lm80c_reset();
 
    goAudio();
 

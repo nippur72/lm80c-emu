@@ -24,86 +24,15 @@
 ** Improved over the years by MESS and MAME teams.
 */
 
-#define CHIPS_IMPL 1
+#include "tms9928.h"
 
-#include <stdint.h>
-#include <stdbool.h>
+uint8_t tms9928_vram_read_byte(tms9928_t *vdp, uint16_t address) {
+   return vdp->m_vram_space[address];
+}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define	TMS9928_PALETTE_SIZE                16
-#define  TMS9928_TOTAL_HORZ                  342
-#define	TMS9928_TOTAL_VERT_NTSC             262
-#define	TMS9928_TOTAL_VERT_PAL              313
-#define	TMS9928_HORZ_DISPLAY_START          2 + 14 + 8 + 13
-#define	TMS9928_VERT_DISPLAY_START_PAL      13 + 51
-#define	TMS9928_VERT_DISPLAY_START_NTSC     13 + 27
-
-typedef struct {
-   // TODO implement timers
-	//TIMER_LINE = 0;
-	//int GROMCLK = 1;
-
-	int m_vram_size;                 // 4K, 8K, or 16K
-	void *m_out_int_line_cb;         // Callback is called whenever the state of the INT output changes
-	void *m_out_gromclk_cb;          // GROMCLK line is optional; if present, pulse it by XTAL/24 rate
-
-	/* TMS9928A internal settings */
-	uint8_t  m_ReadAhead;                 // uint8_t
-	uint8_t  m_Regs[8];                   // uint8_t
-	uint8_t  m_StatusReg;                 // uint8_t
-	uint8_t  m_FifthSprite;               // uint8_t
-	uint8_t  m_latch;                     // uint8_t
-	uint8_t  m_INT;                       // uint8_t
-	uint16_t m_Addr;                      // uint16_t
-	uint16_t m_colour;                    // uint16_t
-	uint16_t m_pattern;                   // uint16_t
-	uint16_t m_nametbl;                   // uint16_t
-	uint16_t m_spriteattribute;           // uint16_t
-	uint16_t m_spritepattern;             // uint16_t
-	int      m_colourmask;                // int
-	int      m_patternmask;               // int
-	uint16_t m_TMS9928_TOTAL_HORZ;        // uint16_t
-	bool     m_50hz;                      // bool
-	bool     m_reva;                      // bool
-	bool     m_99;                        // bool
-
-   uint8_t  *m_vram_space;               // the actual vram
-
-/*
-	m_tmpbmp;                             // drawing buffer of RGBA
-	m_mode;
-
-	m_top_border;
-   m_vertical_size;
-
-   vpos;
-*/
-
-   uint32_t palette[TMS9928_PALETTE_SIZE];
-
-
-    void* user_data;
-} tms9928_t;
-
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
-/*-- IMPLEMENTATION ----------------------------------------------------------*/
-#ifdef CHIPS_IMPL
-#include <string.h>
-#ifndef CHIPS_ASSERT
-    #include <assert.h>
-    #define CHIPS_ASSERT(c) assert(c)
-#endif
-
-
-uint8_t tms9928_vram_read_byte(tms9928_t *vdp, uint16_t address) { return vdp->m_vram_space[address]; }
-void tms9928_vram_write_byte(tms9928_t *vdp, uint16_t address, uint8_t data) { vdp->m_vram_space[address] = data; }
+void tms9928_vram_write_byte(tms9928_t *vdp, uint16_t address, uint8_t data) {
+   vdp->m_vram_space[address] = data;
+}
 
 uint8_t tms9928_vram_read(tms9928_t *vdp) {
    uint8_t data = vdp->m_ReadAhead;
@@ -157,8 +86,8 @@ void tms9928_update_table_masks(tms9928_t *vdp) {
    vdp->m_patternmask = ( (vdp->m_Regs[4] & 3) << 8 ) | ( vdp->m_99 ? (vdp->m_colourmask & 0xff) : 0xff );
 }
 
-void tms9928_change_register(tms9928_t *vdp, reg, val) {
-   const Mask = new Uint8Array([ 0x03, 0xfb, 0x0f, 0xff, 0x07, 0x7f, 0x07, 0xff ]);
+void tms9928_change_register(tms9928_t *vdp, uint8_t reg, uint8_t val) {
+   static uint8_t Mask[8] = { 0x03, 0xfb, 0x0f, 0xff, 0x07, 0x7f, 0x07, 0xff };
 
    /*
       "Mode 0 (GRAPHIC 1)",
@@ -171,7 +100,7 @@ void tms9928_change_register(tms9928_t *vdp, reg, val) {
       "Mode 1+2+3 (BOGUS)"
    */
 
-   let prev = vdp->m_Regs[reg];
+   uint8_t prev = vdp->m_Regs[reg];
    val &= Mask[reg];
    vdp->m_Regs[reg] = val;
 
@@ -183,7 +112,7 @@ void tms9928_change_register(tms9928_t *vdp, reg, val) {
       {
          vdp->m_colour = ((vdp->m_Regs[3] & 0x80) * 64) & (vdp->m_vram_size - 1);
          vdp->m_pattern = ((vdp->m_Regs[4] & 4) * 2048) & (vdp->m_vram_size - 1);
-         vdp->update_table_masks();
+         tms9928_update_table_masks(vdp);
       }
       else
       {
@@ -192,10 +121,10 @@ void tms9928_change_register(tms9928_t *vdp, reg, val) {
       }
       vdp->m_mode = ( (vdp->m_reva ? (vdp->m_Regs[0] & 2) : 0) | ((vdp->m_Regs[1] & 0x10)>>4) | ((vdp->m_Regs[1] & 8)>>1));
       if ((val ^ prev) & 1)
-         vdp->update_backdrop();
+         tms9928_update_backdrop(vdp);
       break;
    case 1:
-      vdp->check_interrupt();
+      tms9928_check_interrupt(vdp);
       vdp->m_mode = ( (vdp->m_reva ? (vdp->m_Regs[0] & 2) : 0) | ((vdp->m_Regs[1] & 0x10)>>4) | ((vdp->m_Regs[1] & 8)>>1));
       break;
    case 2:
@@ -205,7 +134,7 @@ void tms9928_change_register(tms9928_t *vdp, reg, val) {
       if (vdp->m_Regs[0] & 2)
       {
          vdp->m_colour = ((val & 0x80) * 64) & (vdp->m_vram_size - 1);
-         vdp->update_table_masks();
+         tms9928_update_table_masks(vdp);
       }
       else
       {
@@ -216,7 +145,7 @@ void tms9928_change_register(tms9928_t *vdp, reg, val) {
       if (vdp->m_Regs[0] & 2)
       {
          vdp->m_pattern = ((val & 4) * 2048) & (vdp->m_vram_size - 1);
-         vdp->update_table_masks();
+         tms9928_update_table_masks(vdp);
       }
       else
       {
@@ -231,13 +160,13 @@ void tms9928_change_register(tms9928_t *vdp, reg, val) {
       break;
    case 7:
       if ((val ^ prev) & 15)
-         vdp->update_backdrop();
+         tms9928_update_backdrop(vdp);
       break;
    }
 }
 
 
-void tms9928_register_write(tms9928_t *vdp, data)
+void tms9928_register_write(tms9928_t *vdp, uint8_t data)
 {
    if (vdp->m_latch)
    {
@@ -247,14 +176,14 @@ void tms9928_register_write(tms9928_t *vdp, data)
       if (data & 0x80)
       {
          // register write
-         vdp->change_register (data & 7, vdp->m_Addr & 0xff);
+         tms9928_change_register (vdp, data & 7, vdp->m_Addr & 0xff);
       }
       else
       {
          if ( !(data & 0x40) )
          {
             // read ahead
-            vdp->vram_read();
+            tms9928_vram_read(vdp);
          }
       }
       vdp->m_latch = 0;
@@ -268,7 +197,7 @@ void tms9928_register_write(tms9928_t *vdp, data)
 }
 
 // this should be the tick function
-tms9928_drawline(tms9928_t *vdp)
+void tms9928_drawline(tms9928_t *vdp)
 {
    // TODO implement timers
    /*
@@ -284,23 +213,23 @@ tms9928_drawline(tms9928_t *vdp)
 
    vdp->vpos++;
 
-   let BackColour = vdp->m_Regs[7] & 15;
+   int BackColour = vdp->m_Regs[7] & 15;
 
-   let base = vdp->vpos * vdp->TMS9928_TOTAL_HORZ;
+   int base = vdp->vpos * TMS9928_TOTAL_HORZ;
 
-   let y = vdp->vpos - vdp->m_top_border;
+   int y = vdp->vpos - vdp->m_top_border;
 
    if ( y < 0 || y >= 192 || ! (vdp->m_Regs[1] & 0x40) )
    {
       // Draw backdrop colour
-      for ( let i = 0; i < vdp->m_TMS9928_TOTAL_HORZ; i++ )
+      for(int i = 0; i < vdp->m_TMS9928_TOTAL_HORZ; i++)
          vdp->m_tmpbmp[base+i] = vdp->palette[BackColour];
 
       // vblank is set at the last cycle of the first inactive line
       if ( y == 193 )
       {
          vdp->m_StatusReg |= 0x80;
-         vdp->check_interrupt();
+         tms9928_check_interrupt(vdp);
       }
    }
    else
@@ -308,7 +237,7 @@ tms9928_drawline(tms9928_t *vdp)
       // Draw regular line
 
       // Left border
-      for ( let i = 0; i < vdp->TMS9928_HORZ_DISPLAY_START; i++ )
+      for (int i = 0; i < TMS9928_HORZ_DISPLAY_START; i++)
          vdp->m_tmpbmp[base+i] = vdp->palette[BackColour];
 
       // Active display
@@ -317,17 +246,17 @@ tms9928_drawline(tms9928_t *vdp)
       {
       case 0:             /* MODE 0 */
          {
-            let addr = vdp->m_nametbl + ( ( y & 0xF8 ) << 2 );
+            int addr = vdp->m_nametbl + ( ( y & 0xF8 ) << 2 );
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
             {
-               let charcode = tms9928_vram_read_byte(&vdp,  addr );
-               let pattern =  tms9928_vram_read_byte(&vdp,  vdp->m_pattern + ( charcode << 3 ) + ( y & 7 ) );
-               let colour =  tms9928_vram_read_byte(&vdp,  vdp->m_colour + ( charcode >> 3 ) );
-               let fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
-               let bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
+               int charcode = tms9928_vram_read_byte(vdp,  addr );
+               int pattern =  tms9928_vram_read_byte(vdp,  vdp->m_pattern + ( charcode << 3 ) + ( y & 7 ) );
+               int colour =  tms9928_vram_read_byte(vdp,  vdp->m_colour + ( charcode >> 3 ) );
+               uint32_t fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
+               uint32_t bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
 
-               for ( let i = 0; i < 8; pattern <<= 1, i++ )
+               for ( int i = 0; i < 8; pattern <<= 1, i++ )
                   vdp->m_tmpbmp[base+x+i] = ( pattern & 0x80 ) ? fg : bg;
             }
          }
@@ -335,42 +264,42 @@ tms9928_drawline(tms9928_t *vdp)
 
       case 1:             /* MODE 1 */
          {
-            let addr = vdp->m_nametbl + ( ( y >> 3 ) * 40 );
-            let fg = vdp->palette[(vdp->m_Regs[7] >> 4) ? (vdp->m_Regs[7] >> 4) : BackColour];
-            let bg = vdp->palette[BackColour];
+            int addr = vdp->m_nametbl + ( ( y >> 3 ) * 40 );
+            uint32_t fg = vdp->palette[(vdp->m_Regs[7] >> 4) ? (vdp->m_Regs[7] >> 4) : BackColour];
+            uint32_t bg = vdp->palette[BackColour];
 
             // Extra 6 pixels left border
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 6; x++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 6; x++ )
                vdp->m_tmpbmp[base+x] = bg;
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START + 6; x < vdp->TMS9928_HORZ_DISPLAY_START + 246; x+= 6, addr++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START + 6; x < TMS9928_HORZ_DISPLAY_START + 246; x+= 6, addr++ )
             {
-               let charcode = tms9928_vram_read_byte(&vdp,  addr );
-               let pattern = tms9928_vram_read_byte(&vdp,  vdp->m_pattern + ( charcode << 3 ) + ( y & 7 ) );
+               int charcode = tms9928_vram_read_byte(vdp,  addr );
+               int pattern = tms9928_vram_read_byte(vdp,  vdp->m_pattern + ( charcode << 3 ) + ( y & 7 ) );
 
-               for ( let i = 0; i < 6; pattern <<= 1, i++ )
+               for ( int i = 0; i < 6; pattern <<= 1, i++ )
                   vdp->m_tmpbmp[base+x+i] = ( pattern & 0x80 ) ? fg : bg;
             }
 
             // Extra 10 pixels right border
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START + 246; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START + 246; x < TMS9928_HORZ_DISPLAY_START + 256; x++ )
                vdp->m_tmpbmp[base+x] = bg;
          }
          break;
 
       case 2:             /* MODE 2 */
          {
-            let addr = vdp->m_nametbl + ( ( y >> 3 ) * 32 );
+            int addr = vdp->m_nametbl + ( ( y >> 3 ) * 32 );
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
             {
-               let charcode = tms9928_vram_read_byte(&vdp,  addr ) + ( ( y >> 6 ) << 8 );
-               let pattern = tms9928_vram_read_byte(&vdp,  vdp->m_pattern + ( ( charcode & vdp->m_patternmask ) << 3 ) + ( y & 7 ) );
-               let colour = tms9928_vram_read_byte(&vdp,  vdp->m_colour + ( ( charcode & vdp->m_colourmask ) << 3 ) + ( y & 7 ) );
-               let fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
-               let bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
+               int charcode = tms9928_vram_read_byte(vdp,  addr ) + ( ( y >> 6 ) << 8 );
+               int pattern = tms9928_vram_read_byte(vdp,  vdp->m_pattern + ( ( charcode & vdp->m_patternmask ) << 3 ) + ( y & 7 ) );
+               int colour = tms9928_vram_read_byte(vdp,  vdp->m_colour + ( ( charcode & vdp->m_colourmask ) << 3 ) + ( y & 7 ) );
+               uint32_t fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
+               uint32_t bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
 
-               for ( let i = 0; i < 8; pattern <<= 1, i++ )
+               for ( int i = 0; i < 8; pattern <<= 1, i++ )
                   vdp->m_tmpbmp[base+x+i] = ( pattern & 0x80 ) ? fg : bg;
             }
          }
@@ -378,39 +307,39 @@ tms9928_drawline(tms9928_t *vdp)
 
       case 3:             /* MODE 1+2 */
          {
-            let addr = vdp->m_nametbl + ( ( y >> 3 ) * 40 );
-            let fg = vdp->palette[(vdp->m_Regs[7] >> 4) ? (vdp->m_Regs[7] >> 4) : BackColour];
-            let bg = vdp->palette[BackColour];
+            int addr = vdp->m_nametbl + ( ( y >> 3 ) * 40 );
+            uint32_t fg = vdp->palette[(vdp->m_Regs[7] >> 4) ? (vdp->m_Regs[7] >> 4) : BackColour];
+            uint32_t bg = vdp->palette[BackColour];
 
             // Extra 6 pixels left border
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 6; x++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 6; x++ )
                vdp->m_tmpbmp[base+x] = bg;
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START + 6; x < vdp->TMS9928_HORZ_DISPLAY_START + 246; x+= 6, addr++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START + 6; x < TMS9928_HORZ_DISPLAY_START + 246; x+= 6, addr++ )
             {
-               let charcode = ( tms9928_vram_read_byte(&vdp,  addr ) + ( ( y >> 6 ) << 8 ) ) & vdp->m_patternmask;
-               let pattern = tms9928_vram_read_byte(&vdp,  vdp->m_pattern + ( charcode << 3 ) + ( y & 7 ) );
+               int charcode = ( tms9928_vram_read_byte(vdp,  addr ) + ( ( y >> 6 ) << 8 ) ) & vdp->m_patternmask;
+               int pattern = tms9928_vram_read_byte(vdp,  vdp->m_pattern + ( charcode << 3 ) + ( y & 7 ) );
 
-               for ( let i = 0; i < 6; pattern <<= 1, i++ )
+               for ( int i = 0; i < 6; pattern <<= 1, i++ )
                   vdp->m_tmpbmp[base+x+i] = ( pattern & 0x80 ) ? fg : bg;
             }
 
             // Extra 10 pixels right border
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START + 246; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START + 246; x < TMS9928_HORZ_DISPLAY_START + 256; x++ )
                vdp->m_tmpbmp[base+x] = bg;
          }
          break;
 
       case 4:             /* MODE 3 */
          {
-            let addr = vdp->m_nametbl + ( ( y >> 3 ) * 32 );
+            int addr = vdp->m_nametbl + ( ( y >> 3 ) * 32 );
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
             {
-               let charcode = tms9928_vram_read_byte(&vdp,  addr );
-               let colour = tms9928_vram_read_byte(&vdp,  vdp->m_pattern + ( charcode << 3 ) + ( ( y >> 2 ) & 7 ) );
-               let fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
-               let bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
+               int charcode = tms9928_vram_read_byte(vdp,  addr );
+               int colour = tms9928_vram_read_byte(vdp,  vdp->m_pattern + ( charcode << 3 ) + ( ( y >> 2 ) & 7 ) );
+               uint32_t fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
+               uint32_t bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
 
                vdp->m_tmpbmp[base+x+0] = vdp->m_tmpbmp[base+x+1] = vdp->m_tmpbmp[base+x+2] = vdp->m_tmpbmp[base+x+3] = fg;
                vdp->m_tmpbmp[base+x+4] = vdp->m_tmpbmp[base+x+5] = vdp->m_tmpbmp[base+x+6] = vdp->m_tmpbmp[base+x+7] = bg;
@@ -420,35 +349,35 @@ tms9928_drawline(tms9928_t *vdp)
 
       case 5: case 7:     /* MODE bogus */
          {
-            let fg = vdp->palette[(vdp->m_Regs[7] >> 4) ? (vdp->m_Regs[7] >> 4) : BackColour];
-            let bg = vdp->palette[BackColour];
+            uint32_t fg = vdp->palette[(vdp->m_Regs[7] >> 4) ? (vdp->m_Regs[7] >> 4) : BackColour];
+            uint32_t bg = vdp->palette[BackColour];
 
             // Extra 6 pixels left border
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 6; x++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 6; x++ )
                vdp->m_tmpbmp[base+x] = bg;
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START + 6; x < vdp->TMS9928_HORZ_DISPLAY_START + 246; x+= 6 )
+            for ( int x = TMS9928_HORZ_DISPLAY_START + 6; x < TMS9928_HORZ_DISPLAY_START + 246; x+= 6 )
             {
                vdp->m_tmpbmp[base+x+0] = vdp->m_tmpbmp[base+x+1] = vdp->m_tmpbmp[base+x+2] = vdp->m_tmpbmp[base+x+3] = fg;
                vdp->m_tmpbmp[base+x+4] = vdp->m_tmpbmp[base+x+5] = bg;
             }
 
             // Extra 10 pixels right border
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START + 246; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START + 246; x < TMS9928_HORZ_DISPLAY_START + 256; x++ )
                vdp->m_tmpbmp[base+x] = bg;
          }
          break;
 
       case 6:             /* MODE 2+3 */
          {
-            let addr = vdp->m_nametbl + ( ( y >> 3 ) * 32 );
+            int addr = vdp->m_nametbl + ( ( y >> 3 ) * 32 );
 
-            for ( let x = vdp->TMS9928_HORZ_DISPLAY_START; x < vdp->TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
+            for ( int x = TMS9928_HORZ_DISPLAY_START; x < TMS9928_HORZ_DISPLAY_START + 256; x+= 8, addr++ )
             {
-               let charcode = tms9928_vram_read_byte(&vdp,  addr );
-               let colour = tms9928_vram_read_byte(&vdp,  vdp->m_pattern + ( ( ( charcode + ( ( y >> 2 ) & 7 ) + ( ( y >> 6 ) << 8 ) ) & vdp->m_patternmask ) << 3 ) );
-               let fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
-               let bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
+               int charcode = tms9928_vram_read_byte(vdp,  addr );
+               int colour = tms9928_vram_read_byte(vdp,  vdp->m_pattern + ( ( ( charcode + ( ( y >> 2 ) & 7 ) + ( ( y >> 6 ) << 8 ) ) & vdp->m_patternmask ) << 3 ) );
+               uint32_t fg = vdp->palette[(colour >> 4) ? (colour >> 4) : BackColour];
+               uint32_t bg = vdp->palette[(colour & 15) ? (colour & 15) : BackColour];
 
                vdp->m_tmpbmp[base+x+0] = vdp->m_tmpbmp[base+x+1] = vdp->m_tmpbmp[base+x+2] = vdp->m_tmpbmp[base+x+3] = fg;
                vdp->m_tmpbmp[base+x+4] = vdp->m_tmpbmp[base+x+5] = vdp->m_tmpbmp[base+x+6] = vdp->m_tmpbmp[base+x+7] = bg;
@@ -465,16 +394,16 @@ tms9928_drawline(tms9928_t *vdp)
       }
       else
       {
-         let sprite_size = ( vdp->m_Regs[1] & 0x02 ) ? 16 : 8;
-         let sprite_mag = vdp->m_Regs[1] & 0x01;
-         let sprite_height = sprite_size * ( sprite_mag + 1 );
-         let spr_drawn = new Uint8Array(32+256+32).fill(0);
-         let num_sprites = 0;
-         let fifth_encountered = false;
+         int sprite_size = ( vdp->m_Regs[1] & 0x02 ) ? 16 : 8;
+         int sprite_mag = vdp->m_Regs[1] & 0x01;
+         int sprite_height = sprite_size * ( sprite_mag + 1 );
+         uint8_t spr_drawn[32+256+32]; memset(&spr_drawn, 0, 1);
+         int num_sprites = 0;
+         int fifth_encountered = false;
 
-         for ( let sprattr = 0; sprattr < 128; sprattr += 4 )
+         for ( int sprattr = 0; sprattr < 128; sprattr += 4 )
          {
-            let spr_y =  tms9928_vram_read_byte(&vdp,  vdp->m_spriteattribute + sprattr + 0 );
+            int spr_y =  tms9928_vram_read_byte(vdp,  vdp->m_spriteattribute + sprattr + 0 );
 
             vdp->m_FifthSprite = sprattr / 4;
 
@@ -491,10 +420,10 @@ tms9928_drawline(tms9928_t *vdp)
             /* is sprite enabled on this line? */
             if ( spr_y <= y && y < spr_y + sprite_height )
             {
-               let spr_x = tms9928_vram_read_byte(&vdp,  vdp->m_spriteattribute + sprattr + 1 );
-               let sprcode = tms9928_vram_read_byte(&vdp,  vdp->m_spriteattribute + sprattr + 2 );
-               let sprcol = tms9928_vram_read_byte(&vdp,  vdp->m_spriteattribute + sprattr + 3 );
-               let pataddr = vdp->m_spritepattern + ( ( sprite_size == 16 ) ? sprcode & ~0x03 : sprcode ) * 8;
+               int spr_x = tms9928_vram_read_byte(vdp,  vdp->m_spriteattribute + sprattr + 1 );
+               int sprcode = tms9928_vram_read_byte(vdp,  vdp->m_spriteattribute + sprattr + 2 );
+               int sprcol = tms9928_vram_read_byte(vdp,  vdp->m_spriteattribute + sprattr + 3 );
+               int pataddr = vdp->m_spritepattern + ( ( sprite_size == 16 ) ? sprcode & ~0x03 : sprcode ) * 8;
 
                num_sprites++;
 
@@ -510,20 +439,20 @@ tms9928_drawline(tms9928_t *vdp)
                else
                   pataddr += ( ( y - spr_y ) & 0x0F );
 
-               let pattern = tms9928_vram_read_byte(&vdp,  pataddr );
+               int pattern = tms9928_vram_read_byte(vdp,  pataddr );
 
                if ( sprcol & 0x80 )
                   spr_x -= 32;
 
                sprcol &= 0x0f;
 
-               for ( let s = 0; s < sprite_size; s += 8 )
+               for ( int s = 0; s < sprite_size; s += 8 )
                {
-                  for ( let i = 0; i < 8; pattern <<= 1, i++ )
+                  for ( int i = 0; i < 8; pattern <<= 1, i++ )
                   {
-                     let colission_index = spr_x + ( sprite_mag ? i * 2 : i ) + 32;
+                     int colission_index = spr_x + ( sprite_mag ? i * 2 : i ) + 32;
 
-                     for ( let z = 0; z <= sprite_mag; colission_index++, z++ )
+                     for ( int z = 0; z <= sprite_mag; colission_index++, z++ )
                      {
                         // Check if pixel should be drawn
                         if ( pattern & 0x80 )
@@ -541,7 +470,7 @@ tms9928_drawline(tms9928_t *vdp)
                                  if ( ! ( spr_drawn[ colission_index ] & 0x02 ) )
                                  {
                                     spr_drawn[ colission_index ] |= 0x02;
-                                    vdp->m_tmpbmp[base+ vdp->TMS9928_HORZ_DISPLAY_START + colission_index - 32 ] = vdp->palette[sprcol];
+                                    vdp->m_tmpbmp[base+ TMS9928_HORZ_DISPLAY_START + colission_index - 32 ] = vdp->palette[sprcol];
                                  }
                               }
                            }
@@ -549,7 +478,7 @@ tms9928_drawline(tms9928_t *vdp)
                      }
                   }
 
-                  pattern =  tms9928_vram_read_byte(&vdp,  pataddr + 16 );
+                  pattern =  tms9928_vram_read_byte(vdp,  pataddr + 16 );
                   spr_x += sprite_mag ? 16 : 8;
                }
             }
@@ -565,19 +494,56 @@ tms9928_drawline(tms9928_t *vdp)
       }
 
       // Right border
-      for ( let i = vdp->TMS9928_HORZ_DISPLAY_START + 256; i < vdp->m_TMS9928_TOTAL_HORZ; i++ )
+      for ( int i = TMS9928_HORZ_DISPLAY_START + 256; i < vdp->m_TMS9928_TOTAL_HORZ; i++ )
          vdp->m_tmpbmp[base+i] = vdp->palette[BackColour];
    }
 
-   if(vdp->vpos === vdp->m_vertical_size) {
+   if(vdp->vpos == vdp->m_vertical_size-1) {
       vdp->vpos = 0;
-      if(vdp->screen_update_cb !== undefined)
+      if(vdp->screen_update_cb != NULL)
          vdp->screen_update_cb(vdp->m_tmpbmp);
    }
 }
 
-void tms9928_set_palette(tms9928_t *vdp)
+void tms9928_reset(tms9928_t *vdp)
 {
+   for(int i=0;i<8;i++) vdp->m_Regs[i] = 0;
+
+   vdp->m_StatusReg = 0;
+   vdp->m_FifthSprite = 31;
+   vdp->m_nametbl = 0;
+   vdp->m_pattern = 0;
+   vdp->m_colour = 0;
+   vdp->m_spritepattern = 0;
+   vdp->m_spriteattribute = 0;
+   vdp->m_colourmask = 0x3fff;
+   vdp->m_patternmask = 0x3fff;
+   vdp->m_Addr = 0;
+   vdp->m_ReadAhead = 0;
+   vdp->m_INT = 0;
+   vdp->m_latch = 0;
+   vdp->m_mode = 0;
+
+   vdp->vpos = 0;
+}
+
+void tms9928_init(tms9928_t *vdp, tms9928_desc_t *desc) {
+
+   vdp->m_99   = desc->family99;
+   vdp->m_reva = desc->reva;
+
+   vdp->m_50hz = desc->isPal;
+   vdp->m_top_border = vdp->m_50hz ? TMS9928_VERT_DISPLAY_START_PAL : TMS9928_VERT_DISPLAY_START_NTSC;
+   vdp->m_vertical_size = vdp->m_50hz ? TMS9928_TOTAL_VERT_PAL : TMS9928_TOTAL_VERT_NTSC;
+   vdp->m_TMS9928_TOTAL_HORZ = TMS9928_TOTAL_HORZ;
+   vdp->m_vram_size = desc->vram_size;
+   vdp->m_vram_space = desc->vram_space;
+   vdp->m_tmpbmp = desc->display_buffer;
+
+   vdp->m_out_int_line_cb = desc->out_int_line_cb;
+   //vdp->m_out_gromclk_cb = desc->gromclk_cb;
+   vdp->screen_update_cb = desc->screen_update_cb;
+
    /*
    New palette (R. Nabet).
 
@@ -607,95 +573,24 @@ void tms9928_set_palette(tms9928_t *vdp)
    F White         1.00    0.47    0.47    1.00    1.00    1.00    255 255 255
    */
 
-   function applySaturation(r,g,b) {
-      const s = 1.0;
-      const L = 0.3*r + 0.6*g + 0.1*b;
-      const new_r = r + (1.0 - s) * (L - r);
-      const new_g = g + (1.0 - s) * (L - g);
-      const new_b = b + (1.0 - s) * (L - b);
-      return { r: new_r, g: new_g, b: new_b };
-   }
+   #define TMS9928_RGBA32(r, g, b) (0xFF000000 | (r) | ((g) << 8) | ((b) << 16));
 
-   function setPalette(r, g, b) {
-      let color = applySaturation(r,g,b, saturation);
-      return 0xFF000000 | color.r | color.g << 8 | color.b << 16;
-   }
+   vdp->palette[ 0] = TMS9928_RGBA32(  0,   0,   0);
+   vdp->palette[ 1] = TMS9928_RGBA32(  0,   0,   0);
+   vdp->palette[ 2] = TMS9928_RGBA32( 33, 200,  66);
+   vdp->palette[ 3] = TMS9928_RGBA32( 94, 220, 120);
+   vdp->palette[ 4] = TMS9928_RGBA32( 84,  85, 237);
+   vdp->palette[ 5] = TMS9928_RGBA32(125, 118, 252);
+   vdp->palette[ 6] = TMS9928_RGBA32(212,  82,  77);
+   vdp->palette[ 7] = TMS9928_RGBA32( 66, 235, 245);
+   vdp->palette[ 8] = TMS9928_RGBA32(252,  85,  84);
+   vdp->palette[ 9] = TMS9928_RGBA32(255, 121, 120);
+   vdp->palette[10] = TMS9928_RGBA32(212, 193,  84);
+   vdp->palette[11] = TMS9928_RGBA32(230, 206, 128);
+   vdp->palette[12] = TMS9928_RGBA32( 33, 176,  59);
+   vdp->palette[13] = TMS9928_RGBA32(201,  91, 186);
+   vdp->palette[14] = TMS9928_RGBA32(204, 204, 204);
+   vdp->palette[15] = TMS9928_RGBA32(255, 255, 255);
 
-   vdp->palette = new Uint32Array(vdp->TMS9928_PALETTE_SIZE);
-
-   vdp->palette[ 0] = setPalette(  0,   0,   0);
-   vdp->palette[ 1] = setPalette(  0,   0,   0);
-   vdp->palette[ 2] = setPalette( 33, 200,  66);
-   vdp->palette[ 3] = setPalette( 94, 220, 120);
-   vdp->palette[ 4] = setPalette( 84,  85, 237);
-   vdp->palette[ 5] = setPalette(125, 118, 252);
-   vdp->palette[ 6] = setPalette(212,  82,  77);
-   vdp->palette[ 7] = setPalette( 66, 235, 245);
-   vdp->palette[ 8] = setPalette(252,  85,  84);
-   vdp->palette[ 9] = setPalette(255, 121, 120);
-   vdp->palette[10] = setPalette(212, 193,  84);
-   vdp->palette[11] = setPalette(230, 206, 128);
-   vdp->palette[12] = setPalette( 33, 176,  59);
-   vdp->palette[13] = setPalette(201,  91, 186);
-   vdp->palette[14] = setPalette(204, 204, 204);
-   vdp->palette[15] = setPalette(255, 255, 255);
+   tms9928_reset(vdp);
 }
-
-void tms9928_reset(tms9928_t *vdp)
-{
-   vdp->m_Regs = new Uint8Array(8).fill(0);
-
-   vdp->m_StatusReg = 0;
-   vdp->m_FifthSprite = 31;
-   vdp->m_nametbl = 0;
-   vdp->m_pattern = 0;
-   vdp->m_colour = 0;
-   vdp->m_spritepattern = 0;
-   vdp->m_spriteattribute = 0;
-   vdp->m_colourmask = 0x3fff;
-   vdp->m_patternmask = 0x3fff;
-   vdp->m_Addr = 0;
-   vdp->m_ReadAhead = 0;
-   vdp->m_INT = 0;
-   vdp->m_latch = 0;
-   vdp->m_mode = 0;
-
-   /*
-   m_line_timer->adjust( screen().time_until_pos( 0, vdp->TMS9928_HORZ_DISPLAY_START ) );
-
-   // TODO: Check clock freq settings in all drivers
-   if (!m_out_gromclk_cb.isnull() && m_99)
-      m_gromclk_timer->adjust(attotime::zero, 0, clocks_to_attotime(24));
-   */
-}
-
-void tms9928_init(tms9928_t *vdp, options) {
-
-   const { vram_size, isPal, int_line_cb, gromclk_cb, buffer, screen_update_cb, family99, reva } = options;
-
-   vdp->m_99 = family99;
-   vdp->m_reva = reva;
-
-   vdp->m_50hz = isPal;
-   vdp->m_top_border = vdp->m_50hz ? vdp->TMS9928_VERT_DISPLAY_START_PAL : vdp->TMS9928_VERT_DISPLAY_START_NTSC;
-   vdp->m_vertical_size = vdp->m_50hz ? vdp->TMS9928_TOTAL_VERT_PAL : vdp->TMS9928_TOTAL_VERT_NTSC;
-   vdp->m_TMS9928_TOTAL_HORZ = vdp->TMS9928_TOTAL_HORZ;
-   vdp->m_vram_size = vram_size || 16384;
-   vdp->m_vram_space = new Uint8Array(vdp->m_vram_size);
-   vdp->m_tmpbmp = buffer;
-
-   vdp->m_out_int_line_cb = int_line_cb;
-   vdp->m_out_gromclk_cb = gromclk_cb;
-   vdp->screen_update_cb = screen_update_cb;
-
-   vdp->vpos = 0;  // line counter
-
-   // TODO implement timers
-   // m_line_timer = timer_alloc(TIMER_LINE);
-   // m_gromclk_timer = timer_alloc(GROMCLK);
-
-   vdp->set_palette();
-   vdp->reset();
-}
-
-#endif /* CHIPS_IMPL */

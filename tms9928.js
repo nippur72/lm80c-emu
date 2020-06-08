@@ -564,7 +564,7 @@ class TMS9928A
             this.m_tmpbmp[base+i] = this.palette[BackColour];
       }
 
-      if(this.vpos === this.m_vertical_size) {
+      if(this.vpos === this.m_vertical_size-1) {
          this.vpos = 0;
          this.m_frames++;
          if(this.screen_update_cb !== undefined && this.m_frames % 2 == 1)

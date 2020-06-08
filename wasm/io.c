@@ -1,4 +1,5 @@
 #include "lm80c.h"
+#include "tms9928.h"
 
 /*
 byte sio_readPortDA() { return (byte) EM_ASM_INT({ return sio.readPortDA(); }, 0);}
@@ -17,6 +18,8 @@ byte tms9928a_register_read() { return (byte) EM_ASM_INT({ return tms9928a.regis
 
 void tms9928a_vram_write(value)     { byte unused = (byte) EM_ASM_INT({ tms9928a.vram_write($0);    }, value); }
 void tms9928a_register_write(value) { byte unused = (byte) EM_ASM_INT({ tms9928a.register_write($0);}, value); }
+
+extern tms9928_t vdp;
 
 EMSCRIPTEN_KEEPALIVE
 byte io_read(word ioport) {
@@ -38,11 +41,19 @@ byte io_read(word ioport) {
       case 0x22: return SIO_readPortCA();    // SIO_CA
       case 0x23: return SIO_readPortCB();    // SIO_CB
 
+
+      case 0x030:  return tms9928_vram_read(&vdp);
+      case 0x031:  return tms9928_register_read(&vdp);
+      case 0x032:  return tms9928_vram_read(&vdp);
+      case 0x033:  return tms9928_register_read(&vdp);
+
+
+     /*
       case 0x030:  return tms9928a_vram_read();
       case 0x031:  return tms9928a_register_read();
       case 0x032:  return tms9928a_vram_read();
       case 0x033:  return tms9928a_register_read();
-
+      */
       case 0x40:
       case 0x41:
       case 0x42:
@@ -77,8 +88,14 @@ void io_write(word port, byte value) {
       case 0x23: SIO_writePortCB(value); return; // SIO_CB equ %00100011
 
       // TMS9918: 0x30-0x33
+      /*
       case 0b00110000: tms9928a_vram_write(value);     return;
       case 0b00110010: tms9928a_register_write(value); return;
+*/
+
+      case 0b00110000: tms9928_vram_write(&vdp, value);     return;
+      case 0b00110010: tms9928_register_write(&vdp, value); return;
+
 
       case 0x40:
       case 0x41:

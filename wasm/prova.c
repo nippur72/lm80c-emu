@@ -6,7 +6,9 @@
 #include "psg.c"
 #include "mem.c"
 #include "io.c"
+#include "vdp.c"
 #include "cpu.c"
+
 
 bool debug = false;
 
@@ -68,6 +70,24 @@ uint16_t lm80c_tick_line(float cyclesPerLine) {
          break;
       }
    }
+
+   tms9928_drawline(&vdp);
+
+   if(vdp_triggered_NMI) {
+      cpu_interrupt(true, 0);
+      vdp_triggered_NMI = false;
+   }
+
    return elapsed;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void lm80c_init() {
+   vdp_init();
+}
+
+EMSCRIPTEN_KEEPALIVE
+void lm80c_reset() {
+
 }
 

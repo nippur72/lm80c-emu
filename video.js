@@ -44,7 +44,7 @@ let tms9928a_canvas = document.getElementById("canvas");
 let tms9928a_context = tms9928a_canvas.getContext('2d');
 let tms9928a_imagedata = tms9928a_context.getImageData(0, 0, 342*2, 262*2);
 
-let tms9928a_buffer = new Uint32Array(342*262);
+//let tms9928a_buffer = new Uint32Array(342*262);
 
 let tms9928a_update = buffer => {
 
@@ -97,6 +97,7 @@ let tms9928a_update = buffer => {
    tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
 };
 
+/*
 let VDP_triggered_NMI = false;
 
 let tms9928a_interrupt_cb = (m_INT)=> {
@@ -113,4 +114,13 @@ let tms9928a = new TMS9928A({
    family99: true,
    reva: true
 });
+*/
+
+function vdp_screen_update(ptr) {
+   let start = ptr / wasm_instance.HEAPU32.BYTES_PER_ELEMENT;
+   let size = 342*262;
+   let buffer = wasm_instance.HEAPU32.subarray(start,start+size);
+
+   tms9928a_update(buffer);
+}
 
