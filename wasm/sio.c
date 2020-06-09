@@ -49,7 +49,7 @@ void SIO_cpu_found_RETI() {
 
 byte SIO_readPortCA() {
     //console.log("CA read");
-    return 0x00; /*return SIO_port_A & FF;*/
+    return 0x01; /*return SIO_port_A & FF;*/
 }
 byte SIO_readPortDA() {
     //console.log("DA read");
