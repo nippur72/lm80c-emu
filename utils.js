@@ -261,3 +261,13 @@ function stop_counter() {
    counter_avg = 0.9 * counter_avg + 0.1 * elapsed;
    return counter_avg;
 }
+
+let LED = 0;
+function led_read() {
+   return LED;
+}
+
+function led_write(value) {
+   LED = value;
+}
+

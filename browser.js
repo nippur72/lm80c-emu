@@ -85,7 +85,7 @@ dropZone.addEventListener('drop', e => {
 function droppedFile(outName, bytes) {
    const prg = /\.prg$/i;
    if(prg.test(outName)) {     
-      writeFile(outName, bytes)
+      writeFile(outName, bytes);
       crun(outName);         
    }
 }

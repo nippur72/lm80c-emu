@@ -180,9 +180,15 @@ function main() {
 
    goAudio();
 
+   // rom autoload
+   if(autoload !== undefined) {
+      autoload.forEach((e,i)=>rom_load(i,e));
+   }
+
    // starts drawing frames
    oneFrame();
 
+   /*
    // autoload program and run it
    if(autoload !== undefined) {
       //zap();
@@ -193,6 +199,7 @@ function main() {
          pasteLine("RUN\r\n");
       }, 200);
    }
+   */
 }
 
 function cpu_actual_speed() {

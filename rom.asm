@@ -1,6 +1,6 @@
 ; 
 ; ------------------------------------------------------------------------------
-; LM80C - BOOTLOADER - R3.13
+; LM80C - BOOTLOADER - R3.13.1
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -122,7 +122,7 @@ RST18:          jp      CKINCHAR
 
 ;------------------------------------------------------------------------------
 
-                org     $00A0
+                org     $0090
                 defb    $4C,$4D,$38,$30,$43,$20,$43,$4F
                 defb    $4C,$4F,$52,$00,$00,$00,$00,$00
                 defb    $43,$4F,$4D,$50,$55,$54,$45,$52
@@ -131,7 +131,7 @@ RST18:          jp      CKINCHAR
                 defb    $20,$62,$79,$00,$00,$00,$00,$00
                 defb    $4C,$65,$6F,$6E,$61,$72,$64,$6F
                 defb    $20,$4D,$69,$6C,$69,$61,$6E,$69
-FWVER:          defm    'FW 3.13',$20,__date__,$20,__time__,$00
+FWVER:          defm    'FW 3.13.1',$20,__date__,$20,__time__,$00
 ;------------------------------------------------------------------------------
 ; interrupt driven routine to get chars from Z80 SIO
                 org     $0100
@@ -508,11 +508,11 @@ CTCCONF:        defb    $FB,$ED,$4D     ; CTC0 interrupt vector (ei; reti)
                 jp      CH3_TIMER       ; CTC3 interrupt vector (sys tick timer)
 ;------------------------------------------------------------------------------
 MSGTXT1:        defm    "LM80C by Leonardo Miliani",CR
-                defm    "Firmware R3.13",CR,0
+                defm    "Firmware R3.13.1",CR,0
 MSGTXT2:        defb    CR
                 defm    "<C>old or <W>arm start? ",0
 ; ------------------------------------------------------------------------------
-; LM80C - VDP ROUTINES - R3.13
+; LM80C - VDP ROUTINES - R3.13.1
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1559,7 +1559,7 @@ LM80CLOGO       ; patterns to compose the splash screen logo
                 defb    0,0,13,0,0,12,0,0,0,1,4,4,0,1,0,0,3,5,9,20,19,8,9,20,19,8,9,1,1,8,0,0
                 defb    0,0,14,18,18,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
                 defb    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; ------------------------------------------------------------------------------
-; LM80C - PSG ROUTINES - R3.13
+; LM80C - PSG ROUTINES - R3.13.1
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1922,7 +1922,7 @@ KBMAP_CTRL:     defb '1',25,14,3,' ',16,154,'2'         ; 25=HOME  14=CTRL  3=RU
                 defb 31,163,173,',','.',':',186,30      ; 31=CURSOR DOWN  30=CURSOR UP
                 defb 28,225,';','/',27,212,185,29       ; 28=CURSOR LEFT  27=ESCAPE  212=π  29=CURSOR RIGHT
                 defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP; ------------------------------------------------------------------------------
-; LM80C BASIC - R3.13
+; LM80C BASIC - R3.13.1
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -2411,7 +2411,7 @@ WORDTB: defw    PEND
         defw    NMI         ; added by Leonardo Miliani
         defw    GPRINT      ; added by Leonardo Miliani
         defw    WIDTH
-        defw    SYS
+        defw    SYS         ; added by Leonardo Miliani
         defw    RESET       ; new behaviour: now it resets the system
         defw    PRINT
         defw    CONT
@@ -5526,10 +5526,12 @@ SREG:   call    GETINT          ; Get register number back into A
         call    GETINT          ; get second value (0-255), returned into A
         ld      E,A             ; store value into E
         ld      A,(TMPBFR1)     ; recover VDP register and store into D
+        di                      ; disable INTs
         ld      C,PSG_REG       ; output port to access PSG registers
         out     (C),A           ; send register # to PSG
         ld      C,PSG_DAT       ; output port to send data to PSG
         out     (C),E           ; send byte to write into selected register
+        ei                      ; re-enable INTs
         ret                     ; return to caller
 
 ; VOLUME ch,vol
@@ -5572,7 +5574,9 @@ SOUND:  call    GETINT          ; get integer 0-255 (recover channel)
         and     A               ; is it zero?
         jr      NZ,CTSNDC       ; no, continue with checking of params
         push    HL              ; store HL
+        di                      ; disable INTs
         call    CLRPSGREGS      ; yes, it's zero, so reset PSG registers to shut down every sound
+        ei                      ; re-enable INTs
         pop     HL              ; retrieve HL
         ret                     ; return to caller
 CTSNDC: ld      (TMPBFR1),A     ; no, continue by storing A into a temp. buffer
@@ -5667,6 +5671,7 @@ NOS1:   add     A,A
         ld      B,A             ; store channel into B
         ld      A,E             ; check if
         and     A               ; freq is 0 (means that noise reproduction must be halted)
+        di                      ; disable INts
         jr      NZ,NOS2         ; no, so jump over
         ld      A,$07           ; mixer register
         call    SETSNDREG       ; set mixer register
@@ -5680,6 +5685,7 @@ NOS2:   ld      A,B             ; recover channel
         call    SETSNDREG       ; set register into PSG
         ld      A,E             ; load value for noise frequency
         call    WRTSNDREG       ; write data into register $06
+        ei                      ; re-enable INTs
         ret
         ; enable line into mixer of channel stored in A
 WRTSND: ld      B,A             ; move channel into B
@@ -5691,12 +5697,12 @@ WRTSND: ld      B,A             ; move channel into B
                                 ; the register is still unchanged after reset) is 11111111 and
                                 ; 11111111 AND 11111110 is equal to 11111110
                                 ; 11111001 AND 11111110 is equal to 11111000 (in case channels B & C are ON)
-NOS3:   ld      B,A
-        ld      A,$07
-        call    SETSNDREG
-        ld      A,B
-        nop
+NOS3:   ld      B,A             ; store new mixer value into B
+        ld      A,$07           ; mixer address
+        call    SETSNDREG       ; set register
+        ld      A,B             ; retrieve new mixer value from B
         call    WRTSNDREG       ; send new value for the mixer
+        ei                      ; re-enable INTs
         ret                     ; return to caller
 
 ; write a byte into one of the VDP registers
@@ -5726,9 +5732,11 @@ SSTAT:  call    DEINT           ; get integer -32768 to 32767
         ld      A,E             ; consider LSB
         cp      $10             ; check if value >= 16 (PSG registers go from 0 to 15)
         jp      NC,FCERR        ; If yes, exit and raise an Illegal function call Error
+        di                      ; disable INts
         ld      C,PSG_REG       ; output port to set PSG register
         out     (C),A           ; send register to read from
         in      A,(C)           ; read register's contents and store into A
+        ei                      ; re-enable INTs
         jp      PASSA           ; return A
 
 ; read the temp key buffer and return the value of the current key being pressed
@@ -9173,7 +9181,7 @@ LOGOFONT:   equ $
             defb %11111111,%11111111,%11111111,%11111111,%00001111,%00001111,%00001111,%00001111 ; 22
             defb %00000000,%00110000,%01111000,%01111000,%00110000,%00000000,%00000000,%00000000 ; 23
             ; ------------------------------------------------------------------------------
-; LM80C - FIRMWARE - R3.13
+; LM80C - FIRMWARE - R3.13.1
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -9235,6 +9243,28 @@ LOGOFONT:   equ $
 ; this line instructs the assembler to compile taking account that code
 ; starts at $0000 (the address reached by Z80 upon reset)
 #code BOOT, $0000
+
+; ------------------------------------------------------------------------------
+; include the latest version of the bootloader: this sets up the address aliases
+; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
+#include "../include/bootloader/bootloader-r3131.asm"
+
+; incude the latest version of the VDP module
+#include "../include/vdp/vdp-r3131.asm"
+
+; incude the latest version of the PSG module
+#include "../include/psg/psg-r3131.asm"
+
+; include the latest version of the NASCOM BASIC interpreter
+#include "../include/basic/basic32k-r3131.asm"
+
+; include utils
+#include "../include/utils/utils-r11.asm"
+
+; include the latest version of the font sets
+#include "../include/vdp/6x8fonts-r15.asm"
+#include "../include/vdp/8x8fonts-r18.asm"
+#include "../include/vdp/logo-fonts.asm"
 
 ; END OF ASSEMBLY SOURCE
 #end

@@ -70,5 +70,8 @@ function vdp_screen_update(ptr) {
 
    tms9928a_imagedata.data.set(imagedata_buf8);
    tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
+
+   // update LED
+   document.getElementById("LED").style.visibility = LED>0 ? "visible" : "hidden";
 }
 
