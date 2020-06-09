@@ -57,7 +57,7 @@ byte SIO_readPortDA() {
 }
 byte SIO_readPortCB() {
     //console.log("CB read");
-    return 0x00; /* return SIO_port_A & FF;*/
+    return 0x01; /* return SIO_port_A & FF;*/
 }
 byte SIO_readPortDB() {
     //console.log("DB read");
@@ -79,16 +79,19 @@ void SIO_writePortCA(byte value) {
     //console.log(`CA write 0x${hex(value)} -- ${bin(value)}`);
 }
 
-void SIO_writePortDA(byte value) {
-    //console.log(`DA write 0x${hex(value)} -- ${bin(value)}`);
-    SIO_port_A = value;
-}
-
 void SIO_writePortCB(byte value) {
     //console.log(`CB write 0x${hex(value)} -- ${bin(value)}`);
 }
 
+void SIO_writePortDA(byte value) {
+    //console.log(`DA write 0x${hex(value)} -- ${bin(value)}`);
+    byte unused = (byte) EM_ASM_INT({ sio_write_data($0, $1);}, 0, value);
+    SIO_port_A = value;
+}
+
 void SIO_writePortDB(byte value) {
-    //console.log(`DB write 0x${hex(value)} -- ${bin(value)}`);
+    byte unused = (byte) EM_ASM_INT({ sio_write_data($0, $1);}, 1, value);
     SIO_port_B = value;
 }
+
+
