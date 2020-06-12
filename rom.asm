@@ -350,6 +350,10 @@ CH3_TIMER:      push    AF              ; save regs. A,
                 push    BC              ; BC,
                 push    DE              ; DE,
                 push    HL              ; HL
+
+                ld      a, 1
+                out     (255), a
+
                 ld      HL,TMRCNT       ; load starting address of the timer
                 ld      B,$04           ; 4 bytes to check
 INCTMR3:        inc     (HL)            ; increment timer
@@ -9247,24 +9251,6 @@ LOGOFONT:   equ $
 ; ------------------------------------------------------------------------------
 ; include the latest version of the bootloader: this sets up the address aliases
 ; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
-#include "../include/bootloader/bootloader-r3131.asm"
-
-; incude the latest version of the VDP module
-#include "../include/vdp/vdp-r3131.asm"
-
-; incude the latest version of the PSG module
-#include "../include/psg/psg-r3131.asm"
-
-; include the latest version of the NASCOM BASIC interpreter
-#include "../include/basic/basic32k-r3131.asm"
-
-; include utils
-#include "../include/utils/utils-r11.asm"
-
-; include the latest version of the font sets
-#include "../include/vdp/6x8fonts-r15.asm"
-#include "../include/vdp/8x8fonts-r18.asm"
-#include "../include/vdp/logo-fonts.asm"
 
 ; END OF ASSEMBLY SOURCE
 #end
