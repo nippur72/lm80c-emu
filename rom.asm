@@ -1,6 +1,6 @@
 ; 
 ; ------------------------------------------------------------------------------
-; LM80C - BOOTLOADER - R3.13.1
+; LM80C - BOOTLOADER - R3.13.3
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -131,7 +131,7 @@ RST18:          jp      CKINCHAR
                 defb    $20,$62,$79,$00,$00,$00,$00,$00
                 defb    $4C,$65,$6F,$6E,$61,$72,$64,$6F
                 defb    $20,$4D,$69,$6C,$69,$61,$6E,$69
-FWVER:          defm    'FW 3.13.1',$20,__date__,$20,__time__,$00
+FWVER:          defm    'FW 3.13.3',$20,__date__,$20,__time__,$00
 ;------------------------------------------------------------------------------
 ; interrupt driven routine to get chars from Z80 SIO
                 org     $0100
@@ -350,10 +350,6 @@ CH3_TIMER:      push    AF              ; save regs. A,
                 push    BC              ; BC,
                 push    DE              ; DE,
                 push    HL              ; HL
-
-                ld      a, 1
-                out     (255), a
-
                 ld      HL,TMRCNT       ; load starting address of the timer
                 ld      B,$04           ; 4 bytes to check
 INCTMR3:        inc     (HL)            ; increment timer
@@ -512,11 +508,11 @@ CTCCONF:        defb    $FB,$ED,$4D     ; CTC0 interrupt vector (ei; reti)
                 jp      CH3_TIMER       ; CTC3 interrupt vector (sys tick timer)
 ;------------------------------------------------------------------------------
 MSGTXT1:        defm    "LM80C by Leonardo Miliani",CR
-                defm    "Firmware R3.13.1",CR,0
+                defm    "Firmware R3.13.3",CR,0
 MSGTXT2:        defb    CR
                 defm    "<C>old or <W>arm start? ",0
 ; ------------------------------------------------------------------------------
-; LM80C - VDP ROUTINES - R3.13.1
+; LM80C - VDP ROUTINES - R3.13.3
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1563,7 +1559,7 @@ LM80CLOGO       ; patterns to compose the splash screen logo
                 defb    0,0,13,0,0,12,0,0,0,1,4,4,0,1,0,0,3,5,9,20,19,8,9,20,19,8,9,1,1,8,0,0
                 defb    0,0,14,18,18,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
                 defb    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; ------------------------------------------------------------------------------
-; LM80C - PSG ROUTINES - R3.13.1
+; LM80C - PSG ROUTINES - R3.13.3
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1692,15 +1688,15 @@ CNTCHKSND:      inc     IX              ; set for...
 ; read a specific row of the keyboard matrix, set by A
 ; return read into A
 READKBLN:       push    BC
-                ld      B,$0F           ; reg #14
+                ld      B,$0F           ; reg #15
                 ld      C,PSG_REG       ; PSG register port
-                out     (C),B           ; select reg #14
+                out     (C),B           ; select reg #15
                 ld      C,PSG_DAT       ; PSG data port
                 out     (C),A           ; activate the row
-                ld      B,$0E           ; register #15 (port B)
+                ld      B,$0E           ; register #14 (port B)
                 ld      C,PSG_REG       ; PSG register port
-                out     (C),B           ; select reg. 15 (port B)
-                in      A,(C)           ; read register #15
+                out     (C),B           ; select reg. 14 (port B)
+                in      A,(C)           ; read register #14
                 pop     BC
                 ret
 
@@ -1871,10 +1867,12 @@ LDFNKEYCHR:     ld      A,(HL)          ; load char
 CNTFNK:         inc     HL              ; next char
                 djnz    LDFNKEYCHR      ; repeat for max. 16 chars
                 jp      LVKBRDCHK2      ; leave
-PUTCHRBUF1:     xor     A
-                ld      (KBDNPT),A      ; if send to input buffer, set RETURN as from BASIC
+PUTCHRBUF1:     xor     A               ; if send to input buffer,... 
+                ld      (KBDNPT),A      ; ...set input as from BASIC
                 ld      A,D             ; retrieve char
+                push    HL              ; store HL
                 call    CHARINTOBFR     ; cursor off, so send char to buffer...
+                pop     HL              ; retrieve HL
                 jp      CNTFNK          ; jump over
 PRNTFNK:        ld      A,D             ; recover char
                 ld      (CHR4VID),A     ; store char for printing
@@ -1926,7 +1924,7 @@ KBMAP_CTRL:     defb '1',25,14,3,' ',16,154,'2'         ; 25=HOME  14=CTRL  3=RU
                 defb 31,163,173,',','.',':',186,30      ; 31=CURSOR DOWN  30=CURSOR UP
                 defb 28,225,';','/',27,212,185,29       ; 28=CURSOR LEFT  27=ESCAPE  212=π  29=CURSOR RIGHT
                 defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP; ------------------------------------------------------------------------------
-; LM80C BASIC - R3.13.1
+; LM80C BASIC - R3.13.3
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -7170,8 +7168,11 @@ CHKG2M: ld      A,(SCR_MODE)    ; check screen mode
 ; (portions of code are from nippur72)
 GX      equ     TMPBFR3
 GY      equ     TMPBFR4
+TMPCLR  equ     TMPBFR2
 MIXCOL  equ     TMPBFR1
-CHRPNT  equ     TMPBFR2
+CHRPNT  equ     VIDEOBUFF+$02
+NUMCHR  equ     VIDEOBUFF+$04
+TMPHL   equ     VIDEOBUFF+$06
 GPRINT: call    CHKG2M          ; check if in graphic mode 2
         dec     HL              ; dec 'cos GETCHR INCs
         call    GETCHR          ; check if something follows
@@ -7179,6 +7180,12 @@ GPRINT: call    CHKG2M          ; check if in graphic mode 2
         ld      (VIDEOBUFF),HL  ; save current code string pointer
         call    EVAL            ; Evaluate expression
         call    TSTSTR          ; Make sure it's a string
+        ld      (TMPHL),HL
+        call    GSTRCU          ; Current string to pool
+        call    LOADFP          ; Move string block to BCDE (BC=pointer, E=length)
+        ld      (CHRPNT),BC     ; store string pointer
+        ld      (NUMCHR),DE     ; store string lenght
+        ld      HL,(TMPHL)
         call    CHKSYN          ; Make sure ',' follows
         defb    ','
         call    GETINT          ; get X coord.
@@ -7191,7 +7198,7 @@ GPRINT: call    CHKG2M          ; check if in graphic mode 2
         cp      $18             ; is it in range 0~23?
         jp      NC,FCERR        ; Illegal function call error
         ld      (GY),A          ; store into temp. buffer
-        ld      DE,TMPBFR2
+        ld      DE,TMPCLR
         ld      A,(BKGNDCLR)    ; load background color
         ld      (DE),A          ; store into temp buff
         ld      A,(FRGNDCLR)    ; load foreground color
@@ -7205,13 +7212,9 @@ GPRINT: call    CHKG2M          ; check if in graphic mode 2
         call    CKCOL           ; check background color
 CNTGPT2:call    MIXCLRS         ; mix foreground & background colors
         ld      (MIXCOL),A      ; store mixed colors
-        ex      DE,HL           ; save code string address into DE
-        ld      HL,(VIDEOBUFF)  ; retrieve pointer to string
-        push    DE              ; store code string address
-        call    EVAL            ; re-evaluate string
-        call    GSTRCU          ; Current string to pool
-        call    LOADFP          ; Move string block to BCDE (BC=pointer, E=length)
-        ld      (CHRPNT),BC
+        push    HL              ; store code string address
+        ld      BC,(CHRPNT)     ; retrieve string pointer
+        ld      DE,(NUMCHR)     ; retrieve string lenght
         inc     E               ; Length + 1
         call    GPNT            ; print on G2
         pop     HL              ; recover HL
@@ -9185,7 +9188,7 @@ LOGOFONT:   equ $
             defb %11111111,%11111111,%11111111,%11111111,%00001111,%00001111,%00001111,%00001111 ; 22
             defb %00000000,%00110000,%01111000,%01111000,%00110000,%00000000,%00000000,%00000000 ; 23
             ; ------------------------------------------------------------------------------
-; LM80C - FIRMWARE - R3.13.1
+; LM80C - FIRMWARE - R3.13.3
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -9248,9 +9251,6 @@ LOGOFONT:   equ $
 ; starts at $0000 (the address reached by Z80 upon reset)
 #code BOOT, $0000
 
-; ------------------------------------------------------------------------------
-; include the latest version of the bootloader: this sets up the address aliases
-; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
 
 ; END OF ASSEMBLY SOURCE
 #end
