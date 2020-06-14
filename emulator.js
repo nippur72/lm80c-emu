@@ -13,7 +13,7 @@
 // TODO list of 8 bit fonts? COLECO, MSX, APPLE/LASER, TOPAZ, AMSTRAD, CGA, PET/VIC, C64
 
 
-// firmware 3.13
+// firmware 3.13.3
 let BASTXT     = 0x8133;
 let PROGND     = 0x81BB;
 let CRSR_STATE = 0x81E9;
