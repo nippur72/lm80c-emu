@@ -8,9 +8,8 @@ byte vram[16384];
 uint32_t display_buffer[342*262];
 
 bool vdp_triggered_NMI = false;
-void vdp_interrupt_called() {
-   vdp_triggered_NMI = true;
-   byte unused = (byte) EM_ASM_INT({ console.log($0, $1) }, vdp.m_StatusReg, vdp.m_Regs[1] );
+void vdp_interrupt_called(uint8_t int_state) {
+   if(int_state==1) vdp_triggered_NMI = true;
 }
 
 int cnt = 0;

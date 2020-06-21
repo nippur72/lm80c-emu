@@ -33,9 +33,7 @@ byte io_read(word ioport) {
       case 0x23: return SIO_readPortCB();    // SIO_CB
 
       case 0x030:  return tms9928_vram_read(&vdp);
-      case 0x031:  return tms9928_register_read(&vdp);
-      case 0x032:  return tms9928_vram_read(&vdp);
-      case 0x033:  return tms9928_register_read(&vdp);
+      case 0x032:  return tms9928_register_read(&vdp);
 
       case 0x40:
       case 0x41:
