@@ -66,8 +66,6 @@ void tms9928_check_interrupt(tms9928_t *vdp) {
    // trigger if vblank and interrupt-enable bits are set
    int b = (vdp->m_StatusReg & 0x80 && vdp->m_Regs[1] & 0x20) ? 1 : 0;
 
-   // byte unused = (byte) EM_ASM_INT({ console.log($0, $1, $2) }, vdp->m_StatusReg & 0x80, vdp->m_Regs[1] & 0x20, vdp->m_INT );
-
    if(b != vdp->m_INT) {
       vdp->m_INT = b;
       if(vdp->m_out_int_line_cb != NULL )
