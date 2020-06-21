@@ -1,78 +1,76 @@
-                                ; firmware v3.8
-                                READ_VSTAT equ $061e
-                                WRITE_VREG equ $0613
-                                NMIUSR     equ $8061
-                                NMISET     equ $2617
-                                
-                                PTR1       equ P1+1
-                                PTR2       equ P2+1
+                                ; firmware v3.13
+                                READ_VSTAT equ $0641
+                                WRITE_VREG equ $0636
                                 
                                 org $9000
                                 
-                                ;   JP 9010 > C3 10 90
-                                ;             L  H  A
-                                
-                                INSTALL:
-9000: 11 3A 90                     LD DE, MYROUTINE2
-9003: C3 17 26                     JP $2617
+                                ;INSTALL:
+                                ;   LD DE, MYROUTINE
+                                ;   JP $2617
                                 
                                 MYROUTINE:
-9006: F5                           push af
-9007: D5                           push de
-9008: E5                           push hl
+9000: F5                           push af
+9001: D5                           push de
+9002: E5                           push hl
                                 
-9009: 1E F6                        ld   e, $F6
-900B: 3E 07                        ld   a, $07
-900D: CD 13 06                     call WRITE_VREG
+9003: 1E F6                        ld   e, $F6      ; red border
+9005: 3E 07                        ld   a, $07      ;
+9007: CD 36 06                     call WRITE_VREG  ;
                                 
                                 P1:
-9010: 21 DA 02                     ld   hl, $02da
-9013: CD 32 90                     call wait
+900A: 21 DA 02                     ld   hl, $02da   ; wait
+900D: CD 2C 90                     call wait        ;
                                 
-9016: 1E F7                        ld   e, $F7
-9018: 3E 07                        ld   a, $07
-901A: CD 13 06                     call WRITE_VREG
+9010: 1E F7                        ld   e, $F7      ; cyan border
+9012: 3E 07                        ld   a, $07      ;
+9014: CD 36 06                     call WRITE_VREG  ;
                                 P2:
-901D: 21 00 05                     ld   hl, $0500
-9020: CD 32 90                     call wait
+9017: 21 00 05                     ld   hl, $0500   ; wait
+901A: CD 2C 90                     call wait        ;
                                 
-9023: 1E F4                        ld   e, $F4
-9025: 3E 07                        ld   a, $07
-9027: CD 13 06                     call WRITE_VREG
+901D: 1E F4                        ld   e, $F4      ; blue border
+901F: 3E 07                        ld   a, $07      ;
+9021: CD 36 06                     call WRITE_VREG  ;
                                 
-902A: CD 1E 06                     call READ_VSTAT         ; ACK NMI by reading the VDP status register
+9024: CD 41 06                     call READ_VSTAT  ; ACK NMI by reading the VDP status register
                                 
-902D: E1                           pop hl
-902E: D1                           pop de
-902F: F1                           pop af
+9027: E1                           pop hl
+9028: D1                           pop de
+9029: F1                           pop af
                                 
-9030: ED 45                        RETN
+902A: ED 45                        RETN
                                 
+                                ; wait by simply decrementing HL to 0
                                 wait:
-9032: 2B                           dec  hl
-9033: 7D                           ld   a, l
-9034: B4                           or   h
-9035: 20 FB                        jr   nz, wait
-9037: C9                           ret
+902C: 2B                           dec  hl
+902D: 7D                           ld   a, l
+902E: B4                           or   h
+902F: 20 FB                        jr   nz, wait
+9031: C9                           ret
                                 
-9038: 00 00                     counter: dw 0
+                                ;
+                                ; alternative NMI routine that
+                                ; doesn't write to the VDP
+                                ;
                                 
-                                MYROUTINE2:
-903A: F5                           push af
-903B: D5                           push de
-903C: E5                           push hl
-                                
-903D: 2A 38 90                     ld hl, (counter)
-9040: 23                           inc hl
-9041: 22 38 90                     ld (counter), hl
-                                
-9044: CD 1E 06                     call READ_VSTAT         ; ACK NMI by reading the VDP status register
-                                
-9047: E1                           pop hl
-9048: D1                           pop de
-9049: F1                           pop af
-                                
-904A: ED 45                        RETN
+                                ; counter: dw 0
+                                ;
+                                ; MYROUTINE2:
+                                ;    push af
+                                ;    push de
+                                ;    push hl
+                                ;
+                                ;    ld hl, (counter)
+                                ;    inc hl
+                                ;    ld (counter), hl
+                                ;
+                                ;    call READ_VSTAT         ; ACK NMI by reading the VDP status register
+                                ;
+                                ;    pop hl
+                                ;    pop de
+                                ;    pop af
+                                ;
+                                ;    RETN
                                 
 
-904C:
+9032:

@@ -1,17 +1,12 @@
-; firmware v3.8
-READ_VSTAT equ $061e
-WRITE_VREG equ $0613
-NMIUSR     equ $8061
-NMISET     equ $2617
-
-PTR1       equ P1+1
-PTR2       equ P2+1
+; firmware v3.13
+READ_VSTAT equ $0641
+WRITE_VREG equ $0636
 
 org $9000
 
-INSTALL:
-   LD DE, MYROUTINE
-   JP $2617
+;INSTALL:
+;   LD DE, MYROUTINE
+;   JP $2617
 
 MYROUTINE:
    push af
@@ -58,21 +53,21 @@ wait:
 ; doesn't write to the VDP
 ;
 
-counter: dw 0
-
-MYROUTINE2:
-   push af
-   push de
-   push hl
-
-   ld hl, (counter)
-   inc hl
-   ld (counter), hl
-
-   call READ_VSTAT         ; ACK NMI by reading the VDP status register
-
-   pop hl
-   pop de
-   pop af
-
-   RETN
+; counter: dw 0
+;
+; MYROUTINE2:
+;    push af
+;    push de
+;    push hl
+;
+;    ld hl, (counter)
+;    inc hl
+;    ld (counter), hl
+;
+;    call READ_VSTAT         ; ACK NMI by reading the VDP status register
+;
+;    pop hl
+;    pop de
+;    pop af
+;
+;    RETN
