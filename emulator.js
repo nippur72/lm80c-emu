@@ -1,4 +1,6 @@
 "use strict";
+
+// TODO check again NMI interrupt, behaves differently than fpga
 // TODO stereo audio: A right, B left, C common
 // TODO fix AY-3-8910
 // TODO keyboard buffering

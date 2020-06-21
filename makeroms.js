@@ -25,7 +25,9 @@ function makeFile(filename, varname) {
    console.log(s);
 }
 
-makeFile("LM80C-firmware-r3133.rom", "rom");
+let romfile = process.argv.length >= 3 ? process.argv[2] : "LM80C-firmware-r3133.rom";
+
+makeFile(romfile, "rom");
 
 //makeFile("Topaz_a500_v1.0.raw", "topaz");
 //makeFile("charset_laser500.rom", "charset_laser500");

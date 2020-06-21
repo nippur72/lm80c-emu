@@ -1108,7 +1108,7 @@ FLASHCURSOR:    ld      A,(CRSR_STATE)  ; now, check the cursor
                 push    AF              ; store A (keep state for later use)
                 call    LOAD_CRSR_POS   ; load current cursor position into HL
                 pop     AF              ; recover current state
-                ld      B,$FF           ; cursor char
+CURSED:         ld      B,$FF           ; cursor char
                 cp      $20             ; is the cursor on video (A == $20)?
                 jr      Z,PUTCRSCHR     ; yes, jump over
                 ld      A,(SCR_ORG_CHR) ; no, load the original char
@@ -1244,6 +1244,7 @@ CURSOR_ON:      push    AF              ; store AF
                 jr      NC,EXITCURSOR_ON; yes, so exit (no cursor in graphics 2 or 3)
                 ld      A,$01           ; cursor state ON
                 ld      (CRSR_STATE),A  ; set state
+                call    CURSED
 EXITCURSOR_ON:  pop     AF              ; restore AF
                 ret                     ; return to caller
 
@@ -9250,6 +9251,7 @@ LOGOFONT:   equ $
 ; this line instructs the assembler to compile taking account that code
 ; starts at $0000 (the address reached by Z80 upon reset)
 #code BOOT, $0000
+
 
 
 ; END OF ASSEMBLY SOURCE
