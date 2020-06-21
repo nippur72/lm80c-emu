@@ -10,6 +10,7 @@ uint32_t display_buffer[342*262];
 bool vdp_triggered_NMI = false;
 void vdp_interrupt_called() {
    vdp_triggered_NMI = true;
+   byte unused = (byte) EM_ASM_INT({ console.log($0, $1) }, vdp.m_StatusReg, vdp.m_Regs[1] );
 }
 
 int cnt = 0;
@@ -30,7 +31,7 @@ void vdp_init() {
 
    vdp_desc.display_buffer = display_buffer;
 
-   vdp_desc.out_int_line_cb = vdp_interrupt_called;
+   vdp_desc.out_int_line_cb = &vdp_interrupt_called;
    vdp_desc.screen_update_cb = &vdp_screen_update_called;
 
    tms9928_init(&vdp, &vdp_desc);

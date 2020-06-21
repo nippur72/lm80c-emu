@@ -13,7 +13,7 @@
 #define	TMS9928_VERT_DISPLAY_START_NTSC     13 + 27
 
 /* callbacks */
-typedef void (*tms9928_out_int_line_cb_t)();
+typedef void (*tms9928_out_int_line_cb_t)(uint8_t int_state);
 typedef void (*tms9928_screen_update_cb_t)(uint32_t *bmp);
 
 typedef struct {
