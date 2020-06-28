@@ -80,7 +80,6 @@ let set_z80_ei_pending;
 let cpu_init;
 let cpu_reset;
 let cpu_run_instruction;
-let cpu_interrupt;
 
 let mem_read;
 let mem_write;
@@ -190,7 +189,6 @@ function load_wasm(ready_cb) {
       cpu_init            = instance.cwrap("cpu_init", null);
       cpu_reset           = instance.cwrap("cpu_reset", null);
       cpu_run_instruction = instance.cwrap("cpu_run_instruction", 'number');
-      cpu_interrupt       = instance.cwrap("cpu_interrupt", null, ['bool', 'number']);
 
       mem_read           = instance.cwrap("mem_read", 'number', ['number']);
       mem_write          = instance.cwrap("mem_write", null, ['number', 'number']);

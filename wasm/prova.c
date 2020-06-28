@@ -59,11 +59,6 @@ uint16_t lm80c_tick_line(float cyclesPerLine) {
 
    tms9928_drawline(&vdp);
 
-   if(vdp_triggered_NMI) {
-      cpu_interrupt(true, 0);
-      vdp_triggered_NMI = false;
-   }
-
    return elapsed;
 }
 

@@ -156,8 +156,7 @@ function main() {
    {
       init: cpu_init,
       reset: cpu_reset,
-      run_instruction: cpu_run_instruction,
-      interrupt: cpu_interrupt,
+      run_instruction: cpu_run_instruction,      
       getState: ()=>{
          return {
             pc: get_z80_pc()

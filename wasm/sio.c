@@ -25,7 +25,7 @@ void SIO_trigger() {
     ///}
 
     SIO_busy = true;
-    cpu_interrupt(false, 0xC);
+    // TODO cpu_interrupt(false, 0xC);
     //console.log(`${total_cycles} SIO: interrupt started`);
 }
 

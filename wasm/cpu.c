@@ -9,10 +9,6 @@
 z80_t cpu;
 z80_desc_t desc;
 
-bool interrupt_pending;      // an interrupt is pending 
-bool interrupt_pending_nmi;  // was it a NMI or INT ?
-uint8_t interrupt_data;      // data byte to push on the D7-D0
-
 // manually disable CTC from JavaScript
 // TODO remove
 bool ctc_enabled = true;
@@ -20,20 +16,23 @@ bool ctc_enabled = true;
 EMSCRIPTEN_KEEPALIVE
 void lm80c_ctc_enable(bool v) { ctc_enabled = v; }
 
+byte INT_vector;
+
 uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
+
+   if(int_NMI) pins |= Z80_NMI;
+   else        pins &= ~Z80_NMI;
 
    if(ctc_enabled) {
       if(ctc_ticks(num_ticks)) {
-         byte vector = ctc_int_ack();
-         cpu_interrupt(0, vector);
+         INT_vector = ctc_int_ack();
+         pins |= Z80_INT;
       }
    }
 
    if((pins & Z80_M1) && (pins & Z80_IORQ)) {
       // acknowledge interrupt - this is done by external chip
-      Z80_SET_DATA(pins, interrupt_data);
-      interrupt_pending = false;
-      pins &= ~Z80_NMI;
+      Z80_SET_DATA(pins, INT_vector);
       pins &= ~Z80_INT;
    }
    else if(pins & Z80_MREQ) {
@@ -55,11 +54,6 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
       }
    }
 
-   if(interrupt_pending) {
-      if(interrupt_pending_nmi) pins |= Z80_NMI;
-      else                      pins |= Z80_INT;
-   }
-
    // if RETI is found use the virtual pin to ack other chips
    if(pins & Z80_RETI) {
       ctc_set_reti();
@@ -72,8 +66,7 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
 EMSCRIPTEN_KEEPALIVE
 void cpu_init() {
    desc.tick_cb = tick;
-   desc.user_data = 0;  
-   interrupt_pending = false;
+   desc.user_data = 0;
    z80_init(&cpu, &desc);
 }
 
@@ -88,14 +81,6 @@ uint16_t cpu_run_instruction() {
    do ticks+=z80_exec(&cpu, 1);   
    while(!z80_opdone(&cpu));
    return ticks;
-}
-
-EMSCRIPTEN_KEEPALIVE
-void cpu_interrupt(bool nmi, uint8_t data) {
-   interrupt_pending = true;
-   interrupt_pending_nmi = nmi;
-   interrupt_data = data;
-   // all this is handled in the next cpu tick
 }
 
 EMSCRIPTEN_KEEPALIVE uint8_t get_z80_a()         { return z80_a(&cpu); }

@@ -7,9 +7,10 @@ tms9928_desc_t vdp_desc;
 byte vram[16384];
 uint32_t display_buffer[342*262];
 
-bool vdp_triggered_NMI = false;
+byte int_NMI;
+
 void vdp_interrupt_called(uint8_t int_state) {
-   if(int_state==1) vdp_triggered_NMI = true;
+   int_NMI = int_state;
 }
 
 int cnt = 0;
