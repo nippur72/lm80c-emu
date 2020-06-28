@@ -6,6 +6,8 @@
 
 z80ctc_t ctc;
 
+extern bool SIO_busy;
+
 EMSCRIPTEN_KEEPALIVE
 void ctc_init() {
    z80ctc_init(&ctc);
@@ -31,7 +33,7 @@ uint8_t ctc_int_ack() {
 
 EMSCRIPTEN_KEEPALIVE
 uint8_t ctc_ticks(int ticks) {
-   uint64_t pins = Z80CTC_IEIO;
+   uint64_t pins = SIO_busy ? 0 : Z80CTC_IEIO;
    int interrupt_requested = 0;
    for(int t=0; t<ticks; t++) {
       pins = z80ctc_tick(&ctc, pins);
