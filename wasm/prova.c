@@ -18,13 +18,6 @@ void debugAfter()  { byte unused = (byte) EM_ASM_INT({ if(debugAfter !== undefin
 EMSCRIPTEN_KEEPALIVE
 void lm80c_set_debug(bool v) { debug = v; }
 
-// manually disable CTC from JavaScript
-// TODO remove
-bool ctc_enabled = true;
-
-EMSCRIPTEN_KEEPALIVE
-void lm80c_ctc_enable(bool v) { ctc_enabled = v; }
-
 
 EMSCRIPTEN_KEEPALIVE
 uint16_t lm80c_tick() {
@@ -40,13 +33,6 @@ uint16_t lm80c_tick() {
    if(debug & z80_opdone(&cpu)) {
       debugAfter();
       opdone = true;
-   }
-
-   if(ctc_enabled) {
-      if(ctc_ticks(ticks)) {
-         byte vector = ctc_int_ack();
-         cpu_interrupt(0, vector);
-      }
    }
 
    psg_ticks(ticks);

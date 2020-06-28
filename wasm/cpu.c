@@ -13,7 +13,22 @@ bool interrupt_pending;      // an interrupt is pending
 bool interrupt_pending_nmi;  // was it a NMI or INT ?
 uint8_t interrupt_data;      // data byte to push on the D7-D0
 
+// manually disable CTC from JavaScript
+// TODO remove
+bool ctc_enabled = true;
+
+EMSCRIPTEN_KEEPALIVE
+void lm80c_ctc_enable(bool v) { ctc_enabled = v; }
+
 uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
+
+   if(ctc_enabled) {
+      if(ctc_ticks(num_ticks)) {
+         byte vector = ctc_int_ack();
+         cpu_interrupt(0, vector);
+      }
+   }
+
    if((pins & Z80_M1) && (pins & Z80_IORQ)) {
       // acknowledge interrupt - this is done by external chip
       Z80_SET_DATA(pins, interrupt_data);
