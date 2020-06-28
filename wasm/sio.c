@@ -8,6 +8,17 @@ byte SIO_port_A = 0;
 byte SIO_port_B = 0;
 bool SIO_busy = false;
 
+EMSCRIPTEN_KEEPALIVE
+uint8_t sio_int_ack() {
+  return 0x0C;
+}
+
+EMSCRIPTEN_KEEPALIVE
+uint8_t sio_ticks(int ticks) {
+   if(SIO_busy) return 1;
+   else return 0;
+}
+
 int SIO_IEO() {
     if(SIO_busy) return 0;  // busy
     else         return 1;  // not busy, ENABLE

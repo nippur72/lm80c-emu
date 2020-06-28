@@ -23,6 +23,11 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
    if(int_NMI) pins |= Z80_NMI;
    else        pins &= ~Z80_NMI;
 
+   if(sio_ticks(num_ticks)) {
+      INT_vector = sio_int_ack();
+      pins |= Z80_INT;
+   }
+
    if(ctc_enabled) {
       if(ctc_ticks(num_ticks)) {
          INT_vector = ctc_int_ack();
