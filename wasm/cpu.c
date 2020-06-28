@@ -17,6 +17,7 @@ EMSCRIPTEN_KEEPALIVE
 void lm80c_ctc_enable(bool v) { ctc_enabled = v; }
 
 byte INT_vector;
+bool INT_from_SIO = false;
 
 uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
 
@@ -24,19 +25,21 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
    else        pins &= ~Z80_NMI;
 
    if(sio_ticks(num_ticks)) {
-      INT_vector = sio_int_ack();
+      INT_from_SIO = true;
       pins |= Z80_INT;
    }
 
    if(ctc_enabled) {
       if(ctc_ticks(num_ticks)) {
-         INT_vector = ctc_int_ack();
+         INT_from_SIO = false;
          pins |= Z80_INT;
       }
    }
 
    if((pins & Z80_M1) && (pins & Z80_IORQ)) {
       // acknowledge interrupt - this is done by external chip
+      if(INT_from_SIO) INT_vector = sio_int_ack();
+      else             INT_vector = ctc_int_ack();
       Z80_SET_DATA(pins, INT_vector);
       pins &= ~Z80_INT;
    }
