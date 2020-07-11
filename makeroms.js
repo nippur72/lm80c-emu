@@ -20,25 +20,28 @@ function makeFile(filename, buffer, varname) {
 
    s+="]);";
 
-   console.log(s);
+   return s;
 }
 
-let filename = process.argv.length >= 3 ? process.argv[2] : "LM80C-firmware-r3133.rom";
+let filename = process.argv.length >= 3 ? process.argv[2] : "LM80C-firmware-r3134.rom";
 
 let buffer = fs.readFileSync(filename);
 
-if(1) {
-   let rompatched = patch_charset(buffer);
+if(false) {
+   //let rompatched = patch_charset(buffer, 0x44AD);
+   let rompatched = patch_charset(buffer, 0x4487);
    fs.writeFileSync("rom_patched.rom", new Uint8Array(rompatched));
    buffer = rompatched;
 }
 
-makeFile(filename, buffer, "rom");
+let outfile = makeFile(filename, buffer, "rom");
+
+fs.writeFileSync("roms.js", outfile);
 
 //*************************************************************************************/
 
 // patch laser500 charset rom
-function patch_charset(romsource)
+function patch_charset(romsource, start)
 {
    function reverse(b) {
       b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
@@ -49,7 +52,7 @@ function patch_charset(romsource)
 
    let charset_laser500 = fs.readFileSync("../laser-related/laser500emu/charset.rom");
 
-   let CHRST88 = 0x44AD;  // charset start address in ROM, taken from rom.lst
+   let CHRST88 = start;  // charset start address in ROM, taken from rom.lst
 
    let romdest = [];
    romsource.forEach(e=>romdest.push(e));

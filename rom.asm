@@ -1108,7 +1108,7 @@ FLASHCURSOR:    ld      A,(CRSR_STATE)  ; now, check the cursor
                 push    AF              ; store A (keep state for later use)
                 call    LOAD_CRSR_POS   ; load current cursor position into HL
                 pop     AF              ; recover current state
-CURSED:         ld      B,$FF           ; cursor char
+                ld      B,$FF           ; cursor char
                 cp      $20             ; is the cursor on video (A == $20)?
                 jr      Z,PUTCRSCHR     ; yes, jump over
                 ld      A,(SCR_ORG_CHR) ; no, load the original char
@@ -1244,7 +1244,6 @@ CURSOR_ON:      push    AF              ; store AF
                 jr      NC,EXITCURSOR_ON; yes, so exit (no cursor in graphics 2 or 3)
                 ld      A,$01           ; cursor state ON
                 ld      (CRSR_STATE),A  ; set state
-                call    CURSED
 EXITCURSOR_ON:  pop     AF              ; restore AF
                 ret                     ; return to caller
 
@@ -1732,17 +1731,17 @@ CHECKCTRL:      ld      A,%11111110     ; select CTRL row
                 ld      (HL),%00000010  ; set CTRL flag, reset SHIFT & ALT flags (currently multiply control keys are NOT supported)
 CHECKKBD:       ld      B,$08           ; 8 lines
                 ld      A,%01111111     ; start from the last line of the matrix
-RPTKBDRD:       ld      D,$0F           ; register #14 (port A)
+RPTKBDRD:       ld      D,$0F           ; register #15 (port B)
                 ld      C,PSG_REG       ; PSG register port
-                out     (C),D           ; select reg. #14
+                out     (C),D           ; select reg. #15
                 ld      C,PSG_DAT       ; PSG data port
                 out     (C),A           ; activate 1 line (active line is grounded, i.e. with a LOW signal)
                 ld      E,A             ; save current line into E
-                ld      D,$0E           ; register #15 (port B)
+                ld      D,$0E           ; register #14 (port A)
                 ld      C,PSG_REG       ; PSG register port
-                out     (C),D           ; select reg. 15 (port B)
+                out     (C),D           ; select reg. 14 (port A)
                 nop
-                in      A,(C)           ; read register #15
+                in      A,(C)           ; read register #14
                 cp      $FF             ; is there any line set to 0?
                 jr      Z,NOKEYPRSD     ; no, go to the next row
                 ; check control keys
@@ -1924,7 +1923,8 @@ KBMAP_CTRL:     defb '1',25,14,3,' ',16,154,'2'         ; 25=HOME  14=CTRL  3=RU
                 defb '9',184,170,172,171,181,164,'0'
                 defb 31,163,173,',','.',':',186,30      ; 31=CURSOR DOWN  30=CURSOR UP
                 defb 28,225,';','/',27,212,185,29       ; 28=CURSOR LEFT  27=ESCAPE  212=π  29=CURSOR RIGHT
-                defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP; ------------------------------------------------------------------------------
+                defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP
+; ------------------------------------------------------------------------------
 ; LM80C BASIC - R3.13.3
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
@@ -8714,8 +8714,8 @@ CHRST68 equ $
         defb $30,$48,$40,$e0,$40,$40,$40,$00 ; char 102: f
         defb $00,$00,$78,$88,$78,$08,$70,$00 ; char 103: g
         defb $80,$80,$b0,$c8,$88,$88,$88,$00 ; char 104: h
-        defb $00,$20,$00,$20,$20,$20,$20,$00 ; char 105: i
-        defb $00,$10,$00,$30,$10,$90,$60,$00 ; char 106: j
+        defb $20,$00,$20,$20,$20,$20,$20,$00 ; char 105: i
+        defb %00001000,%00000000,%00001000,%00001000,%00001000,%10001000,%01110000,%00000000 ; char 106: j
         defb $80,$80,$90,$a0,$c0,$a0,$90,$00 ; char 107: k
         defb $60,$20,$20,$20,$20,$20,$70,$00 ; char 108: l
         defb $00,$00,$d0,$a8,$a8,$88,$88,$00 ; char 109: m
@@ -8861,7 +8861,7 @@ CHRST68 equ $
         defb %00100000,%01100000,%11100000,%11100000,%11100000,%01100000,%00100000,%00000000 ; char 249 (audio off)
         defb %10000000,%11000000,%11100000,%11110000,%11111000,%11111100,%11110000,%10010000 ; char 250 (pointer)
         defb %01111000,%10000100,%10110100,%10100100,%10110100,%10000100,%01111000,%00000000 ; char 251 (©)
-        defb %00110000,%01001000,%01000000,%11100000,%01000000,%01000100,%10111000,%00000000 ; char 252 (£)
+        defb %00110000,%01001000,%01000000,%11100000,%01000000,%01001000,%10110000,%00000000 ; char 252 (£)
         defb %01111000,%10000100,%11110000,%01001000,%01001000,%00111100,%10000100,%01111000 ; char 253 (§)
         defb %00000000,%00000000,%00100000,%00000000,%11111000,%00000000,%00100000,%00000000 ; char 254 (÷)
         defb %11111100,%11111100,%11111100,%11111100,%11111100,%11111100,%11111100,%11111100 ; char 255 (cursor)
@@ -9252,7 +9252,27 @@ LOGOFONT:   equ $
 ; starts at $0000 (the address reached by Z80 upon reset)
 #code BOOT, $0000
 
+; ------------------------------------------------------------------------------
+; include the latest version of the bootloader: this sets up the address aliases
+; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
+#include "../include/bootloader/bootloader-r3133.asm"
 
+; incude the latest version of the VDP module
+#include "../include/vdp/vdp-r3133.asm"
+
+; incude the latest version of the PSG module
+#include "../include/psg/psg-r3133.asm"
+
+; include the latest version of the NASCOM BASIC interpreter
+#include "../include/basic/basic32k-r3133.asm"
+
+; include utils
+#include "../include/utils/utils-r11.asm"
+
+; include the latest version of the font sets
+#include "../include/vdp/6x8fonts-r15.asm"
+#include "../include/vdp/8x8fonts-r18.asm"
+#include "../include/vdp/logo-fonts.asm"
 
 ; END OF ASSEMBLY SOURCE
 #end
