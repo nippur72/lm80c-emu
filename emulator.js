@@ -1,18 +1,18 @@
 "use strict";
 
 // TODO check again NMI interrupt, behaves differently than fpga
+// TODO fix autoload
 // TODO stereo audio: A right, B left, C common
-// TODO fix AY-3-8910
 // TODO keyboard buffering
 // TODO check actual timings (elapsed)
+// TODO check cpu speed, is it too fast?
 // TODO rename paste into serial
 // TODO serial output buffer for printing
 // TODO investigate why dropping "screen2_putc.prg" hangs it
-// TODO check cpu speed, is it too fast?
 // TODO implement SIO-CTC-PIO daisy chain
-// TODO fix autoload
 // TODO tms timings check 30 T states
-// TODO list of 8 bit fonts? COLECO, MSX, APPLE/LASER, TOPAZ, AMSTRAD, CGA, PET/VIC, C64
+// TODO allow change firmware rom
+// TODO mobile keyboard
 
 
 // firmware 3.13.3
