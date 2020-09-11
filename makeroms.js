@@ -23,7 +23,7 @@ function makeFile(filename, buffer, varname) {
    return s;
 }
 
-let filename = process.argv.length >= 3 ? process.argv[2] : "LM80C-firmware-r3134.rom";
+let filename = process.argv.length >= 3 ? process.argv[2] : "LM80C-firmware-r3136.rom";
 
 let buffer = fs.readFileSync(filename);
 

@@ -2,7 +2,7 @@ rem /mnt/c/Users/Nino1/Desktop/USB/GitHub/LM80C/12-Home computer$
 rem  ~/bin/zasm -uwy --z80 ./LM80C-firmware-r3133.asm
 
 set DEST=rom.asm
-set VER=r3133
+set VER=r3136
 set LM80CPATH=..\LM80C
 echo ; > %DEST%
 type %LM80CPATH%\include\bootloader\bootloader-%VER%.asm >> %DEST%
