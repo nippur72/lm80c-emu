@@ -1,6 +1,6 @@
 ; 
 ; ------------------------------------------------------------------------------
-; LM80C - BOOTLOADER - R3.13.3
+; LM80C - BOOTLOADER - R3.14
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -131,7 +131,7 @@ RST18:          jp      CKINCHAR
                 defb    $20,$62,$79,$00,$00,$00,$00,$00
                 defb    $4C,$65,$6F,$6E,$61,$72,$64,$6F
                 defb    $20,$4D,$69,$6C,$69,$61,$6E,$69
-FWVER:          defm    'FW 3.13.3',$20,__date__,$20,__time__,$00
+FWVER:          defm    'FW 3.14',$20,__date__,$20,__time__,$00
 ;------------------------------------------------------------------------------
 ; interrupt driven routine to get chars from Z80 SIO
                 org     $0100
@@ -508,11 +508,11 @@ CTCCONF:        defb    $FB,$ED,$4D     ; CTC0 interrupt vector (ei; reti)
                 jp      CH3_TIMER       ; CTC3 interrupt vector (sys tick timer)
 ;------------------------------------------------------------------------------
 MSGTXT1:        defm    "LM80C by Leonardo Miliani",CR
-                defm    "Firmware R3.13.3",CR,0
+                defm    "Firmware R3.14",CR,0
 MSGTXT2:        defb    CR
                 defm    "<C>old or <W>arm start? ",0
 ; ------------------------------------------------------------------------------
-; LM80C - VDP ROUTINES - R3.13.3
+; LM80C - VDP ROUTINES - R3.14
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -570,6 +570,8 @@ TXTMD:          ; load charset
                 ld      (SCR_SIZE_W),A  ; screen width = 40 cols
                 ld      A,$18
                 ld      (SCR_SIZE_H),A  ; screen height = 24 rows
+                ld      A,$1E
+                ld      (COMMAN),A      ; width for commas (4 columns)
                 ld      DE,$0800
                 ld      (SCR_NAM_TB),DE ; set name table address
                 jp      ENDVDPSET       ; execute the rest of the video setting
@@ -587,6 +589,8 @@ G1MD:           ; load pattern table
                 ld      (SCR_SIZE_W),A  ; screen width = 32 cols
                 ld      A,$18
                 ld      (SCR_SIZE_H),A  ; screen height = 24 rows
+                ld      A,$14
+                ld      (COMMAN),A      ; width for commas (3 columns)
                 ld      DE,$1800
                 ld      (SCR_NAM_TB),DE ; set name table address
                 ; load color table
@@ -648,6 +652,8 @@ EXG2MD:         ; load pattern table
                 ld      (SCR_SIZE_W),A  ; screen width = 32 cols
                 ld      A,$18
                 ld      (SCR_SIZE_H),A  ; screen height = 24 rows
+                ld      A,$14
+                ld      (COMMAN),A      ; width for commas (3 columns)
                 ld      DE,$3800
                 ld      (SCR_NAM_TB),DE ; set name table address
                  ; load color table
@@ -962,7 +968,12 @@ POS_CURSOR:     call    LOAD_CRSR_POS   ; load the VRAM address of cursor into H
 ; move cursor to new X,Y coordinates
 MOVCRS:         call    RSTCHRCRS       ; restore the char in the current cursor position
                 call    NEWCRSRCOORD    ; set new cursor's coordinates
-                jp      POS_CURSOR      ; position cursor into new location & return to caller
+MOVSHOWCRS:     call    POS_CURSOR      ; position cursor into new location
+                ld      A,(TMPBFR1)     ; load status of cursor flashing
+                and     $20             ; check cursor state
+                ld      (LSTCSRSTA),A   ; store the last cursor state
+                ld      A,$FF           ; set cursor visible after moved it
+                jp      WRITE_VIDEO_LOC ; write into video cell
 
 
 ; set new cursor's coordinates:
@@ -1003,7 +1014,7 @@ CONT_POS_CURS:  add     HL,DE           ; the correct starting address of the re
                 ret
 
 ; find X,Y coordinates of a screen address pointed in VRAM by HL
-; return them into L & A for X,Y
+; return them into L,A for X,Y
 HL2XY:          push    DE              ; store DE
                 ld      DE,(SCR_NAM_TB) ; load starting address of name table into DE
                 xor     A               ; clear Carry
@@ -1024,7 +1035,7 @@ CHAR2VID:       push    AF              ; store AF
                 push    AF              ; into stack
                 call    CURSOR_OFF      ; cursor off
                 ld      A,(CHR4VID)     ; recover char
-                cp      HOME            ; is it HOME char ($19?)
+                cp      HOME            ; is it HOME char ($19)?
                 jr      NZ,CHKCS        ; no, check over
                 call    ATHOME          ; yes, move the cursor to 0,0
                 jp      EXITCHAR2VID    ; exit
@@ -1081,7 +1092,10 @@ SETCRSRY:       xor     A               ; then set cursor X to 0 (go to beginnin
 SETCSRCOORDS:   ld      (SCR_CURS_X),A  ; store current cursor X
                 ld      A,E             ; recover Y
                 ld      (SCR_CURS_Y),A  ; store current cursor Y
-                call    POS_CURSOR      ; position cursor to new location
+                call    POS_CURSOR      ; position cursor into new location
+                ld      A,(TMPBFR1)     ; load status of cursor flashing
+                and     $20             ; check cursor state
+                ld      (LSTCSRSTA),A   ; store the last cursor state
 EXITCHAR2VID:   xor     A               ; reset char
                 ld      (CHR4VID),A     ; to be sent to screen
                 pop     AF              ; recover cursor state
@@ -1124,7 +1138,7 @@ BACKSPACE:      call    MVCRS2LFT       ; prepare to move cursor to left
                 call    LOAD_CRSR_POS   ; find address of new video cell
                 xor     A               ; null char
                 call    WRITE_VIDEO_LOC ; write into video cell
-                jp      POS_CURSOR      ; position cursor and return
+                jp      MOVSHOWCRS      ; move cursor to the new location and set it ON
 
 
 ; move cursor to left
@@ -1559,7 +1573,7 @@ LM80CLOGO       ; patterns to compose the splash screen logo
                 defb    0,0,13,0,0,12,0,0,0,1,4,4,0,1,0,0,3,5,9,20,19,8,9,20,19,8,9,1,1,8,0,0
                 defb    0,0,14,18,18,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
                 defb    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0; ------------------------------------------------------------------------------
-; LM80C - PSG ROUTINES - R3.13.3
+; LM80C - PSG ROUTINES - R3.14
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -1687,7 +1701,7 @@ CNTCHKSND:      inc     IX              ; set for...
 
 ; read a specific row of the keyboard matrix, set by A
 ; return read into A
-READKBLN:       push    BC
+READKBLN:       push    BC              ; store BC
                 ld      B,$0F           ; reg #15
                 ld      C,PSG_REG       ; PSG register port
                 out     (C),B           ; select reg #15
@@ -1697,7 +1711,7 @@ READKBLN:       push    BC
                 ld      C,PSG_REG       ; PSG register port
                 out     (C),B           ; select reg. 14 (port B)
                 in      A,(C)           ; read register #14
-                pop     BC
+                pop     BC              ; retrieve BC
                 ret
 
 ; read the keyboard matrix to look for a key pressure
@@ -1873,7 +1887,7 @@ PUTCHRBUF1:     xor     A               ; if send to input buffer,...
                 push    HL              ; store HL
                 call    CHARINTOBFR     ; cursor off, so send char to buffer...
                 pop     HL              ; retrieve HL
-                jp      CNTFNK          ; jump over
+                jp      CNTFNK          ; repeat
 PRNTFNK:        ld      A,D             ; recover char
                 ld      (CHR4VID),A     ; store char for printing
                 ld      A,$01           ; normal key - set input flag
@@ -1923,9 +1937,8 @@ KBMAP_CTRL:     defb '1',25,14,3,' ',16,154,'2'         ; 25=HOME  14=CTRL  3=RU
                 defb '9',184,170,172,171,181,164,'0'
                 defb 31,163,173,',','.',':',186,30      ; 31=CURSOR DOWN  30=CURSOR UP
                 defb 28,225,';','/',27,212,185,29       ; 28=CURSOR LEFT  27=ESCAPE  212=π  29=CURSOR RIGHT
-                defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP
-; ------------------------------------------------------------------------------
-; LM80C BASIC - R3.13.3
+                defb 8,13,189,162,1,2,4,24              ; 8=DEL(backspace)  13=RETURN  252=£  1=F1  2=F2  4=F3  24=HELP; ------------------------------------------------------------------------------
+; LM80C BASIC - R3.14
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. Code and computer schematics are released under
@@ -2293,6 +2306,7 @@ WORDS:  defb    'E'+$80,"ND"            ; from here the list contains the COMMAN
         defb    'P'+$80,"LOT"           ; added by Leonardo Miliani
         defb    'D'+$80,"RAW"           ; added by Leonardo Miliani
         defb    'C'+$80,"IRCLE"         ; added by Leonardo Miliani
+        defb    'P'+$80,"AINT"          ; added by Leonardo Miliani
         defb    'S'+$80,"ERIAL"         ; added by Leonardo Miliani
         defb    'H'+$80,"ELP"           ; changed by Leonardo Miliani - was LINES
         defb    'C'+$80,"LS"            ; restored command
@@ -2407,6 +2421,7 @@ WORDTB: defw    PEND
         defw    PLOT        ; added by Leonardo Miliani
         defw    DRAW        ; added by Leonardo Miliani
         defw    CIRCLE      ; added by Leonardo Miliani
+        defw    PAINT       ; added by Leonardo Miliani
         defw    SERIAL      ; added by Leonardo Miliani
         defw    HELP        ; changed by Leonardo Miliani - was LINES
         defw    CLS
@@ -2441,33 +2456,33 @@ ZDATA   equ     $83             ; DATA
 ZGOTO   equ     $88             ; GOTO
 ZGOSUB  equ     $8C             ; GOSUB
 ZREM    equ     $8E             ; REM
-ZPRINT  equ     $AC             ; PRINT
-ZNEW    equ     $B2             ; NEW
+ZPRINT  equ     $AD             ; PRINT
+ZNEW    equ     $B3             ; NEW
 
-ZTAB    equ     $B3             ; TAB
-ZTO     equ     $B4             ; TO
-ZFN     equ     $B5             ; FN
-ZSPC    equ     $B6             ; SPC
-ZTHEN   equ     $B7             ; THEN
-ZNOT    equ     $B8             ; NOT
-ZSTEP   equ     $B9             ; STEP
+ZTAB    equ     $B4             ; TAB
+ZTO     equ     $B5             ; TO
+ZFN     equ     $B6             ; FN
+ZSPC    equ     $B7             ; SPC
+ZTHEN   equ     $B8             ; THEN
+ZNOT    equ     $B9             ; NOT
+ZSTEP   equ     $BA             ; STEP
 
-ZPLUS   equ     $BA             ; +         <-- from here, there are the math operators
-ZMINUS  equ     $BB             ; -
-ZTIMES  equ     $BC             ; *
-ZDIV    equ     $BD             ; /
-ZMOD    equ     $BE             ; %
-ZDINT   equ     $BF             ; #
-ZOR     equ     $C3             ; OR
-ZGTR    equ     $C4             ; >
-ZEQUAL  equ     $C5             ; M
-ZLTH    equ     $C6             ; <
+ZPLUS   equ     $BB             ; +         <-- from here, there are the math operators
+ZMINUS  equ     $BC             ; -
+ZTIMES  equ     $BD             ; *
+ZDIV    equ     $BE             ; /
+ZMOD    equ     $BF             ; %
+ZDINT   equ     $C0             ; #
+ZOR     equ     $C4             ; OR
+ZGTR    equ     $C5             ; >
+ZEQUAL  equ     $C6             ; M
+ZLTH    equ     $C7             ; <
 
-ZSGN    equ     $C7             ; SGN       <-- from here, there are the functions
-ZPOINT  equ     $DD             ; ZPOINT    <-- if the user enters a custom function, between
+ZSGN    equ     $C8             ; SGN       <-- from here, there are the functions
+ZPOINT  equ     $DE             ; ZPOINT    <-- if the user enters a custom function, between
                                 ;               SGN and POINT, he/she must increment this pointer by 1
-ZINSTR  equ     $DE             ; ZINSTR    <-- same here
-ZLEFT   equ     $E6             ; LEFT$     <-- if the user enters a custom function anywhere,
+ZINSTR  equ     $DF             ; ZINSTR    <-- same here
+ZLEFT   equ     $E7             ; LEFT$     <-- if the user enters a custom function anywhere,
                                 ;               he/she must increment this pointer by 1
 
 ; ARITHMETIC PRECEDENCE TABLE
@@ -2589,7 +2604,7 @@ INITAB: jp      WARMST          ; Warm start jump
         in      A,($00)         ; INP (x) skeleton
         ret
         defb    $FF             ; Terminal width (255 = no auto CRLF)
-        defb    $1C             ; Width for commas (3 columns)
+        defb    $14             ; Width for commas (at reset, 3 columns, for G1 mode)
         defb    $00             ; No nulls after input bytes
         defb    $00             ; Output enabled (^O off)
         defw    $00             ; Array load/save check sum
@@ -3821,11 +3836,11 @@ CNTEND: xor     A               ; Set to position 0
 
 DOCOM:  ld      A,(COMMAN)      ; Get comma width
         ld      B,A             ; Save in B
-        ld      A,(CURPOS)      ; Get current position
+        ld      A,(SCR_CURS_X)  ; Get current position
         cp      B               ; Within the limit?
         call    NC,PRNTCRLF     ; No - output CRLF
         jp      NC,NEXITM       ; Get next item
-ZONELP: sub     $0E             ; Next zone of 14 characters
+ZONELP: sub     $0A             ; Next zone of 10 characters
         jp      NC,ZONELP       ; Repeat if more zones
         cpl                     ; Number of null chars to output
         ld      C,NLLCR         ; null char
@@ -5147,7 +5162,7 @@ TP      equ     VIDEOBUFF+6
 TF      equ     VIDEOBUFF+8
 INSTR:  call    CHKSYN          ; make sure "(" follows
         defb    '('
-        dec     HL
+        dec     HL              ; dec 'cause GETCHR increments
         call    GETCHR          ; check if something follows
         jp      Z,SNERR         ; if nothing else, raise a syntax error
         call    EVAL            ; Evaluate expression
@@ -5160,7 +5175,7 @@ INSTR:  call    CHKSYN          ; make sure "(" follows
         ld      HL,(VIDEOBUFF)  ; retrieve code string pointer from temp buffer
         call    CHKSYN          ; Make sure ',' follows
         defb    ','
-        dec     HL
+        dec     HL              ; dec 'cause GETCHR increments
         call    GETCHR          ; check if something follows
         jp      Z,SNERR         ; if nothing else, raise a syntax error
         call    EVAL            ; Evaluate expression
@@ -5375,7 +5390,7 @@ NMI:    call    GETNUM          ; Get memory address
         ld      A,E             ; check if address is 0
         or      D
         jr      NZ,NM1          ; no, so jump over
-        di                      ; disable INTs
+DISNMI: di                      ; disable INTs
         call    NMIDINT         ; disable VDP INT
         push    HL              ; store HL
         ld      HL,$45ED        ; these are the op-codes for "RETN"
@@ -7059,7 +7074,7 @@ CHKSCAR:dec     HL              ; dec 'cos GETCHR INCs
 ; a=foreground color / b=background color / c=border color
 ; a,b,c must be in a range between 1 and 15 (0 is transparent and it's not supported)
 COLOR:  call    GETINT          ; get first value
-        call    CHKCLR          ; check if it's in range 1~15
+        call    CHKCLR1         ; check if it's in range 1~15
         ld      (TMPBFR1),A     ; store it
         ld      A,(SCR_MODE)    ; check screen mode
         cp      $03             ; is it multicolor mode?
@@ -7072,16 +7087,15 @@ COLOR:  call    GETINT          ; get first value
 CNTCKCL:call    CHKSYN          ; Make sure ',' follows
         defb    ','
         call    GETINT          ; get second value
-        call    CHKCLR          ; check if it's in range 1~15
+        call    CHKCLR1         ; check if it's in range 1~15
         ld      (TMPBFR2),A     ; store it
-        ld      (BKGNDCLR),A    ; and set as background color
         ld      A,(SCR_MODE)    ; check screen mode
         and     A               ; is it text mode?
         jr      Z,CLRTXT        ; yes, stop here because in text mode, background and border colors coincide
         call    CHKSYN          ; Make sure ',' follows
         defb    ','
         call    GETINT          ; get third value
-        call    CHKCLR          ; check if it's in range 1~15
+        call    CHKCLR1         ; check if it's in range 1~15
         ld      (TMPBFR3),A     ; store it
         push    DE              ; store DE
         ld      A,(SCR_MODE)    ; check screen mode
@@ -7119,14 +7133,13 @@ RPTLDCL:out     (C),A           ; after first byte, the VDP autoincrements VRAM 
         jr      NZ,RPTLDCL      ; no, repeat
         ei
         pop     HL              ; retrieve HL
-SETBRCL:add     A,A             ; move high nibble
-        add     A,A             ; to right to get the
-        add     A,A             ; foreground color
-        add     A,A             ; into the low nibble
-        ld      (FRGNDCLR),A    ; store foreground color
+SETBRCL:ld      A,(TMPBFR1)     ; retrieve foreground color
+        ld      (FRGNDCLR),A    ; store it
+        ld      A,(TMPBFR2)     ; retrieve background color
+        ld      (BKGNDCLR),A    ; store it
         ld      A,(TMPBFR3)     ; recover border color
-        ld      E,A             ; move A into E
-        ld      A,$07           ; VDP register 7
+        ld      E,A             ; move it into E
+        ld      A,$07           ; set VDP register 7
         di
         call    WRITE_VREG      ; send value to VDP: set border color
         ei                      ; re-enable INTs
@@ -7147,9 +7160,9 @@ MIXCLRS:ld      A,(TMPBFR2)     ; retrieve background color
 
 
 ; check if the color is not 0 and into the range 1~15
-CHKCLR: and     A               ; is it 0?
+CHKCLR1:and     A               ; is it 0?
         jp      Z,SNERR         ; yes, raise a SN error
-        cp      $10             ; is it in range 1~15?
+CHKCLR0:cp      $10             ; is it in range 0~15?
         jp      NC,SNERR        ; no, raise a SN error
         ret                     ; param is OK, can return
 
@@ -7171,6 +7184,7 @@ GX      equ     TMPBFR3
 GY      equ     TMPBFR4
 TMPCLR  equ     TMPBFR2
 MIXCOL  equ     TMPBFR1
+TMPADR  equ     VIDEOBUFF
 CHRPNT  equ     VIDEOBUFF+$02
 NUMCHR  equ     VIDEOBUFF+$04
 TMPHL   equ     VIDEOBUFF+$06
@@ -7181,12 +7195,12 @@ GPRINT: call    CHKG2M          ; check if in graphic mode 2
         ld      (VIDEOBUFF),HL  ; save current code string pointer
         call    EVAL            ; Evaluate expression
         call    TSTSTR          ; Make sure it's a string
-        ld      (TMPHL),HL
+        ld      (TMPHL),HL      ; store code string pointer
         call    GSTRCU          ; Current string to pool
         call    LOADFP          ; Move string block to BCDE (BC=pointer, E=length)
         ld      (CHRPNT),BC     ; store string pointer
         ld      (NUMCHR),DE     ; store string lenght
-        ld      HL,(TMPHL)
+        ld      HL,(TMPHL)      ; store code string pointer
         call    CHKSYN          ; Make sure ',' follows
         defb    ','
         call    GETINT          ; get X coord.
@@ -7227,18 +7241,18 @@ GPNT:   push    DE              ; store string lenght (E)
         ld      H,0             ; HL = X
         add     HL,HL           ;
         add     HL,HL           ;
-        add     HL,HL           ; HL = X*8
+        add     HL,HL           ; X=X*8
         ld      A,(GY)          ; load Y
-        ld      D,A             ;
-        ld      E,0             ; DE = Y * 256
+        ld      D,A             ; move it into D
+        ld      E,0             ; DE =Y*256
         add     HL,DE           ; address = X*8 + Y*256
-        ld      (VIDEOBUFF),HL  ; store VRAM address of first VRAM cell
+        ld      (TMPADR),HL     ; store VRAM address of first VRAM cell
         pop     DE              ; retrieve # of chars to be printed yet (E)
 RPGPNT: dec     E               ; Count characters
         ret     Z               ; End of string - return
         push    DE              ; store chars counter
         ; calculate dest address in color vram
-        ld      HL,(VIDEOBUFF)  ; recover VRAM address 
+        ld      HL,(TMPADR)     ; recover VRAM address 
         ld      DE,$2000        ; color map address
         add     HL,DE           ; HL = $2000 + XY address
         di                      ; disable INTs
@@ -7265,7 +7279,7 @@ GPNTCO1:out     (C),A           ; send data (VRAM pointer auto-increments)
         ld      DE,CHRST88      ; DE = start of 8x8 fonts in ROM
         add     HL,DE           ; HL = start of characters in ROM
         ex      DE,HL           ; store address into DE
-GPCPCHR:ld      HL,(VIDEOBUFF)  ; load VRAM address
+GPCPCHR:ld      HL,(TMPADR)     ; load VRAM address
         call    SETVDPADRS      ; send it to VDP
         ex      DE,HL           ; restore address into HL
         ld      B,$08           ; repeat for 8 rows
@@ -7277,9 +7291,9 @@ GPCPCH1:outi                    ; load a byte from ROM and send to VRAM
         jr      NZ,GPCPCH1      ; repeat for 8 chars
         ei                      ; re-enable INTs
         ld      DE,$0008        ; 8 bytes to go to the next video ell
-        ld      HL,(VIDEOBUFF)  ; load VRAM address
+        ld      HL,(TMPADR)     ; load VRAM address
         add     HL,DE           ; get address of next VRAM cell
-        ld      (VIDEOBUFF),HL  ; store new VRAM address
+        ld      (TMPADR),HL     ; store new VRAM address
         ld      DE,$1800        ; forbidden address
         call    CMP16           ; check if the printing has gone out of the screen
         pop     DE              ; retrieve number of chars to be printed
@@ -7293,12 +7307,167 @@ CKCOL:  dec     HL              ; dec 'cos GETCHR INCs
         defb    ','
         push    DE              ; store DE
         call    GETINT          ; get value
-        call    CHKCLR          ; check if color is in range 1~15
+        call    CHKCLR1         ; check if color is in range 1~15
         pop     DE              ; retrieve DE
         ld      (DE),A          ; store color into temp buffer
         ret                     ; return to caller
         
-; POINT(x,y): return if a pixel is set (1) or reset (0)
+
+; paint X,Y[,C]: in graphics mode, fills an area starting
+; at point X,Y, using default color or, if used, with
+; color set by C
+; TMPBFR1       X
+; TMPBFR2       Y
+; TMPBFR3       COLOR
+PNT     equ     VIDEOBUFF
+SPA     equ     VIDEOBUFF+$02
+SPB     equ     VIDEOBUFF+$03
+ORGSP   equ     VIDEOBUFF+$04
+PAINT:  call    CHKG2M          ; check if in graphic mode 2
+        call    GETINT          ; get X
+        ld      (TMPBFR1),A     ; store X
+        call    CHKSYN          ; Make sure ',' follows
+        defb    ','
+        call    GETINT          ; get Y coords,
+        cp      $C0             ; check if Y is in range 0~191
+        jp      NC,FCERR        ; no, raise an FC error
+        ld      (TMPBFR2),A     ; store Y
+        call    CLRPRM          ; check if color has been passed
+        ld      A,(TMPBFR3)     ; load color
+        and     A               ; check if 0
+        jp      Z,FCERR         ; yes, raise an error
+        push    HL              ; store HL
+        push    BC              ; store BC
+        push    DE              ; store DE
+        ; start algorithm
+        call    PNTRTN          ; check if pixel is already set
+        jp      NZ,EXITPA2      ; if yes, then leave PAINT
+        ld      (ORGSP),SP      ; no, store current Stack Pointer
+        ld      HL,$0001        ; HL=1
+        ld      (PNT),HL        ; set PNT
+        ld      A,(TMPBFR1)     ; load starting X...
+        ld      B,A             ; ...into B
+        ld      A,(TMPBFR2)     ; load starting Y...
+        ld      C,A             ; ...into C
+        push    BC              ; store starting X,Y into stack
+        ; main loop
+;130 IF PT<0 THEN END
+;140 X=ST(PT,0):Y=ST(PT,1):PT=PT-1
+;150 X1=X
+NXTLOOP:ld      HL,(PNT)        ; retrieve PNT
+        ld      A,H             ; check if PNT=0
+        or      L
+        jp      Z,EXITPAI       ; yes, no more points to process - exit
+        dec     HL              ; no, so decrement PNT...
+        ld      (PNT),HL        ; ...and store it
+        pop     BC              ; retrieve pixel coordinates X,Y into BC
+;170 IF X1>=0 THEN IF POINT(X1,Y)=0 THEN X1=X1-1:GOTO 170
+PAINT0: call    CHECKPA         ; check if pixel is set/reset
+        jr      NZ,PAINT11      ; pixel is set, so jump over
+        ld      A,B             ; pixel is reset, check if X1=0
+        and     A               ; (reached the limit of the screen)
+        jr      Z,PAINT1        ; yes, jump over
+        dec     B               ; no, decrement X1...
+        jr      PAINT0          ; ...and repeat
+;180 X1=X1+1 ??
+;190 SA=0:SB=0
+PAINT11:inc     B               ; if found a pixel on, the re-increment X1
+PAINT1: xor     A               ; reset A
+        ld      (SPA),A         ; set SA=0
+        ld      (SPB),A         ; set SB=0
+;200 IF POINT(X1,Y)=0 THEN 210
+;205 GOTO 130
+MNPAINT:call    CHECKPA         ; check if pixel is set/reset
+        jr      NZ,NXTLOOP      ; it's set, so goto next loop
+;210 PLOT X1,Y
+        ld      A,B             ; copy X1
+        ld      (TMPBFR1),A     ; into buffer
+        ld      A,C             ; copy Y
+        ld      (TMPBFR2),A     ; into buffer
+        call    CNTPLOT         ; plot pixel X1,Y
+;220 IF SA=0 AND Y>0 THEN IF POINT(X1,Y-1)=0 THEN A=X1:B=Y-1:GOSUB 300:SA=1:GOTO 240
+        ld      A,(SPA)
+        and     A               ; SA=0?
+        jr      NZ,PAINT2       ; no, jump over
+        ld      A,C             ; load Y
+        cp      $01             ; Y>0?
+        jr      C,PAINT2        ; no, jump over
+        dec     A               ; yes, Y=Y-1
+        call    CHECKPY         ; check pixel X1,Y-1
+        jr      NZ,PAINT2       ; it's set, so jump over
+        dec     C               ; Y=Y-1
+        push    BC              ; insert pixel(X1,Y-1) into stack
+        inc     C               ; retrieve original Y
+        ld      HL,(PNT)        ; load PNT
+        inc     HL              ; increment PNT
+        ld      (PNT),HL        ; store new PNT
+        ld      A,$01           ; set SA=1...
+        ld      (SPA),A         ; ...into memory
+        jp      PAINT3          ; jump over
+;230 IF SA=1 AND Y>0 THEN IF POINT(X1,Y-1)<>0 THEN SA=0
+PAINT2: ld      A,(SPA)
+        rra                     ; check if SA=1
+        jr      NC,PAINT3       ; no, jump over
+        ld      A,C             ; load Y
+        cp      $01             ; Y>0?
+        jr      C,PAINT3        ; no, jump over
+        dec     A               ; Y=Y-1
+        call    CHECKPY         ; check pixel X1,Y-1
+        jp      Z,PAINT3        ; if pixel is off, jump over
+        xor     A               ; pixel is on, so...
+        ld      (SPA),A         ; ...set SA=0
+;240 IF SB=0 AND Y<191 THEN IF POINT(X1,Y+1)=0 THEN A=X1:B=Y+1:GOSUB 300:SB=1:GOTO 260
+PAINT3: ld      A,(SPB)         ; check if
+        and     A               ; B=0
+        jr      NZ,PAINT4       ; no, jump over
+        ld      A,C             ; load Y
+        cp      $BF             ; Y<191?
+        jr      NC,PAINT4       ; no, jump over
+        inc     A               ; Y=Y+1
+        call    CHECKPY         ; check pixel X1,Y+1
+        jr      NZ,PAINT4       ; pixel is on, so jump over
+        inc     C               ; Y=Y+1
+        push    BC              ; insert pixel(X1,Y+1) into stack
+        dec     C               ; retrieve original Y
+        ld      HL,(PNT)        ; PNT
+        inc     HL              ; PNT=PNT+1
+        ld      (PNT),HL        ; store PNT
+        ld      A,$01           ; SB=1
+        ld      (SPB),A         ; set SB
+        jp      PAINT5          ; jump over
+;250 IF SB=1 AND Y<191 THEN IF POINT(X1,Y+1)<>0 THEN SB=0
+PAINT4: ld      A,(SPB)         ; load SB
+        rra                     ; check if SB=1
+        jp      NC,PAINT5       ; no, jump over
+        ld      A,C             ; load Y
+        cp      $BF             ; Y<191?
+        jr      NC,PAINT5       ; no, jump over
+        inc     A               ; Y=Y+1
+        call    CHECKPY         ; check pixel X1,Y+1
+        jp      Z,PAINT5        ; if pixel is off, jump over
+        xor     A               ; pixel is on, so...
+        ld      (SPB),A         ; ...set SB=0
+;260 X1=X1+1
+;270 GOTO 200
+PAINT5: inc     B               ; X1=X1+1
+        jp      Z,NXTLOOP       ; if X1>255 (X1=0) then goto next loop
+        jp      MNPAINT         ; otherwise, repeat for next X
+EXITPAI:ld      SP,(ORGSP)      ; retrieve original SP pointer
+EXITPA2:pop     DE              ; retrieve DE
+        pop     BC              ; retrieve BC
+        pop     HL              ; retrieve HL
+        ret                     ; return to caller
+CHECKPA:ld      A,C             ; copy Y into A
+CHECKPY:ld      (TMPBFR2),A     ; store Y
+        ld      A,B             ; copy X1 into A
+        ld      (TMPBFR1),A     ; store X1
+        push    BC              ; save X1,Y
+        call    PNTRTN          ; check if pixel is set/reset
+        pop     BC              ; retrieve X1,Y
+        ret                     ; return to caller
+
+
+; POINT(x,y): return if a pixel is set (returns color) or if it's reset (0)
 POINT:  call    CHKG2M          ; check if in graphic mode 2
         call    CHKSYN          ; make sure "(" follows
         defb    '('
@@ -7314,21 +7483,33 @@ POINT:  call    CHKG2M          ; check if in graphic mode 2
         defb    ')'
         push    HL              ; store current string address - the point after the ")" - ...
         pop     IY              ; ...into IY
-        call    XY2HL           ; find HL address of pixel at X,Y
+        call    PNTRTN          ; check if pixel is set or reset
+        jr      NZ,CTPOINT      ; it's ON, jump over
+        xor     A               ; no, it's OFF. make sure to reset A...
+        ld      B,A             ; ...and B
+PNTEND: pop     HL              ; drop original return point
+        push    IY              ; load current string address from IY into stack
+        ld      DE,RETNUM       ; Address of Return number from function...
+        push    DE              ; ...saved on stack
+        jp      ABPASS          ; return AB
+CTPOINT:set     5,H             ; set to read from color VRAM (it's like adding $2000 to HL)
+        di
+        call    READ_VIDEO_LOC  ; load original colors of pixel
+        ei
+        srl     A               ; shift A...
+        srl     A               ; ...4 times...
+        srl     A               ; ...to move foreground color...
+        srl     A               ; ...into lowest nibble
+        ld      B,A             ; color into B
+        xor     A               ; reset MSB
+        jp      PNTEND          ; return AB
+PNTRTN: call    XY2HL           ; find HL address of pixel at X,Y
         ld      D,A             ; store pixel index
         di                      ; disable INTs
         call    READ_VIDEO_LOC  ; read contents of VRAM cell addressed by HL
         ei                      ; re-enable INTs
         and     D               ; is the pixel ON or OFF? (will be checked later)
-        pop     HL              ; drop original return point
-        push    IY              ; load current string address from IY into stack
-        ld      DE,RETNUM       ; Address of Return number from function...
-        push    DE              ; ...saved on stack
-        LD      A,$00           ; A=0 (reset A w/o altering flags)
-        LD      B,A             ; and B=0, so integer AB = 0
-        jp      Z,ABPASS        ; if pixel is off, return AB=0
-        inc     B               ; otherwise, return AB=1
-PNTEND: jp      ABPASS          ; return AB
+        ret                     ; return to caller
 
 
 ; PLOT X,Y[,color]
@@ -7350,7 +7531,20 @@ CNTPLOT:push    HL              ; store HL
         jp      NC,NOGD         ; if carry is reset, there was an error -> so leave
         ld      D,A             ; move pixel value into D
         ld      A,(TMPBFR3)     ; retrieve color
-        add     A,A             ; now we move low nibble
+        and     A               ; is it 0? (background, or reset pixel)
+        jr      NZ,CNTPLT1      ; no, continue
+        di                      ; yes - so, disable INTs
+        call    READ_VIDEO_LOC  ; load original value of VRAM cell pointed by HL
+        ei                      ; re-enable INTs
+        ld      E,A             ; store value of cell
+        ld      A,D             ; retrieve pixel
+        cpl                     ; revert bits
+        and     E               ; set video pixel to off
+        di                      ; disable INTs
+        call    WRITE_VIDEO_LOC ; write new value into VRAM cell
+        ei                      ; re-enable INTs
+        jp      NOGD            ; leave
+CNTPLT1:add     A,A             ; now we move low nibble
         add     A,A             ; in the high nibble
         add     A,A             ; by adding A to itself
         add     A,A             ; 4 times (this is a shift left 4)
@@ -7362,7 +7556,7 @@ CNTPLOT:push    HL              ; store HL
         di
         call    WRITE_VIDEO_LOC ; write new value into VRAM cell
         ei
-        set     5,H             ; set to write into color VRAM (it's like adding $2000 to HL)
+        set     5,H             ; set to read from color VRAM (it's like adding $2000 to HL)
         di
         call    READ_VIDEO_LOC  ; load original colors of pixel
         ei
@@ -7467,7 +7661,8 @@ DRAW:   call    CHKG2M          ; check if in G2 mode
         ld      HL,(X1)
         ld      DE,(X2)
         call    CMP16           ; X1<X2?
-        jp      P,X1GR          ; no, X1>=X2
+        jp      Z,X1GR          ; no, X1=X2
+        jp      P,X1GR          ; no, X1>X2
         ld      BC,$0001        ; yes, so set SX=1
 X1GR:   ld      (SX),BC         ; store SX
         ld      DE,(Y1)
@@ -7480,7 +7675,8 @@ X1GR:   ld      (SX),BC         ; store SX
         ld      HL,(Y1)
         ld      DE,(Y2)
         call    CMP16           ; is Y1<Y2?
-        jp      P,Y1GR          ; no, Y1>=Y2
+        jp      Z,Y1GR          ; no, Y1=Y2
+        jp      P,Y1GR          ; no, Y1>Y2 - jump over
         ld      BC,$0001        ; yes, so set SY=1
 Y1GR:   ld      (SY),BC         ; store SY
         ld      HL,(DY)         ; ER=DY
@@ -7496,6 +7692,9 @@ Y1GR:   ld      (SY),BC         ; store SY
 ER2:    ld      HL,(ER)         ; load ER
         sra     H               ; right shift (and preserve sign)...
         rr      L               ; ...of HL, so ER=INT(ER/2)
+        bit     7,H             ; is the number negative?
+        jp      Z,STRE2         ; no, jump over
+        inc     HL              ; yes, add 1 'cos INT of a negative number needs to be incremented
 STRE2:  ld      (ER),HL         ; store ER
 RPTDRW: call    CNTPLOT         ; plot first pixel
         ld      HL,(X1)
@@ -7526,7 +7725,8 @@ CNTDRW: ld      DE,(ER)
 DXGR:   ld      HL,(E2)
         ld      DE,(DY)
         call    CMP16           ; E2<DY?
-        jp      P,RPTDRW        ; no, E2>=DY: so jump over
+        jp      Z,RPTDRW        ; no, E2=DY: jump
+        jp      P,RPTDRW        ; no, E2>DY: jump
         ld      HL,(ER)         ; yes
         ld      DE,(DX)
         add     HL,DE           ; ER=ER+DX
@@ -7779,11 +7979,11 @@ CLRPRM: ld      A,(FRGNDCLR)    ; load foreground color
         ld      (TMPBFR3),A     ; store into temp buffer
         dec     HL              ; dec 'cos GETCHR INCs
         call    GETCHR          ; Get next character
-        ret     Z               ; return if nothing follows
+        ret     Z               ; return foreground color if nothing follows
         call    CHKSYN          ; Make sure ',' follows
         defb    ','
         call    GETINT          ; get value
-        call    CHKCLR          ; check if color is in range 1~15
+        call    CHKCLR0         ; check if color is in range 0~15
         ld      (TMPBFR3),A     ; store color into temp buffer
         ret                     ; return to caller
 
@@ -8430,6 +8630,8 @@ MONOUT: jp      $0008           ; output a char
 RESET:  ld      A,(SERIALS_EN)
         and     $01             ; is serial port #1 open?
         call    NZ,RSTSER1      ; yes, reset serial 1
+        call    DISNMI          ; disable NMI vector
+        di                      ; disable INTs
         jp      $0000           ; Restart
 
 
@@ -9189,7 +9391,7 @@ LOGOFONT:   equ $
             defb %11111111,%11111111,%11111111,%11111111,%00001111,%00001111,%00001111,%00001111 ; 22
             defb %00000000,%00110000,%01111000,%01111000,%00110000,%00000000,%00000000,%00000000 ; 23
             ; ------------------------------------------------------------------------------
-; LM80C - FIRMWARE - R3.13.3
+; LM80C - FIRMWARE - R3.14
 ; ------------------------------------------------------------------------------
 ; The following code is intended to be used with LM80C Z80-based computer
 ; designed by Leonardo Miliani. More info at
@@ -9254,25 +9456,7 @@ LOGOFONT:   equ $
 
 ; ------------------------------------------------------------------------------
 ; include the latest version of the bootloader: this sets up the address aliases
-; configure the hardware, checks if warm or cold startup and loads the BASIC interpreter
-#include "../include/bootloader/bootloader-r3133.asm"
-
-; incude the latest version of the VDP module
-#include "../include/vdp/vdp-r3133.asm"
-
-; incude the latest version of the PSG module
-#include "../include/psg/psg-r3133.asm"
-
-; include the latest version of the NASCOM BASIC interpreter
-#include "../include/basic/basic32k-r3133.asm"
-
-; include utils
-#include "../include/utils/utils-r11.asm"
-
-; include the latest version of the font sets
-#include "../include/vdp/6x8fonts-r15.asm"
-#include "../include/vdp/8x8fonts-r18.asm"
-#include "../include/vdp/logo-fonts.asm"
+; configu
 
 ; END OF ASSEMBLY SOURCE
 #end
