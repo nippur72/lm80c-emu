@@ -5,6 +5,7 @@ function pckey_to_hardware_keys_ITA(code, key, e) {
 
    if(e.ctrlKey) hardware_keys.push( KEY_CTRL );
    if(e.altKey) hardware_keys.push( KEY_CBM );
+   let capsLockState = e.getModifierState("CapsLock");
 
    if(code === "Home" && e.shiftKey) hardware_keys.push( KEY_SHIFT, KEY_CLR_HOME  );
 
@@ -19,7 +20,7 @@ function pckey_to_hardware_keys_ITA(code, key, e) {
    if(key === "9")             hardware_keys.push( KEY_9  );
    if(key === "0")             hardware_keys.push( KEY_0  );
 
-   if(e.shiftKey) {
+   if((e.shiftKey && !capsLockState) || (!e.shiftKey && capsLockState)) {
       if(code === "KeyQ")         hardware_keys.push( KEY_SHIFT, KEY_Q  );
       if(code === "KeyW")         hardware_keys.push( KEY_SHIFT, KEY_W  );
       if(code === "KeyE")         hardware_keys.push( KEY_SHIFT, KEY_E  );
