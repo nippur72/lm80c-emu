@@ -166,7 +166,7 @@ async function fetchProgram(name)
       const response = await fetch(`software/${name}`);
       if(response.status === 404) return false;
       const bytes = new Uint8Array(await response.arrayBuffer());
-      setTimeout(()=>droppedFile(name, bytes), 2000);
+      setTimeout(()=>droppedFile(name, bytes), 3000);
       return true;
    }
    catch(err)
