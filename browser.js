@@ -122,7 +122,7 @@ function parseQueryStringCommands() {
 
    if(options.load !== undefined) {
       const name = options.load;      
-      fetchProgramAll(name);            
+      fetchProgramAll(name);
    }
 
    if(options.bt !== undefined || 
@@ -166,7 +166,7 @@ async function fetchProgram(name)
       const response = await fetch(`software/${name}`);
       if(response.status === 404) return false;
       const bytes = new Uint8Array(await response.arrayBuffer());
-      droppedFile(name, bytes);
+      setTimeout(()=>droppedFile(name, bytes), 2000);
       return true;
    }
    catch(err)
