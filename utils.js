@@ -64,8 +64,8 @@ function mem_read_word(address) {
    return lo+hi*256;
 }
 
-function crun(filename) {
-   load(filename);
+async function crun(filename) {
+   await load(filename);
    //await print_string("\nrun:\n");
    pasteLine("RUN\r\n");
 }
