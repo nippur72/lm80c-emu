@@ -144,8 +144,6 @@ function oneFrame() {
 
 
 function main() {
-   // prints welcome message on the console
-   welcome();
 
    parseQueryStringCommands();
 

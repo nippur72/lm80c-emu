@@ -90,14 +90,6 @@ async function droppedFile(outName, bytes) {
    }
 }
 
-// **** welcome message ****
-
-function welcome() {
-   console.info(
-`Welcome to the LM80C emulator
-Please read the instructions at https://github.com/nippur72/lm80c-emu`);   
-}
-
 function getQueryStringObject(options) {
    let a = window.location.search.split("&");
    let o = a.reduce((o, v) =>{
