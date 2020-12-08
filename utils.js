@@ -99,8 +99,8 @@ function pasteLine(line) {
 function pasteChar(c) {
    SIO_receiveChar(c);
    while(sio_is_busy()) renderLines(262);
-   while(mem_read(CRSR_STATE)==0) renderLines(262);
-   while(mem_read(CRSR_STATE)==0) renderLines(262);
+   let start_cycle = total_cycles;
+   while(mem_read(CRSR_STATE)==0 && ((total_cycles-start_cycle) < (cyclesPerLine*262*8))) renderLines(262);
    renderLines(262);
 }
 
@@ -239,11 +239,6 @@ function make_lm(start, end, rows) {
       nline += 10;
    }
    console.log(s);
-}
-
-function tmr()
-{
-   return mem_read_word(TMRCNT) + (mem_read_word(TMRCNT+2) << 16);
 }
 
 let counter = 0;
