@@ -15,13 +15,12 @@
 // TODO mobile keyboard
 
 
-// firmware 3.13.3
-let BASTXT     = 0x8133;
-let PROGND     = 0x81BB;
-let CRSR_STATE = 0x81E9;
-let TMRCNT     = 0x81CE;
+// firmware 3.4
+let BASTXT     = 0x8133;    // points to basic free area (start of program)
+let PROGND     = 0x81BB;    // points to end of the basic program
+let CRSR_STATE = 0x81E9;    // cursor visibility state (for injecting keys)
 
-// 32K ROM is defined in roms.js
+const rom = new Uint8Array(32768).fill(0x00);
 const ram = new Uint8Array(32768).fill(0x00); 
 
 let cpu;
@@ -148,7 +147,24 @@ function main() {
    parseQueryStringCommands();
 
    // loads the eprom
-   rom.forEach((v,i)=>rom_load(i,v));
+   {
+      let firmware = rom_314;
+      if(options.rom == "310") firmware = rom_310;
+      if(options.rom == "311") firmware = rom_311;
+      if(options.rom == "312") firmware = rom_312;
+      if(options.rom == "313") firmware = rom_313;
+      if(options.rom == "3131") firmware = rom_3131;
+      if(options.rom == "3132") firmware = rom_3132;
+      if(options.rom == "3133") firmware = rom_3133;
+      if(options.rom == "3134") firmware = rom_3134;
+      if(options.rom == "3135") firmware = rom_3135;
+      if(options.rom == "3136") firmware = rom_3136;
+      if(options.rom == "3137") firmware = rom_3137;
+      if(options.rom == "3138") firmware = rom_3138;
+      if(options.rom == "314") firmware = rom_314;
+      if(options.rom == "315") firmware = rom_315;
+      firmware.forEach((v,i)=>rom_load(i,v));
+   }
 
    cpu =
    {

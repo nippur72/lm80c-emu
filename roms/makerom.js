@@ -24,6 +24,7 @@ function makeFile(filename, buffer, varname) {
 }
 
 let filename = process.argv.length >= 3 ? process.argv[2] : "LM80C-firmware-r314.rom";
+let outname = process.argv.length >= 3 ? process.argv[3] : "rom";
 
 let buffer = fs.readFileSync(filename);
 
@@ -34,9 +35,9 @@ if(false) {
    buffer = rompatched;
 }
 
-let outfile = makeFile(filename, buffer, "rom");
+let outfile = makeFile(filename, buffer, outname);
 
-fs.writeFileSync("roms.js", outfile);
+fs.writeFileSync(`${outname}.js`, outfile);
 
 //*************************************************************************************/
 

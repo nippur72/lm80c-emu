@@ -36,6 +36,16 @@ to deactivate it. Within the debug functions you can access all the emulator var
 most likely you'll want to read the Z80 state with `cpu.getState()` or the memory content
 with `mem_read()` and `mem_write()`.
 
+START WITH A DIFFERENT FIRMWARE
+===============================
+
+To select a different firmware than the latest one, use the querystring parameter
+`rom`, e.g.:
+
+https://nippur72.github.io/lm80c-emu?rom=314
+
+to start with firmware named "LM80C-firmware-r314.rom"
+
 
 AUTOLOADING
 =================
