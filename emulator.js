@@ -1,5 +1,7 @@
 "use strict";
 
+// TODO allow phisical keyboard
+// TODO drop bomb sound for "air attack" differs from FPGA
 // TODO check again NMI interrupt, behaves differently than fpga
 // TODO fix autoload
 // TODO stereo audio: A right, B left, C common
@@ -15,7 +17,7 @@
 // TODO mobile keyboard
 
 
-// firmware 3.4
+// firmware 3.14
 let BASTXT     = 0x8133;    // points to basic free area (start of program)
 let PROGND     = 0x81BB;    // points to end of the basic program
 let CRSR_STATE = 0x81E9;    // cursor visibility state (for injecting keys)
@@ -163,6 +165,7 @@ function main() {
       if(options.rom == "3138") firmware = rom_3138;
       if(options.rom == "314") firmware = rom_314;
       if(options.rom == "315") firmware = rom_315;
+      if(options.rom == "316") firmware = rom_316;
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
