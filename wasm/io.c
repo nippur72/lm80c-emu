@@ -38,8 +38,8 @@ byte io_read(word ioport) {
       case 0x23: return SIO_readPortCB();    // SIO_CB
 
       case 0x030:  return tms9928_vram_read(&vdp);
-      case 0x031:  return tms9928_register_read(&vdp);   // LM80C 64K model
-      case 0x032:  return tms9928_register_read(&vdp);   // LM80C 32K model
+      case 0x031:  return LM80C_64K == 1 ? tms9928_register_read(&vdp) : port;  // LM80C 64K model
+      case 0x032:  return LM80C_64K == 0 ? tms9928_register_read(&vdp) : port;  // LM80C 32K model
 
       case 0x40:
       case 0x41:
@@ -78,7 +78,8 @@ void io_write(word port, byte value) {
 
       // TMS9918: 0x30-0x33
       case 0b00110000: tms9928_vram_write(&vdp, value);     return;
-      case 0b00110010: tms9928_register_write(&vdp, value); return;
+      case 0b00110001: if(LM80C_64K == 1) tms9928_register_write(&vdp, value); return;
+      case 0b00110010: if(LM80C_64K == 0) tms9928_register_write(&vdp, value); return;
 
       case 0x40:
       case 0x41:
