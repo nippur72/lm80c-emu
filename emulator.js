@@ -18,9 +18,10 @@
 
 
 // firmware 3.14
-let BASTXT     = 0x8133;    // points to basic free area (start of program)
-let PROGND     = 0x81BB;    // points to end of the basic program
-let CRSR_STATE = 0x81E9;    // cursor visibility state (for injecting keys)
+let LM80C_model = 0;         // 0=LM80C 32K, 1=64K
+let BASTXT      = 0x8133;    // points to basic free area (start of program)
+let PROGND      = 0x81BB;    // points to end of the basic program
+let CRSR_STATE  = 0x81E9;    // cursor visibility state (for injecting keys)
 
 const rom = new Uint8Array(32768).fill(0x00);
 const ram = new Uint8Array(32768).fill(0x00); 
@@ -151,22 +152,22 @@ function main() {
    // loads the eprom
    {
       let firmware = rom_314;
-      if(options.rom == "310")    firmware = rom_310;
-      if(options.rom == "311")    firmware = rom_311;
-      if(options.rom == "312")    firmware = rom_312;
-      if(options.rom == "313")    firmware = rom_313;
-      if(options.rom == "3131")   firmware = rom_3131;
-      if(options.rom == "3132")   firmware = rom_3132;
-      if(options.rom == "3133")   firmware = rom_3133;
-      if(options.rom == "3134")   firmware = rom_3134;
-      if(options.rom == "3135")   firmware = rom_3135;
-      if(options.rom == "3136")   firmware = rom_3136;
-      if(options.rom == "3137")   firmware = rom_3137;
-      if(options.rom == "3138")   firmware = rom_3138;
+      if(options.rom == "310")    { firmware = rom_310; }
+      if(options.rom == "311")    { firmware = rom_311; }
+      if(options.rom == "312")    { firmware = rom_312; }
+      if(options.rom == "313")    { firmware = rom_313; }
+      if(options.rom == "3131")   { firmware = rom_3131; }
+      if(options.rom == "3132")   { firmware = rom_3132; }
+      if(options.rom == "3133")   { firmware = rom_3133; }
+      if(options.rom == "3134")   { firmware = rom_3134; }
+      if(options.rom == "3135")   { firmware = rom_3135; }
+      if(options.rom == "3136")   { firmware = rom_3136; }
+      if(options.rom == "3137")   { firmware = rom_3137; }
+      if(options.rom == "3138")   { firmware = rom_3138; }
       if(options.rom == "314")    { firmware = rom_314;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
       if(options.rom == "315")    { firmware = rom_315;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
       if(options.rom == "316")    { firmware = rom_316;     BASTXT=0x8133; PROGND=0x821E; CRSR_STATE=0x81D6; }
-      if(options.rom == "64K102") { firmware = rom_64K_102; BASTXT=0x5234; PROGND=0x5323; CRSR_STATE=0x52D8; }
+      if(options.rom == "64K102") { firmware = rom_64K_102; BASTXT=0x5233; PROGND=0x5322; CRSR_STATE=0x52D8; LM80C_model=1; }
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
@@ -194,7 +195,7 @@ function main() {
    ctc_init();
    ctc_reset();
 
-   lm80c_init();
+   lm80c_init(LM80C_model);
    lm80c_reset();
 
    goAudio();

@@ -200,7 +200,7 @@ function load_wasm(ready_cb) {
       lm80c_tick         = instance.cwrap("lm80c_tick", 'number');
       lm80c_set_debug    = instance.cwrap("lm80c_set_debug", null, ['bool']);
       lm80c_ctc_enable   = instance.cwrap("lm80c_ctc_enable", null, ['bool']);
-      lm80c_init         = instance.cwrap("lm80c_init", null);
+      lm80c_init         = instance.cwrap("lm80c_init", ['number']);
       lm80c_reset        = instance.cwrap("lm80c_reset", null);
 
       lm80c_tick_line    = instance.cwrap("lm80c_tick_line", 'number', ['number']);

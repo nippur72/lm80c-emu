@@ -9,7 +9,6 @@
 #include "vdp.c"
 #include "cpu.c"
 
-
 bool debug = false;
 
 void debugBefore() { byte unused = (byte) EM_ASM_INT({ if(debugBefore!== undefined) debugBefore(); }, 0); }
@@ -62,10 +61,13 @@ uint16_t lm80c_tick_line(float cyclesPerLine) {
    return elapsed;
 }
 
+byte LM80C_64K = 0;
+
 EMSCRIPTEN_KEEPALIVE
-void lm80c_init() {
+void lm80c_init(byte model) {
    vdp_init();
-   PIO_data_B = 1;   // switches to ROM
+   LM80C_64K = model;
+   if(LM80C_64K) PIO_data_B = 1;
 }
 
 EMSCRIPTEN_KEEPALIVE
