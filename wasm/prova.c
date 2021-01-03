@@ -65,6 +65,7 @@ uint16_t lm80c_tick_line(float cyclesPerLine) {
 EMSCRIPTEN_KEEPALIVE
 void lm80c_init() {
    vdp_init();
+   PIO_data_B = 1;   // switches to ROM
 }
 
 EMSCRIPTEN_KEEPALIVE

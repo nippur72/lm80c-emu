@@ -1,7 +1,6 @@
 #include "lm80c.h"
 #include "tms9928.h"
 
-
 byte led_read(byte port)  {
    return EM_ASM_INT({ return led_read(); }, 0);
 }
@@ -12,15 +11,21 @@ void led_write(byte port, byte value) {
 
 extern tms9928_t vdp;
 
+// simplified LED bits control
+// bit 0: 0=RAM    1=ROM
+// bit 1: 0=VRAM0  1=VRAM1
+
+byte PIO_data_B;
+
 EMSCRIPTEN_KEEPALIVE
 byte io_read(word ioport) {
    byte port = ioport & 0xFF;
 
    switch(port) {
-      case 0x00: return 0x00;  // PIO not implemented yet
-      case 0x01: return 0x00;  // PIO not implemented yet
-      case 0x02: return 0x00;  // PIO not implemented yet
-      case 0x03: return 0x00;  // PIO not implemented yet
+      case 0x00: return 0x00;        // PIO data channel A
+      case 0x01: return PIO_data_B;  // PIO data channel B
+      case 0x02: return 0x00;        // PIO control A
+      case 0x03: return 0x00;        // PIO control B
 
       case 0x10:
       case 0x11:
@@ -33,7 +38,8 @@ byte io_read(word ioport) {
       case 0x23: return SIO_readPortCB();    // SIO_CB
 
       case 0x030:  return tms9928_vram_read(&vdp);
-      case 0x032:  return tms9928_register_read(&vdp);
+      case 0x031:  return tms9928_register_read(&vdp);   // LM80C 64K model
+      case 0x032:  return tms9928_register_read(&vdp);   // LM80C 32K model
 
       case 0x40:
       case 0x41:
@@ -55,7 +61,7 @@ void io_write(word port, byte value) {
    switch(port & 0xFF) {
       // PIO DATAREGA
       case 0x00: return;
-      case 0x01: return;
+      case 0x01: PIO_data_B = value; return;
       case 0x02: return;
       case 0x03: return;
 

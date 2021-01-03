@@ -14,3 +14,4 @@ node makerom LM80C-firmware-r314.rom  rom_314
 node makerom LM80C-firmware-r315.rom  rom_315
 node makerom LM80C-firmware-r3.16.bin rom_316
 
+node makerom LM80C-64K-firmware-1.02.bin rom_64K_102

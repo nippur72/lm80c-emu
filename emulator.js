@@ -1,5 +1,6 @@
 "use strict";
 
+// TODO emulate second VRAM bank
 // TODO allow phisical keyboard
 // TODO drop bomb sound for "air attack" differs from FPGA
 // TODO check again NMI interrupt, behaves differently than fpga
@@ -13,7 +14,6 @@
 // TODO investigate why dropping "screen2_putc.prg" hangs it
 // TODO implement SIO-CTC-PIO daisy chain
 // TODO tms timings check 30 T states
-// TODO allow change firmware rom
 // TODO mobile keyboard
 
 
@@ -151,21 +151,22 @@ function main() {
    // loads the eprom
    {
       let firmware = rom_314;
-      if(options.rom == "310") firmware = rom_310;
-      if(options.rom == "311") firmware = rom_311;
-      if(options.rom == "312") firmware = rom_312;
-      if(options.rom == "313") firmware = rom_313;
-      if(options.rom == "3131") firmware = rom_3131;
-      if(options.rom == "3132") firmware = rom_3132;
-      if(options.rom == "3133") firmware = rom_3133;
-      if(options.rom == "3134") firmware = rom_3134;
-      if(options.rom == "3135") firmware = rom_3135;
-      if(options.rom == "3136") firmware = rom_3136;
-      if(options.rom == "3137") firmware = rom_3137;
-      if(options.rom == "3138") firmware = rom_3138;
-      if(options.rom == "314") firmware = rom_314;
-      if(options.rom == "315") firmware = rom_315;
-      if(options.rom == "316") firmware = rom_316;
+      if(options.rom == "310")    firmware = rom_310;
+      if(options.rom == "311")    firmware = rom_311;
+      if(options.rom == "312")    firmware = rom_312;
+      if(options.rom == "313")    firmware = rom_313;
+      if(options.rom == "3131")   firmware = rom_3131;
+      if(options.rom == "3132")   firmware = rom_3132;
+      if(options.rom == "3133")   firmware = rom_3133;
+      if(options.rom == "3134")   firmware = rom_3134;
+      if(options.rom == "3135")   firmware = rom_3135;
+      if(options.rom == "3136")   firmware = rom_3136;
+      if(options.rom == "3137")   firmware = rom_3137;
+      if(options.rom == "3138")   firmware = rom_3138;
+      if(options.rom == "314")    { firmware = rom_314;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
+      if(options.rom == "315")    { firmware = rom_315;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
+      if(options.rom == "316")    { firmware = rom_316;     BASTXT=0x8133; PROGND=0x821E; CRSR_STATE=0x81D6; }
+      if(options.rom == "64K102") { firmware = rom_64K_102; BASTXT=0x5234; PROGND=0x5323; CRSR_STATE=0x52D8; }
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
