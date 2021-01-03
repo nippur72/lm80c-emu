@@ -167,7 +167,9 @@ function main() {
       if(options.rom == "314")    { firmware = rom_314;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
       if(options.rom == "315")    { firmware = rom_315;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
       if(options.rom == "316")    { firmware = rom_316;     BASTXT=0x8133; PROGND=0x821E; CRSR_STATE=0x81D6; }
+      if(options.rom == "317")    { firmware = rom_317;     BASTXT=0x8135; PROGND=0x8224; CRSR_STATE=0x81D8; }
       if(options.rom == "64K102") { firmware = rom_64K_102; BASTXT=0x5233; PROGND=0x5322; CRSR_STATE=0x52D8; LM80C_model=1; }
+      if(options.rom == "64K103") { firmware = rom_64K_103; BASTXT=0x5224; PROGND=0x5313; CRSR_STATE=0x52C7; LM80C_model=1; }
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
