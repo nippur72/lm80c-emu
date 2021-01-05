@@ -75,6 +75,18 @@ void psg_ticks(int ticks) {
    }
 }
 
+// ========= READ ===================
+// PORT  BDIR   BC1     PSG FUNCTION
+// ==================================
+// $40   0      1       READ FROM PSG
+// $41   0      0       INACTIVE
+
+// ========== WRITE =================
+// PORT  BDIR   BC1     PSG FUNCTION
+// ==================================
+// $40   1      1       LATCH ADDRESS
+// $41   1      0       WRITE TO PSG
+
 EMSCRIPTEN_KEEPALIVE
 void psg_write(uint8_t port, uint8_t data) {
 
