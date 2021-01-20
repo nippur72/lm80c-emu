@@ -179,7 +179,6 @@ function main() {
    {
       init: cpu_init,
       reset: cpu_reset,
-      run_instruction: cpu_run_instruction,      
       getState: ()=>{
          return {
             pc: get_z80_pc()
@@ -229,3 +228,15 @@ function main() {
 function cpu_actual_speed() {
    return (total_cycles / (new Date().valueOf() - cpu_started_msec)) * 1000;
 }
+
+// connect the SIO output to the printer
+function sio_write_data(port, data) {
+   printerWrite(data);
+   send_byte_to_modem(data);
+}
+function sio_write_control(port, data) {
+   //console.log(`Serial port ${port} register write ${hex(data)}`);
+}
+
+//bbs();
+

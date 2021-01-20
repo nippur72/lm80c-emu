@@ -19,6 +19,8 @@ void lm80c_ctc_enable(bool v) { ctc_enabled = v; }
 byte INT_vector;
 bool INT_from_SIO = false;
 
+extern int SIO_busy;
+
 uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
 
    if(int_NMI) pins |= Z80_NMI;
@@ -29,7 +31,7 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
       pins |= Z80_INT;
    }
 
-   if(ctc_enabled) {
+   if(!SIO_busy && ctc_enabled) {
       if(ctc_ticks(num_ticks)) {
          INT_from_SIO = false;
          pins |= Z80_INT;
@@ -38,8 +40,8 @@ uint64_t tick(int num_ticks, uint64_t pins, void* user_data) {
 
    if((pins & Z80_M1) && (pins & Z80_IORQ)) {
       // acknowledge interrupt - this is done by external chip
-      if(INT_from_SIO) INT_vector = sio_int_ack();
-      else             INT_vector = ctc_int_ack();
+      if(INT_from_SIO) INT_vector = sio_int_ack_vector();
+      else             INT_vector = ctc_int_ack_vector();
       Z80_SET_DATA(pins, INT_vector);
       pins &= ~Z80_INT;
    }
@@ -81,14 +83,6 @@ void cpu_init() {
 EMSCRIPTEN_KEEPALIVE
 void cpu_reset() {
    z80_reset(&cpu);
-}
-
-EMSCRIPTEN_KEEPALIVE
-uint16_t cpu_run_instruction() {
-   uint16_t ticks = 0;   
-   do ticks+=z80_exec(&cpu, 1);   
-   while(!z80_opdone(&cpu));
-   return ticks;
 }
 
 EMSCRIPTEN_KEEPALIVE uint8_t get_z80_a()         { return z80_a(&cpu); }

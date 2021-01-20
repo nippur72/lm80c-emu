@@ -1,108 +1,103 @@
 #include "lm80c.h"
 
-EMSCRIPTEN_KEEPALIVE void cpu_interrupt(bool nmi, uint8_t data);
+#define SIO_BUFFERSIZE 4096
+byte receive_buffer_A[SIO_BUFFERSIZE];
+int  receive_buffer_A_len = 0;
+byte receive_buffer_B[SIO_BUFFERSIZE];
+int  receive_buffer_B_len = 0;
 
-int SIO_IEI_cb = 1;      // callback to ask if interrupt line is free, (returns always 1 for now)
+byte SIO_port_A_data    = 0;     // port A data register value
+byte SIO_port_B_data    = 0;     // port B data register value
+byte SIO_port_A_status  = 0x01;  // port A status register value
+byte SIO_port_B_status  = 0x01;  // port B status register value
 
-byte SIO_port_A = 0;
-byte SIO_port_B = 0;
-bool SIO_busy = false;
+int SIO_INT = 0;         // interrupt pin: is set to 1 during all the SIO interrupt time, from trigger to M1 & IORQ (ACK)
+int SIO_busy = 0;        // 1=SIO is busy serving the interrupt: from trigger to RETI
 
-EMSCRIPTEN_KEEPALIVE
-uint8_t sio_int_ack() {
-  return 0x0C;
+// TODO callbacks for IEI and IEO
+int SIO_IEI_cb = 0;      // Interrupt Enable Input: callback to ask if interrupt line is free, (returns always 0 for now)
+
+// *************************************************************************************
+// called from CPU tick, to ask for the SIO interrupt ACK vector data byte
+// clears the INT pin
+// *************************************************************************************
+uint8_t sio_int_ack_vector() {
+   SIO_INT = 0;
+   return 0x0C;
 }
 
-EMSCRIPTEN_KEEPALIVE
+// *************************************************************************************
+// ticks the SIO
+// returns the SIO INT pin status
+// *************************************************************************************
+int sio_tick_counter = 0;
 uint8_t sio_ticks(int ticks) {
-   if(SIO_busy) return 1;
-   else return 0;
+   if(SIO_INT == 1) return SIO_INT;
+
+   if(receive_buffer_A_len == 0) return SIO_INT;
+
+   sio_tick_counter += ticks;
+   if(sio_tick_counter > 25000) {
+      sio_tick_counter = 0;
+      // pop character
+      byte data = receive_buffer_A[0];
+      for(int t=1;t<receive_buffer_A_len;t++) receive_buffer_A[t-1] = receive_buffer_A[t];
+      receive_buffer_A_len--;
+      SIO_port_A_data = data;
+      SIO_INT = 1;
+      SIO_busy = 1;
+   }
+
+   return SIO_INT;
 }
 
-int SIO_IEO() {
-    if(SIO_busy) return 0;  // busy
-    else         return 1;  // not busy, ENABLE
-}
-
-void SIO_trigger() {
-    //if(SIO_IEI_cb === 0) {
-    //    //console.log(`${total_cycles} SIO: can't trigger, INT line is occupied chained device`);
-    //    //return;
-    //}
-
-    //if(SIO_busy) {
-    //    console.log(`${total_cycles} SIO: can't trigger, previous INT call not finshed`);
-    //    return;
-    ///}
-
-    SIO_busy = true;
-    // TODO cpu_interrupt(false, 0xC);
-    //console.log(`${total_cycles} SIO: interrupt started`);
-}
-
-EMSCRIPTEN_KEEPALIVE
-bool sio_is_busy() {
-    return SIO_busy;
-}
-
-EMSCRIPTEN_KEEPALIVE
-void SIO_receiveChar(byte c) {
-    SIO_port_A = c;
-    SIO_trigger();
-}
-
+// *************************************************************************************
+// called from CPU tick when the RETI instruction is found
+// ends the interrupt on the SIO
+// *************************************************************************************
 void SIO_cpu_found_RETI() {
-    if(SIO_busy && SIO_IEI_cb == 1) {
-        SIO_busy = false;
-        //console.log(`${total_cycles} SIO: interrupt ended`);
+    if(SIO_INT && SIO_IEI_cb == 0) {
+        SIO_busy = 0;
     }
 }
 
-byte SIO_readPortCA() {
-    //console.log("CA read");
-    return 0x01; /*return SIO_port_A & FF;*/
-}
-byte SIO_readPortDA() {
-    //console.log("DA read");
-    return SIO_port_A & 0xFF;
-}
-byte SIO_readPortCB() {
-    //console.log("CB read");
-    return 0x01; /* return SIO_port_A & FF;*/
-}
-byte SIO_readPortDB() {
-    //console.log("DB read");
-    return SIO_port_B;
-}
+byte SIO_readPortCA() { return SIO_port_A_status; }
+byte SIO_readPortDA() { return SIO_port_A_data;   }
+byte SIO_readPortCB() { return SIO_port_B_status; }
+byte SIO_readPortDB() { return SIO_port_B_data;   }
 
 void SIO_writePortCA(byte value) {
-    /*
-    if(value == 0x2a) {
-        // hack
-        if(buffer_sio.length > 0) {
-        setTimeout(()=>{
-            sio.receiveChar(buffer_sio[0]);
-            buffer_sio = buffer_sio.slice(1);
-        },1000);
-        }
-    }
-    */
-    //console.log(`CA write 0x${hex(value)} -- ${bin(value)}`);
+    byte unused = (byte) EM_ASM_INT({ sio_write_control($0, $1);}, 0, value);
 }
 
 void SIO_writePortCB(byte value) {
-    //console.log(`CB write 0x${hex(value)} -- ${bin(value)}`);
+    byte unused = (byte) EM_ASM_INT({ sio_write_control($0, $1);}, 0, value);
 }
 
 void SIO_writePortDA(byte value) {
-    //console.log(`DA write 0x${hex(value)} -- ${bin(value)}`);
+    SIO_port_A_data = value;
+    // sends the data byte to the external world
     byte unused = (byte) EM_ASM_INT({ sio_write_data($0, $1);}, 0, value);
-    SIO_port_A = value;
 }
 
 void SIO_writePortDB(byte value) {
+    SIO_port_B_data = value;
+    // sends the data byte to the external world
     byte unused = (byte) EM_ASM_INT({ sio_write_data($0, $1);}, 1, value);
-    SIO_port_B = value;
 }
 
+// *************************************************************************************
+// EXTERNAL INTERFACE
+// *************************************************************************************
 
+EMSCRIPTEN_KEEPALIVE
+void SIO_receiveChar(byte c) {
+    if(receive_buffer_A_len < SIO_BUFFERSIZE-1) {
+        receive_buffer_A[receive_buffer_A_len] = c;
+        receive_buffer_A_len++;
+    }
+    else {
+        // TODO trigger buffer overflow
+        // do nothing for now
+    }
+}

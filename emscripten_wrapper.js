@@ -79,7 +79,6 @@ let set_z80_ei_pending;
 
 let cpu_init;
 let cpu_reset;
-let cpu_run_instruction;
 
 let mem_read;
 let mem_write;
@@ -91,7 +90,6 @@ let io_write;
 let lm80c_tick;
 let lm80c_tick_line;
 let lm80c_set_debug;
-let lm80c_ctc_enable;
 let lm80c_init;
 let lm80c_reset;
 
@@ -101,7 +99,6 @@ let keyboard_release;
 let keyboard_poll;
 
 let SIO_receiveChar;
-let sio_is_busy;
 
 function load_wasm(ready_cb) {
 
@@ -123,7 +120,6 @@ function load_wasm(ready_cb) {
       ctc_read     = instance.cwrap("ctc_read", 'number', ['number']);
       ctc_write    = instance.cwrap("ctc_write", null, ['number', 'number']);
       ctc_set_reti = instance.cwrap("ctc_set_reti");
-      ctc_int_ack  = instance.cwrap("ctc_int_ack", 'number');
 
       get_z80_a          = instance.cwrap("get_z80_a", 'number');
       get_z80_f          = instance.cwrap("get_z80_f", 'number');
@@ -188,7 +184,6 @@ function load_wasm(ready_cb) {
 
       cpu_init            = instance.cwrap("cpu_init", null);
       cpu_reset           = instance.cwrap("cpu_reset", null);
-      cpu_run_instruction = instance.cwrap("cpu_run_instruction", 'number');
 
       mem_read           = instance.cwrap("mem_read", 'number', ['number']);
       mem_write          = instance.cwrap("mem_write", null, ['number', 'number']);
@@ -199,7 +194,6 @@ function load_wasm(ready_cb) {
 
       lm80c_tick         = instance.cwrap("lm80c_tick", 'number');
       lm80c_set_debug    = instance.cwrap("lm80c_set_debug", null, ['bool']);
-      lm80c_ctc_enable   = instance.cwrap("lm80c_ctc_enable", null, ['bool']);
       lm80c_init         = instance.cwrap("lm80c_init", ['number']);
       lm80c_reset        = instance.cwrap("lm80c_reset", null);
 
@@ -211,7 +205,6 @@ function load_wasm(ready_cb) {
       keyboard_poll      = instance.cwrap("keyboard_poll"   , 'number', ['number'] );
 
       SIO_receiveChar    = instance.cwrap("SIO_receiveChar"   , null, ['number'] );
-      sio_is_busy        = instance.cwrap("sio_is_busy"       , 'bool' );
 
       // export instance globally (not strictly required)
       wasm_instance = instance;

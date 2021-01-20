@@ -5,10 +5,6 @@ let printerReady = 0x00;
 
 let printerTimeLastReceived ;
 
-function sio_write_data(port, data) {
-   printerWrite(data);
-}
-
 // this version prints the whole buffer into one console line, allowing copy & paste
 // print is done if nothing is received from Laser within 2 seconds
 function checkPrinterBuffer() {
