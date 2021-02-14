@@ -53,16 +53,11 @@ let options = {
    restore: false
 };
 
-// scanline version
-function renderLines(nlines) {
-   for(let t=0; t<nlines; t++) {
-      total_cycles += lm80c_tick_line(cyclesPerLine);
-   }
+function renderFrame() {
+   total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine);
 }
 
-function renderAllLines() {
-
-   // poll keyboard
+function poll_keyboard() {
    if(keyboard_buffer.length > 0) {
       let key_event = keyboard_buffer[0];
       keyboard_buffer = keyboard_buffer.slice(1);
@@ -72,78 +67,27 @@ function renderAllLines() {
          key_event.hardware_keys.forEach((k) => keyPress(k));
       }
    }
-
-   renderLines(262);  // frame linee pari
-   renderLines(262);  // frame linee dispari
 }
 
-/*
-function oneFrame() {
-   renderAll_2(0);
-}
-
-let cpu_timer = 0;
-let delta;
-
-function renderAll_2(timer) {
-
-   delta = timer - cpu_timer;
-   if(delta > 200) {
-      delta = 200;
-      cpu_timer = timer;
-   }
-
-   let line_time = cyclesPerLine / cpuSpeed * 1000 * 100;
-   let n_lines = delta * line_time;
-
-
-   // poll keyboard
-   if(keyboard_buffer.length > 0) {
-      let key_event = keyboard_buffer[0];
-      keyboard_buffer = keyboard_buffer.slice(1);
-
-      keyboardReset();
-      if(key_event.type === "press") {
-         key_event.hardware_keys.forEach((k) => keyPress(k));
-      }
-   }
-   renderLines(n_lines);
-   //console.log(timer, cpu_timer, delta, n_lines);
-
-   cpu_timer += n_lines * line_time;
-
-   requestAnimationFrame(renderAll_2);
-}
-*/
-
-let nextFrame;
 let end_of_frame_hook = undefined;
 
-function oneFrame() {
-   const startTime = new Date().getTime();      
+let last_timestamp = 0;
+function oneFrame(timestamp) {
+   let stamp = timestamp == undefined ? last_timestamp : timestamp;
+   let msec = stamp - last_timestamp;
+   let cycles = cpuSpeed * msec / 1000;
+   last_timestamp = stamp;
 
-   if(nextFrame === undefined) nextFrame = startTime;
+   if(cycles > cpuSpeed) cycles = 100;
 
-   nextFrame = nextFrame + (1000/frameRate); 
+   poll_keyboard();
 
-   renderAllLines();
-   frames++;   
+   total_cycles += lm80c_ticks(cycles, cyclesPerLine);
 
-   if(end_of_frame_hook !== undefined) end_of_frame_hook();
+   averageFrameTime = averageFrameTime * 0.992 + msec * 0.008;
 
-   const now = new Date().getTime();
-   const elapsed = now - startTime;
-   averageFrameTime = averageFrameTime * 0.992 + elapsed * 0.008;
-   if(elapsed < minFrameTime) minFrameTime = elapsed;
-
-   let time_out = nextFrame - now;
-   if(time_out < 0 || throttle) {
-      time_out = 0;
-      nextFrame = undefined;      
-   }
-   if(!stopped) setTimeout(()=>oneFrame(), time_out);   
+   if(!stopped) requestAnimationFrame(oneFrame);
 }
-
 
 function main() {
 

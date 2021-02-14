@@ -196,8 +196,7 @@ function load_wasm(ready_cb) {
       lm80c_set_debug    = instance.cwrap("lm80c_set_debug", null, ['bool']);
       lm80c_init         = instance.cwrap("lm80c_init", ['number']);
       lm80c_reset        = instance.cwrap("lm80c_reset", null);
-
-      lm80c_tick_line    = instance.cwrap("lm80c_tick_line", 'number', ['number']);
+      lm80c_ticks        = instance.cwrap("lm80c_ticks", 'number', ['number', 'number']);
 
       keyboard_reset     = instance.cwrap("keyboard_reset"  , null );
       keyboard_press     = instance.cwrap("keyboard_press"  , null, ['number', 'number'] );

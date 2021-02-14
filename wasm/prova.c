@@ -40,24 +40,21 @@ uint16_t lm80c_tick() {
 }
 
 EMSCRIPTEN_KEEPALIVE
-uint16_t lm80c_tick_line(float cyclesPerLine) {
-   static float counter = 0;
+uint16_t lm80c_ticks(int ncycles, float cyclesPerLine) {
 
-   uint16_t elapsed = 0;
-   uint16_t ticks = 0;
+   int elapsed = 0;
+   static float line_ticks = 0;
 
-   while(true) {
-      ticks = lm80c_tick();
-      elapsed += ticks;
-      counter += (float) ticks;
-      if(counter>=cyclesPerLine) {
-         counter-=cyclesPerLine;
-         break;
+   while(elapsed < ncycles) {
+      int cpu_ticks = lm80c_tick();
+      elapsed += cpu_ticks;
+      line_ticks += cpu_ticks;
+
+      if(line_ticks >= cyclesPerLine) {
+         line_ticks-=cyclesPerLine;
+         tms9928_drawline(&vdp);
       }
    }
-
-   tms9928_drawline(&vdp);
-
    return elapsed;
 }
 
