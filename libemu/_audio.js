@@ -25,24 +25,6 @@ const bufferSize = 4096;
 const sampleRate = audioContext.sampleRate;
 var speakerSound = audioContext.createScriptProcessor(bufferSize, 1, 1);
 
-/*
-let ch0 = [];
-let ch1 = [];
-
-function csave() {
-   const wavData = {
-      sampleRate: 48000,
-      channelData: [ new Float32Array(ch0), new Float32Array(ch1) ]
-   };
-     
-   const buffer = encodeSync(wavData, { bitDepth: 16, float: false });      
-   
-   let blob = new Blob([buffer], {type: "application/octet-stream"});   
-   const fileName = "csaved.wav";
-   saveAs(blob, fileName);
-}
-*/
-
 speakerSound.onaudioprocess = function(e) {
    const output = e.outputBuffer.getChannelData(0);
 

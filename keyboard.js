@@ -108,7 +108,7 @@ function pckey_to_hwkey(pckey) {
 function keyDown(e) { 
 
    // from Chrome 71 audio is suspended by default and must resume within an user-generated event
-   audioContextResume();   
+   audio.resume();
 
    // disable auto repeat, as it is handled on the firmware
    if(e.repeat) {

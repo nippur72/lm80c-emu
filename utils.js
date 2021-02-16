@@ -115,7 +115,7 @@ function power() {
 }
 
 function stop() {   
-   stopAudio();
+   audio.stop();
    stopped = true;
    console.log("emulation stopped");
 }

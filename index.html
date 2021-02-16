@@ -116,11 +116,6 @@
    </div>
    -->
 
-   <!-- allows to "Save As..." programs from the emulator -->
-   <script type="text/javascript" src="FileSaver.js"></script>
-
-   <!-- allows to used a keyval store with IndexedDB -->
-   <script type="text/javascript" src="idb-keyval-iife.min.js"></script>
 
    <!-- core emulator files -->
    <script type="text/javascript" src="roms/rom_310.js"></script>
@@ -148,18 +143,23 @@
 
    <script type="text/javascript" src="bbs.js"></script>
 
+   <script type="text/javascript" src="libemu/wav-decoder.js"></script>
+   <script type="text/javascript" src="libemu/wav-encoder.js"></script>
+   <script type="text/javascript" src="libemu/FileSaver.js"></script>               <!-- allows to "Save As..." programs from the emulator -->
+   <script type="text/javascript" src="libemu/idb-keyval-iife.min.js"></script>     <!-- allows to used a keyval store with IndexedDB -->
+   <script type="text/javascript" src="libemu/audio.js"></script>
+   <script type="text/javascript" src="libemu/filesystem.js"></script>
+   <script type="text/javascript" src="libemu/mdawson.js"></script>
+   <script type="text/javascript" src="libemu/printer.js"></script>
+
    <script type="text/javascript" src="autoload.js"></script>
+   <script type="text/javascript" src="files.js"></script>
    <script type="text/javascript" src="keyboard_IT.js"></script>
    <script type="text/javascript" src="keys.js"></script>
    <script type="text/javascript" src="keyboard.js"></script>
    <script type="text/javascript" src="video.js"></script>
    <script type="text/javascript" src="utils.js"></script>
-   <script type="text/javascript" src="printer.js"></script>
-   <script type="text/javascript" src="filesystem.js"></script>
-   <script type="text/javascript" src="wav-decoder.js"></script>
-   <script type="text/javascript" src="wav-encoder.js"></script>
    <script type="text/javascript" src="browser.js"></script>
-   <script type="text/javascript" src="audio.js"></script>
    <script type="text/javascript" src="emulator.js"></script>
 </body>
 </html>

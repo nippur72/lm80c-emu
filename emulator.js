@@ -53,6 +53,10 @@ let options = {
    restore: false
 };
 
+let audio = new Audio(4096);
+
+let storage = new BrowserStorage("lm80c");
+
 function renderFrame() {
    total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine);
 }
@@ -148,7 +152,7 @@ function main() {
    lm80c_init(LM80C_model);
    lm80c_reset();
 
-   goAudio();
+   audio.start();
 
    // rom autoload
    if(autoload !== undefined) {
@@ -183,6 +187,17 @@ function sio_write_data(port, data) {
 }
 function sio_write_control(port, data) {
    //console.log(`Serial port ${port} register write ${hex(data)}`);
+}
+
+// FORMULA: one buffer arrives every t cpu cycles
+// T = (3686400 / 2) / (48000 / BUFFER_SIZE)
+// in msec: t = BUFFER_SIZE / 48000 = 85.3
+
+function ay38910_audio_buf_ready(ptr, size) {
+   if(!audio.playing) return;
+   let start = ptr / wasm_instance.HEAPF32.BYTES_PER_ELEMENT;
+   let buffer = wasm_instance.HEAPF32.subarray(start,start+size);
+   audio.playBuffer(buffer);
 }
 
 //bbs();
