@@ -82,7 +82,7 @@ function oneFrame(timestamp) {
    let cycles = cpuSpeed * msec / 1000;
    last_timestamp = stamp;
 
-   if(cycles > cpuSpeed) cycles = 100;
+   if(msec > frameRate*2) cycles = cpuSpeed * (frameRate*2 / 1000);
 
    poll_keyboard();
 
