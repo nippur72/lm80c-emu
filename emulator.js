@@ -23,9 +23,6 @@ let BASTXT      = 0x8133;    // points to basic free area (start of program)
 let PROGND      = 0x81BB;    // points to end of the basic program
 let CRSR_STATE  = 0x81E9;    // cursor visibility state (for injecting keys)
 
-const rom = new Uint8Array(32768).fill(0x00);
-const ram = new Uint8Array(32768).fill(0x00); 
-
 let cpu;
 
 /******************/
@@ -39,14 +36,10 @@ const cyclesPerLine = cpuSpeed / vdcSpeed * 342;
 let stopped = false; // allows to stop/resume the emulation
 
 let frames = 0;
-let nextFrameTime = 0;
 let averageFrameTime = 0;
-let minFrameTime = Number.MAX_VALUE;
 
 let cycle = 0;
 let total_cycles = 0;
-
-let throttle = false;
 
 let options = {
    load: undefined,

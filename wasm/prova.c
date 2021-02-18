@@ -1,3 +1,6 @@
+#define CHIPS_ASSERT(c) 1
+#include <assert.h>
+
 #include "lm80c.h"
 
 #include "keyboard.c"
