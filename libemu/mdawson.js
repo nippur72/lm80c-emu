@@ -27,10 +27,10 @@ function externalLoad(cmd,url,format,subfile) {
 	head.appendChild(script);
 }
 
-function loadPrg(src) {   
+async function loadPrg(src) {
    if(src.length !== 1) return;
 
    let bin = binToArray(src[0]);
-   
-   loadBytes(bin);
+   await storage.writeFile("autoload.prg", bin);
+   await run("autoload.prg");
 }

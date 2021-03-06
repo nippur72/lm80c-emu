@@ -15,6 +15,8 @@
 // TODO implement SIO-CTC-PIO daisy chain
 // TODO tms timings check 30 T states
 // TODO mobile keyboard
+// TODO save WAV files of AY38910
+// TODO pseudo VZ files with version
 
 
 // firmware 3.14
@@ -155,18 +157,10 @@ function main() {
    // starts drawing frames
    oneFrame();
 
-   /*
    // autoload program and run it
    if(autoload !== undefined) {
-      //zap();
-      //cpu.reset();
-
-      setTimeout(()=>{
-         loadBytes(autoload);
-         pasteLine("RUN\r\n");
-      }, 200);
+      throw "not implemented";
    }
-   */
 }
 
 function cpu_actual_speed() {

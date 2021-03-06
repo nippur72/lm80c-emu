@@ -83,10 +83,11 @@ dropZone.addEventListener('drop', e => {
 });
 
 async function droppedFile(outName, bytes) {
-   const prg = /\.prg$/i;
-   if(prg.test(outName)) {     
-      await writeFile(outName, bytes);
-      await crun(outName);
+   const ext = getFileExtension(outName);
+
+   if(ext == ".prg") {
+      await storage.writeFile(outName, bytes);
+      await run(outName);
    }
 }
 
@@ -104,7 +105,7 @@ function getQueryStringObject(options) {
    return o;
 }
 
-function parseQueryStringCommands() {
+async function parseQueryStringCommands() {
    options = getQueryStringObject(options);
 
    if(options.restore !== false) {
@@ -113,8 +114,17 @@ function parseQueryStringCommands() {
    }
 
    if(options.load !== undefined) {
-      const name = options.load;      
-      fetchProgramAll(name);
+      const name = options.load;
+      setTimeout(async ()=>{
+         if(name.startsWith("http")) {
+            // external load
+            await externalLoad("loadPrg", name);
+         }
+         else {
+            // internal load
+            await fetchProgram(name);
+         }
+      }, 4000);
    }
 
    if(options.bt !== undefined || 
@@ -131,38 +141,19 @@ function parseQueryStringCommands() {
    }
 }
 
-async function fetchProgramAll(name) {
-   const candidates = [
-      name,
-      `${name}.prg`,
-      `${name}/${name}`,
-      `${name}/${name}.prg`,      
-      `prg/${name}`,
-      `prg/${name}.bin`,
-      `prg/${name}/${name}`,
-      `prg/${name}/${name}.prg`      
-   ];
-
-   for(let t=0;t<candidates.length;t++) {
-      if(await fetchProgram(candidates[t])) return;   
-   }
-
-   console.log(`cannot load "${name}"`);
-}
-
 async function fetchProgram(name)
 {
-   console.log(`wanting to load ${name}`);
+   //console.log(`wanting to load ${name}`);
    try
    {
       const response = await fetch(`software/${name}`);
       if(response.status === 404) return false;
       const bytes = new Uint8Array(await response.arrayBuffer());
-      setTimeout(()=>droppedFile(name, bytes), 3000);
+      droppedFile(name, bytes);
       return true;
    }
    catch(err)
    {
-      return false;      
+      return false;
    }
 }
