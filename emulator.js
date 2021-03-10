@@ -1,5 +1,6 @@
 "use strict";
 
+// TODO persisent CF card
 // TODO emulate second VRAM bank
 // TODO allow phisical keyboard
 // TODO drop bomb sound for "air attack" differs from FPGA
@@ -95,7 +96,7 @@ function main() {
    // loads the eprom
    {
       let firmware;
-      if(options.rom == undefined) options.rom = "64K105";
+      if(options.rom == undefined) options.rom = "64K112";
       if(options.rom == "310")    { firmware = rom_310; }
       if(options.rom == "311")    { firmware = rom_311; }
       if(options.rom == "312")    { firmware = rom_312; }
@@ -108,16 +109,20 @@ function main() {
       if(options.rom == "3136")   { firmware = rom_3136; }
       if(options.rom == "3137")   { firmware = rom_3137; }
       if(options.rom == "3138")   { firmware = rom_3138; }
-      if(options.rom == "314")    { firmware = rom_314;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
-      if(options.rom == "315")    { firmware = rom_315;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; }
-      if(options.rom == "316")    { firmware = rom_316;     BASTXT=0x8133; PROGND=0x821E; CRSR_STATE=0x81D6; }
-      if(options.rom == "317")    { firmware = rom_317;     BASTXT=0x8135; PROGND=0x8224; CRSR_STATE=0x81D8; }
-      if(options.rom == "318")    { firmware = rom_318;     BASTXT=0x8135; PROGND=0x8224; CRSR_STATE=0x81D8; }
-      if(options.rom == "319")    { firmware = rom_319;     BASTXT=0x8135; PROGND=0x8223; CRSR_STATE=0x81D7; }
+      if(options.rom == "314")    { firmware = rom_314;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; LM80C_model=0; }
+      if(options.rom == "315")    { firmware = rom_315;     BASTXT=0x8133; PROGND=0x81BB; CRSR_STATE=0x81E9; LM80C_model=0; }
+      if(options.rom == "316")    { firmware = rom_316;     BASTXT=0x8133; PROGND=0x821E; CRSR_STATE=0x81D6; LM80C_model=0; }
+      if(options.rom == "317")    { firmware = rom_317;     BASTXT=0x8135; PROGND=0x8224; CRSR_STATE=0x81D8; LM80C_model=0; }
+      if(options.rom == "318")    { firmware = rom_318;     BASTXT=0x8135; PROGND=0x8224; CRSR_STATE=0x81D8; LM80C_model=0; }
+      if(options.rom == "319")    { firmware = rom_319;     BASTXT=0x8135; PROGND=0x8223; CRSR_STATE=0x81D7; LM80C_model=0; }
+      if(options.rom == "321")    { firmware = rom_321;     BASTXT=0x8135; PROGND=0x824B; CRSR_STATE=0x81FF; LM80C_model=0; }
+      if(options.rom == "322")    { firmware = rom_322;     BASTXT=0x8135; PROGND=0x824B; CRSR_STATE=0x81FF; LM80C_model=0; }
       if(options.rom == "64K102") { firmware = rom_64K_102; BASTXT=0x5233; PROGND=0x5322; CRSR_STATE=0x52D8; LM80C_model=1; }
       if(options.rom == "64K103") { firmware = rom_64K_103; BASTXT=0x5224; PROGND=0x5313; CRSR_STATE=0x52C7; LM80C_model=1; }
       if(options.rom == "64K104") { firmware = rom_64K_104; BASTXT=0x5254; PROGND=0x5343; CRSR_STATE=0x52F7; LM80C_model=1; }
       if(options.rom == "64K105") { firmware = rom_64K_105; BASTXT=0x527A; PROGND=0x5368; CRSR_STATE=0x531C; LM80C_model=1; }
+      if(options.rom == "64K111") { firmware = rom_64K_111; BASTXT=0x604E; PROGND=0x6164; CRSR_STATE=0x6118; LM80C_model=1; }
+      if(options.rom == "64K112") { firmware = rom_64K_112; BASTXT=0x608E; PROGND=0x61A4; CRSR_STATE=0x6158; LM80C_model=1; }
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 

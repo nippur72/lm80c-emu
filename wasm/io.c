@@ -9,6 +9,15 @@ void led_write(byte port, byte value) {
    byte unused = (byte) EM_ASM_INT({ led_write($0); }, value);
 }
 
+byte cf_read(word port) {
+   byte value = (byte) EM_ASM_INT({ return cf_read($0) }, port);
+   return value;
+}
+
+void cf_write(word port, byte value) {
+   byte unused = (byte) EM_ASM_INT({ cf_write($0, $1); }, port, value);
+}
+
 extern tms9928_t vdp;
 
 // simplified LED bits control
@@ -46,6 +55,15 @@ byte io_read(word ioport) {
       case 0x42:
       case 0x43: return psg_read(port);
 
+      case 0x50:
+      case 0x51:
+      case 0x52:
+      case 0x53:
+      case 0x54:
+      case 0x55:
+      case 0x56:
+      case 0x57: return cf_read(port);
+
       case 0xFF: return led_read(port);
 
       default:
@@ -55,10 +73,11 @@ byte io_read(word ioport) {
  }
 
 EMSCRIPTEN_KEEPALIVE
-void io_write(word port, byte value) {
+void io_write(word ioport, byte value) {
+   byte port = ioport & 0xFF;
 
    // console.log(`io write ${hex(port)} ${hex(value)}`)
-   switch(port & 0xFF) {
+   switch(port) {
       // PIO DATAREGA
       case 0x00: return;
       case 0x01: PIO_data_B = value; return;
@@ -85,6 +104,15 @@ void io_write(word port, byte value) {
       case 0x41:
       case 0x42:
       case 0x43: psg_write(port, value); return;
+
+      case 0x50:
+      case 0x51:
+      case 0x52:
+      case 0x53:
+      case 0x54:
+      case 0x55:
+      case 0x56:
+      case 0x57: cf_write(port, value); return;
 
       case 0xFF: led_write(port, value); return;
 
