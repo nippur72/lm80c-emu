@@ -175,7 +175,7 @@ function cpu_actual_speed() {
 // connect the SIO output to the printer
 function sio_write_data(port, data) {
    printerWrite(data);
-   send_byte_to_modem(data);
+   //send_byte_to_modem(data);
 }
 function sio_write_control(port, data) {
    //console.log(`Serial port ${port} register write ${hex(data)}`);
