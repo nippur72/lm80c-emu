@@ -38,6 +38,7 @@ const CF_STAT_BUSY  = 0b10000000;
 const CF_STAT_READY = 0b01000000;
 const CF_STAT_DSC   = 0b00010000;
 const CF_STAT_DRQ   = 0b00001000;   // data request
+const CF_STAT_ERR   = 0b00000001;
 
 // CF card features and commands
 const CF_FTR_8BIT    = 0x01;
@@ -171,7 +172,8 @@ function cf_write(port, data) {
          let start = sector * 512;
          let end = start + cf_seccnt * 512;
          if(start >= CF_SIZE || end > CF_SIZE || start < 0 || end < 0) {
-            throw `beyond end of disk lba=${cf_lba} start=${start} end=${end}`;
+            //throw `beyond end of disk lba=${cf_lba} start=${start} end=${end}`;
+            cf_stat = CF_STAT_ERR;
          }
          else {
             cf_read_buffer = cf_card.slice(start, end);
@@ -185,8 +187,13 @@ function cf_write(port, data) {
          let sector = (cf_lba & 0x7FFFFFF); // only 27 bits are used
          cf_ptr = sector * 512;
          cf_count = cf_seccnt * 512;
-         cf_stat = CF_STAT_DRQ;
-         console.log(`CF: write sector #${sector} (count ${cf_seccnt})`);
+         if(cf_ptr >= CF_SIZE) {
+            cf_stat = CF_STAT_ERR;
+         }
+         else {
+            cf_stat = CF_STAT_DRQ;
+            console.log(`CF: write sector #${sector} (count ${cf_seccnt})`);
+         }
       }
       else if(cf_cmd === CF_CMD_STDBY) {
          cf_stat = CF_STAT_READY;
