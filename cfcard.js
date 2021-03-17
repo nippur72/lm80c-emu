@@ -1,17 +1,3 @@
-/*
-CF card:
-•	CF data (reg. #0):  $50 (R/W)
-•	CF error (reg. #1): $51 (R)
-•	CF features (reg. #1):  $51 (W)
-•	CF sector count reg. (reg. #2): $52 (R/W)
-•	CF LBA reg. 0 (reg. #3): $53 (bits 0-7) (R/W)
-•	CF LBA reg. 1 (reg. #4): $54 (bits 8-15) (R/W)
-•	CF LBA reg. 2 (reg. #5): $55 (bits 16-23) (R/W)
-•	CF LBA reg. 3 (reg. #6): $56 (bits 24-27) (R/W)
-•	CF status (reg. #7): $57 (R)
-•	CF command (reg. #7): $57 (W)
-*/
-
 // CF card I/O ports
 const CF_DATA   = 0x50;  // r/w
 const CF_ERR    = 0x51;  // r
@@ -52,23 +38,41 @@ const CF_CMD_WRITE   = 0x30;
 const CF_CMD_STDBY   = 0x92;
 const CF_CMD_DRIVEID = 0xEC;
 
-// CF card geometry
-const CF_DISK_SIZE            = 0xA8000007;  // 4 bytes disk size            $07 $00 $00 $A8
-const CF_CYLINDERS            = 0x03D4;      // 2 bytes number of cylinders  $D4 $03
-const CF_SECTORS_PER_CYLINDER = 0x0020;      // 2 bytes sectors per cylinder $20 $00
-const CF_HEADS                = 0x0010;      // 2 bytes number of heads      $10 $00
 const CF_SECTOR_SIZE          = 512;         // fixed for all CF cards
 
-const CF_SIZE = CF_SECTOR_SIZE * CF_HEADS * CF_SECTORS_PER_CYLINDER * CF_CYLINDERS; // 256 MB CF card
-
-let cf_card   = new Uint8Array(CF_SIZE).fill(0x00);
 let cf_ptr    = 0;
 let cf_count  = 0;
-
 let cf_read_buffer = [];
+
+let CF_SIZE;
+let cf_card;
+
+function cf_create_card() {
+   CF_SIZE = CF_SECTOR_SIZE * cf_geometry.heads * cf_geometry.sectorsPerCylinder * cf_geometry.cylinders;
+   cf_card = new Uint8Array(CF_SIZE).fill(0x00);
+}
 
 function cf_get_card_id() {
    let buffer = new Uint8Array(512).fill(0x00);
+
+   let nsectors = cf_geometry.heads * cf_geometry.sectorsPerCylinder * cf_geometry.cylinders;
+
+   // fill disk size
+   buffer[0x0E+0] = (nsectors >> 16 ) & 0xFF;
+   buffer[0x0E+1] = (nsectors >> 24 ) & 0xFF;
+   buffer[0x0E+2] = (nsectors >>  0 ) & 0xFF;
+   buffer[0x0E+3] = (nsectors >> 08 ) & 0xFF;
+   // fill number of cylinders
+   buffer[0x02+0] = (cf_geometry.cylinders >> 0 ) & 0xFF;
+   buffer[0x02+1] = (cf_geometry.cylinders >> 8 ) & 0xFF;
+   // fill sectors per cylinder
+   buffer[0x0C+0] = (cf_geometry.sectorsPerCylinder >> 0 ) & 0xFF;
+   buffer[0x0C+1] = (cf_geometry.sectorsPerCylinder >> 8 ) & 0xFF;
+   // fill number of heads
+   buffer[0x06+0] = (cf_geometry.heads >> 0 ) & 0xFF;
+   buffer[0x06+1] = (cf_geometry.heads >> 8 ) & 0xFF;
+
+   /*
    // fill disk size
    buffer[0x0E+0] = 0x07;
    buffer[0x0E+1] = 0x00;
@@ -83,6 +87,7 @@ function cf_get_card_id() {
    // fill number of heads
    buffer[0x06+0] = 0x10;
    buffer[0x06+1] = 0x00;
+   */
    return buffer;
 }
 
@@ -218,3 +223,14 @@ function cf_write(port, data) {
       return 0x00;
    }
 }
+
+let cf_geometry = {
+   heads: 0x10,
+   cylinders: 0x03d4,
+   sectorsPerCylinder: 0x20
+};
+
+// create the actual CF card space
+cf_create_card();
+
+

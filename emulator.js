@@ -96,7 +96,7 @@ function main() {
    // loads the eprom
    {
       let firmware;
-      if(options.rom == undefined) options.rom = "64K113";
+      if(options.rom == undefined) options.rom = "64K114";
       if(options.rom == "310")    { firmware = rom_310; }
       if(options.rom == "311")    { firmware = rom_311; }
       if(options.rom == "312")    { firmware = rom_312; }
@@ -118,6 +118,7 @@ function main() {
       if(options.rom == "321")    { firmware = rom_321;     BASTXT=0x8135; PROGND=0x824B; CRSR_STATE=0x81FF; LM80C_model=0; }
       if(options.rom == "322")    { firmware = rom_322;     BASTXT=0x8135; PROGND=0x824B; CRSR_STATE=0x81FF; LM80C_model=0; }
       if(options.rom == "323")    { firmware = rom_323;     BASTXT=0x8135; PROGND=0x824C; CRSR_STATE=0x8200; LM80C_model=0; }
+      if(options.rom == "324")    { firmware = rom_324;     BASTXT=0x8135; PROGND=0x824C; CRSR_STATE=0x8200; LM80C_model=0; }
       if(options.rom == "64K102") { firmware = rom_64K_102; BASTXT=0x5233; PROGND=0x5322; CRSR_STATE=0x52D8; LM80C_model=1; }
       if(options.rom == "64K103") { firmware = rom_64K_103; BASTXT=0x5224; PROGND=0x5313; CRSR_STATE=0x52C7; LM80C_model=1; }
       if(options.rom == "64K104") { firmware = rom_64K_104; BASTXT=0x5254; PROGND=0x5343; CRSR_STATE=0x52F7; LM80C_model=1; }
@@ -125,6 +126,7 @@ function main() {
       if(options.rom == "64K111") { firmware = rom_64K_111; BASTXT=0x604E; PROGND=0x6164; CRSR_STATE=0x6118; LM80C_model=1; }
       if(options.rom == "64K112") { firmware = rom_64K_112; BASTXT=0x608E; PROGND=0x61A4; CRSR_STATE=0x6158; LM80C_model=1; }
       if(options.rom == "64K113") { firmware = rom_64K_113; BASTXT=0x6096; PROGND=0x61AD; CRSR_STATE=0x6161; LM80C_model=1; }
+      if(options.rom == "64K114") { firmware = rom_64K_114; BASTXT=0x60AA; PROGND=0x61C1; CRSR_STATE=0x6175; LM80C_model=1; }
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
