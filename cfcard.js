@@ -34,11 +34,14 @@ let cf_lba = 0;
 let cf_cmd = 0;
 
 // CF card status bits
-const CF_STAT_BUSY  = 0b10000000;
-const CF_STAT_READY = 0b01000000;
-const CF_STAT_DSC   = 0b00010000;
-const CF_STAT_DRQ   = 0b00001000;   // data request
-const CF_STAT_ERR   = 0b00000001;
+const CF_STAT_BUSY  = 0b10000000;   // BUSY, registers and buffers are locked
+const CF_STAT_RDY   = 0b01000000;   // READY, ready to accept commands
+const CF_STAT_DWF   = 0b00100000;   // WRITE FAULT, error writing
+const CF_STAT_DSC   = 0b00010000;   // storage card is ready ?
+const CF_STAT_DRQ   = 0b00001000;   // DATA REQUEST, data needed to be transferred from to data register
+const CF_STAT_CORR  = 0b00000100;   // correctable data error occurred
+const CF_STAT_IDX   = 0b00000010;   // always 0
+const CF_STAT_ERR   = 0b00000001;   // last command ended with error
 
 // CF card features and commands
 const CF_FTR_8BIT    = 0x01;
@@ -58,7 +61,7 @@ const CF_SECTOR_SIZE          = 512;         // fixed for all CF cards
 
 const CF_SIZE = CF_SECTOR_SIZE * CF_HEADS * CF_SECTORS_PER_CYLINDER * CF_CYLINDERS; // 256 MB CF card
 
-let cf_card   = new Uint8Array(CF_SIZE).fill(0xff);
+let cf_card   = new Uint8Array(CF_SIZE).fill(0x00);
 let cf_ptr    = 0;
 let cf_count  = 0;
 
@@ -97,10 +100,10 @@ function cf_read(port) {
          cf_ptr++;
          cf_count--;
          if(cf_count > 0) cf_stat = CF_STAT_DRQ;
-         else             cf_stat = CF_STAT_READY;
+         else             cf_stat = CF_STAT_RDY;
       }
       else {
-         cf_stat = CF_STAT_READY;  // ERR ?
+         cf_stat = CF_STAT_RDY;
       }
       //console.log(`CF: read from CF_DATAREG data ${hex(cf_data)} status=${cf_stat}`);
       return cf_data;
@@ -136,11 +139,11 @@ function cf_write(port, data) {
          cf_card[cf_ptr] = cf_data;
          cf_ptr++;
          cf_count--;
-         if(cf_count > 0) cf_stat = CF_STAT_READY;
-         else             cf_stat = CF_STAT_READY;
+         if(cf_count > 0) cf_stat = CF_STAT_RDY;
+         else             cf_stat = CF_STAT_RDY;
       }
       else {
-         cf_stat = CF_STAT_READY;
+         cf_stat = CF_STAT_RDY;
       }
    }
    else if(port === CF_FTR) {
@@ -160,11 +163,11 @@ function cf_write(port, data) {
 
       // perform command
       if(cf_cmd === CF_CMD_MODE && cf_ftr === CF_FTR_NOP) {
-         cf_stat = CF_STAT_READY;
+         cf_stat = CF_STAT_RDY;
          console.log(`CF: wake up`);
       }
       else if(cf_cmd === CF_CMD_MODE && cf_ftr === CF_FTR_8BIT) {
-         cf_stat = CF_STAT_READY;
+         cf_stat = CF_STAT_RDY;
          console.log(`CF: set 8 bit mode`);
       }
       else if(cf_cmd === CF_CMD_READ) {
@@ -196,7 +199,7 @@ function cf_write(port, data) {
          }
       }
       else if(cf_cmd === CF_CMD_STDBY) {
-         cf_stat = CF_STAT_READY;
+         cf_stat = CF_STAT_RDY;
          console.log(`CF: standby`);
       }
       else if(cf_cmd === CF_CMD_DRIVEID) {
