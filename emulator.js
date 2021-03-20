@@ -96,7 +96,7 @@ function main() {
    // loads the eprom
    {
       let firmware;
-      if(options.rom == undefined) options.rom = "64K114";
+      if(options.rom == undefined) options.rom = "64K115";
       if(options.rom == "310")    { firmware = rom_310; }
       if(options.rom == "311")    { firmware = rom_311; }
       if(options.rom == "312")    { firmware = rom_312; }
@@ -127,6 +127,7 @@ function main() {
       if(options.rom == "64K112") { firmware = rom_64K_112; BASTXT=0x608E; PROGND=0x61A4; CRSR_STATE=0x6158; LM80C_model=1; }
       if(options.rom == "64K113") { firmware = rom_64K_113; BASTXT=0x6096; PROGND=0x61AD; CRSR_STATE=0x6161; LM80C_model=1; }
       if(options.rom == "64K114") { firmware = rom_64K_114; BASTXT=0x60AA; PROGND=0x61C1; CRSR_STATE=0x6175; LM80C_model=1; }
+      if(options.rom == "64K115") { firmware = rom_64K_115; BASTXT=0x5473; PROGND=0x5586; CRSR_STATE=0x553A; LM80C_model=1; }
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
