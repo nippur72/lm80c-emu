@@ -131,3 +131,78 @@ paste(`
 30 if sstat(7)<>191 then print sstat(7)
 40 goto 20
 `)
+
+
+// test BBS
+(async function() {
+   let m = new BBS();
+   let buf = "";
+   m.onreceive = (d) => {
+      console.log(d);
+   }
+   await m.connect("ws:/localhost:8080","bbs");
+   await wait(500);
+   m.sendText("5");   // 5 = pure ascii
+   await wait(500);
+   m.sendText("T\r");   // t = chat
+   await wait(500);
+   m.sendText("pappagallo\r");
+   await wait(500);
+   /*
+   m.sendText("ciao, sono un bot e faccio spam\r");
+   await wait(500);
+   m.sendText("compra viagra e cialis a soli 4,99\r");
+   await wait(500);
+   */
+   window.m = m;
+}());
+
+// test modem
+(function() {
+   let m = new VirtualModem();
+   m.connect();
+   let buf = "";
+
+   function send(text) {
+      for(let t=0;t<text.length;t++) {
+         m.write_byte(text.charCodeAt(t));
+      }
+   }
+
+   function tick() {
+      while(m.read_status()) {
+         buf += String.fromCharCode(m.read_byte());
+      }
+      if(buf!="") console.log(buf);
+   }
+
+   function get_input(pattern) {
+      while(1) {
+         tick();
+         let x = buf.indexOf(text);
+         if(x!=-1) {
+            buf = buf.slice(x+text.length);
+            return buf;
+         }
+      }
+   }
+
+   window.send = send;
+   window.tick = tick;
+   window.get_input = get_input;
+
+}());
+
+paste(`
+100 open "mario",1,1
+110 for i=1 to 10
+120 put 1,i
+130 next
+140 close 1
+150 open "mario",1,0
+160 n=eof(0)
+170 for i=1 to n
+180 print get(1)
+190 next
+200 close 1
+`)
