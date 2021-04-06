@@ -118,7 +118,9 @@ async function parseQueryStringCommands() {
       setTimeout(async ()=>{
          if(name.startsWith("http")) {
             // external load
-            await externalLoad("loadPrg", name);
+            let bin = await externalLoad("loadPrg", name);
+            await storage.writeFile("autoload.prg", bin);
+            await run("autoload.prg");
          }
          else {
             // internal load

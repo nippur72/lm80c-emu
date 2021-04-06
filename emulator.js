@@ -305,7 +305,7 @@ async function zz() {
    bot.buffer = "";
    console.warn("chat insert name prompt");
 
-   await bot.digita("ponz\r");
+   await bot.digita("scas\r");
    console.warn("login with name");
 
    await bot.waitfor(":", TIMEOUT);
@@ -374,7 +374,7 @@ async function zz() {
                let chance = Math.random();
                let option = Math.floor(Math.random() * 12);
                console.log(`chance: ${chance}`);
-               if(chance < 0.10) {
+               if(chance < 0.50) {
                   if(option == 0) {
                      await bot.digita(`${match.nome_msg}, lo sai che ho trovato un sito\r`);
                      await bot.digita(`dove si puo' comprare VIAGRA o CIALIS a 4,99... pazzesco\r`);
