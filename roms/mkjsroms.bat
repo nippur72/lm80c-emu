@@ -30,6 +30,8 @@ node makerom LM80C-64K-firmware-r1.13.bin rom_64K_113
 node makerom LM80C-64K-firmware-r1.14.bin rom_64K_114
 node makerom LM80C-64K-firmware-r1.15.bin rom_64K_115
 node makerom LM80C-64K-firmware-r1.16.bin rom_64K_116
+node makerom LM80C-64K-firmware-r1.17.bin rom_64K_117
+
 
 
 
