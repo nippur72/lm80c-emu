@@ -24,7 +24,6 @@ uint8_t mem_read(uint16_t address) {
             return ram[address];
         }
     }
-
 }
 
 EMSCRIPTEN_KEEPALIVE
