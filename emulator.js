@@ -1,5 +1,6 @@
 "use strict";
 
+// TODO support .bas loading
 // TODO persisent CF card
 // TODO emulate second VRAM bank
 // TODO allow phisical keyboard
