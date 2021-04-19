@@ -1,6 +1,6 @@
 @echo off
 SET FNAME1=..\..\LM80C\Rom\LM80C-firmware-r3.24.lst
-SET FNAME2=..\..\LM80C\Rom\LM80C_64K-firmware-r1.18.lst
+SET FNAME2=..\..\LM80C\Rom\LM80C_64K-firmware-r1.19.lst
 
 rem echo %FNAME1%
 rem TYPE %FNAME1% | FINDSTR BASTXT     | FINDSTR 0x
