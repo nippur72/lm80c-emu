@@ -26,10 +26,18 @@ const DOT_HEIGHT = 262;
 
 let tms9928a_canvas = document.getElementById("canvas");
 let tms9928a_context = tms9928a_canvas.getContext('2d');
+
+// new drawing method
+let tms9928a_imagedata = tms9928a_context.createImageData(DOT_WIDTH*2, DOT_HEIGHT*2);
+let bmp = new Uint32Array(tms9928a_imagedata.data.buffer);
+
+/*
+// old drawing method
 let tms9928a_imagedata = tms9928a_context.getImageData(0, 0, DOT_WIDTH*2, DOT_HEIGHT*2);
 let imagedata_buffer = new ArrayBuffer(tms9928a_imagedata.data.length);
 let imagedata_buf8 = new Uint8ClampedArray(imagedata_buffer);
 let imagedata_data = new Uint32Array(imagedata_buffer);
+*/
 
 function vdp_screen_update(ptr) {
    let start = ptr / wasm_instance.HEAPU32.BYTES_PER_ELEMENT;
@@ -43,18 +51,24 @@ function vdp_screen_update(ptr) {
    for(let y=0;y<DOT_HEIGHT;y++) {
       for(let x=0;x<DOT_WIDTH;x++) {
          let pixel = buffer[ptr0];
-         imagedata_data[ptr1++] = pixel;
-         imagedata_data[ptr1++] = pixel;
-         imagedata_data[ptr2++] = pixel;
-         imagedata_data[ptr2++] = pixel;
+         bmp[ptr1++] = pixel;
+         bmp[ptr1++] = pixel;
+         bmp[ptr2++] = pixel;
+         bmp[ptr2++] = pixel;
          ptr0++;
       }
       ptr1 += DOT_WIDTH*2;
       ptr2 += DOT_WIDTH*2;
    }
 
+   // new drawing method
+   tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
+
+   /*
+   // old drawing method
    tms9928a_imagedata.data.set(imagedata_buf8);
    tms9928a_context.putImageData(tms9928a_imagedata, -60, -48);
+   */
 
    frames++;
    if(end_of_frame_hook !== undefined) end_of_frame_hook();
