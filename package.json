@@ -2,9 +2,7 @@
   "name": "lm80c-emu",
   "version": "0.0.1",
   "description": "LM80C emulator",
-  "main": "elect.js",
   "scripts": {
-    "start": "electron electron.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
