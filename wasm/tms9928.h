@@ -92,6 +92,6 @@ void tms9928_vram_write(tms9928_t *vdp, uint8_t data);
 void tms9928_register_write(tms9928_t *vdp, uint8_t data);
 void tms9928_init(tms9928_t *vdp, tms9928_desc_t *desc);
 void tms9928_drawline(tms9928_t *vdp);
-void tms9928_reset();
+void tms9928_reset(tms9928_t *vdp);
 
 #endif

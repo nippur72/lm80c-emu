@@ -104,7 +104,7 @@ function load_wasm(ready_cb) {
 
    // emscripten_module.js exports "emscripten_module" globally
 
-   let instance = emscripten_module({ wasmBinary: emscripten_wasm_binary, onRuntimeInitialized: ()=>{
+   emscripten_module({ wasmBinary: emscripten_wasm_binary }).then((instance) => {
       // makes C exported functions available globally
       test_function = instance.cwrap("test_function");
 
@@ -210,6 +210,6 @@ function load_wasm(ready_cb) {
 
       // finished
       ready_cb();
-   }});
+   });
 }
 

@@ -6,7 +6,6 @@
 // TODO allow phisical keyboard
 // TODO drop bomb sound for "air attack" differs from FPGA
 // TODO check again NMI interrupt, behaves differently than fpga
-// TODO fix autoload
 // TODO stereo audio: A right, B left, C common
 // TODO keyboard buffering
 // TODO check actual timings (elapsed)
@@ -164,18 +163,8 @@ function main() {
 
    audio.start();
 
-   // rom autoload
-   if(autoload !== undefined) {
-      autoload.forEach((e,i)=>rom_load(i,e));
-   }
-
    // starts drawing frames
    oneFrame();
-
-   // autoload program and run it
-   if(autoload !== undefined) {
-      throw "not implemented";
-   }
 }
 
 function cpu_actual_speed() {
