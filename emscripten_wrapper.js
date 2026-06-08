@@ -102,9 +102,10 @@ let SIO_receiveChar;
 
 function load_wasm(ready_cb) {
 
-   // emscripten_module.js exports "emscripten_module" globally
+   import('./emscripten_module.js').then((module) => {
+      const emscripten_module = module.default;
 
-   emscripten_module({ wasmBinary: emscripten_wasm_binary }).then((instance) => {
+      emscripten_module().then((instance) => {
       // makes C exported functions available globally
       test_function = instance.cwrap("test_function");
 
@@ -205,11 +206,12 @@ function load_wasm(ready_cb) {
 
       SIO_receiveChar    = instance.cwrap("SIO_receiveChar"   , null, ['number'] );
 
-      // export instance globally (not strictly required)
-      wasm_instance = instance;
+         // export instance globally (not strictly required)
+         wasm_instance = instance;
 
-      // finished
-      ready_cb();
+         // finished
+         ready_cb();
+      });
    });
 }
 
