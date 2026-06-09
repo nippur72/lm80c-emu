@@ -4,7 +4,7 @@ import { saveState, restoreState } from './utils.js';
 import { getFileExtension } from './bytes.js';
 import { run } from './files.js';
 import { calculateGeometry } from './video.js';
-import { externalLoad } from './mdawson.js';
+import { externalLoad } from './externalLoad.js';
 import { stopped, audio, oneFrame, options, setStopped, storage } from './emulator.js';
 
 let aspect = 1.25;

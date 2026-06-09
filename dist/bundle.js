@@ -978,38 +978,28 @@ function vdp_screen_update(ptr) {
 }
 window.vdp_screen_update = vdp_screen_update;
 //#endregion
-//#region src/mdawson.ts
-function externalLoad(url) {
-	let subfile = "";
-	let cmd = "externalLoad.load";
-	let head = document.getElementsByTagName("head")[0];
-	let script = document.createElement("script");
-	script.type = "text/javascript";
-	script.src = `https://www.mdawson.net/vic20chrome/vic20/prgtojsloader.php?cmd=${cmd}&prgurl=${url}&subfile=${subfile}&rnd=${(/* @__PURE__ */ new Date()).valueOf()}`;
-	head.appendChild(script);
-	return new Promise((resolve, reject) => {
-		externalLoad.resolve = resolve;
-	});
-}
-externalLoad.load = function(src) {
-	function encodedbinToArray(data) {
-		let bincodes = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.!";
-		let v = 0, cnt = 0, out = [], ii = 0;
-		for (let i = 0; i < data.length; i++) {
-			v += bincodes.indexOf(data[i]) << cnt;
-			cnt += 6;
-			if (cnt >= 8) {
-				out[ii++] = v & 255;
-				cnt -= 8;
-				v >>= 8;
-			}
+//#region src/externalLoad.ts
+async function externalLoad(url) {
+	console.log("externalLoad url=" + url);
+	try {
+		const proxyUrl = "https://vercel-cors-proxy-kappa.vercel.app/?url=" + encodeURIComponent(url);
+		const response = await fetch(proxyUrl);
+		if (!response.ok) {
+			let errorBody = "";
+			try {
+				errorBody = await response.text();
+			} catch (_) {}
+			throw new Error(`HTTP error! status: ${response.status}. Body: ${errorBody}`);
 		}
-		return out;
+		const arrayBuffer = await response.arrayBuffer();
+		const bytes = new Uint8Array(arrayBuffer);
+		console.log("Successfully loaded external program via Vercel Proxy.");
+		return bytes;
+	} catch (error) {
+		console.error("Error loading external program:", error);
+		return;
 	}
-	if (src.length !== 1) return;
-	let bytes = encodedbinToArray(src[0]);
-	externalLoad.resolve(bytes);
-};
+}
 //#endregion
 //#region src/browser.ts
 var aspect = 1.25;
