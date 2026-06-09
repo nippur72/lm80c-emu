@@ -1180,6 +1180,156 @@ function main() {
 	{
 		let firmware;
 		if (options.rom == void 0) options.rom = "64K120";
+		if (options.rom == "310") firmware = rom_310;
+		if (options.rom == "311") firmware = rom_311;
+		if (options.rom == "312") firmware = rom_312;
+		if (options.rom == "313") firmware = rom_313;
+		if (options.rom == "3131") firmware = rom_3131;
+		if (options.rom == "3132") firmware = rom_3132;
+		if (options.rom == "3133") firmware = rom_3133;
+		if (options.rom == "3134") firmware = rom_3134;
+		if (options.rom == "3135") firmware = rom_3135;
+		if (options.rom == "3136") firmware = rom_3136;
+		if (options.rom == "3137") firmware = rom_3137;
+		if (options.rom == "3138") firmware = rom_3138;
+		if (options.rom == "314") {
+			firmware = rom_314;
+			BASTXT = 33075;
+			PROGND = 33211;
+			LM80C_model = 0;
+		}
+		if (options.rom == "315") {
+			firmware = rom_315;
+			BASTXT = 33075;
+			PROGND = 33211;
+			LM80C_model = 0;
+		}
+		if (options.rom == "316") {
+			firmware = rom_316;
+			BASTXT = 33075;
+			PROGND = 33310;
+			LM80C_model = 0;
+		}
+		if (options.rom == "317") {
+			firmware = rom_317;
+			BASTXT = 33077;
+			PROGND = 33316;
+			LM80C_model = 0;
+		}
+		if (options.rom == "318") {
+			firmware = rom_318;
+			BASTXT = 33077;
+			PROGND = 33316;
+			LM80C_model = 0;
+		}
+		if (options.rom == "319") {
+			firmware = rom_319;
+			BASTXT = 33077;
+			PROGND = 33315;
+			LM80C_model = 0;
+		}
+		if (options.rom == "321") {
+			firmware = rom_321;
+			BASTXT = 33077;
+			PROGND = 33355;
+			LM80C_model = 0;
+		}
+		if (options.rom == "322") {
+			firmware = rom_322;
+			BASTXT = 33077;
+			PROGND = 33355;
+			LM80C_model = 0;
+		}
+		if (options.rom == "323") {
+			firmware = rom_323;
+			BASTXT = 33077;
+			PROGND = 33356;
+			LM80C_model = 0;
+		}
+		if (options.rom == "324") {
+			firmware = rom_324;
+			BASTXT = 33077;
+			PROGND = 33356;
+			LM80C_model = 0;
+		}
+		if (options.rom == "64K102") {
+			firmware = rom_64K_102;
+			BASTXT = 21043;
+			PROGND = 21282;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K103") {
+			firmware = rom_64K_103;
+			BASTXT = 21028;
+			PROGND = 21267;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K104") {
+			firmware = rom_64K_104;
+			BASTXT = 21076;
+			PROGND = 21315;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K105") {
+			firmware = rom_64K_105;
+			BASTXT = 21114;
+			PROGND = 21352;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K111") {
+			firmware = rom_64K_111;
+			BASTXT = 24654;
+			PROGND = 24932;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K112") {
+			firmware = rom_64K_112;
+			BASTXT = 24718;
+			PROGND = 24996;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K113") {
+			firmware = rom_64K_113;
+			BASTXT = 24726;
+			PROGND = 25005;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K114") {
+			firmware = rom_64K_114;
+			BASTXT = 24746;
+			PROGND = 25025;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K115") {
+			firmware = rom_64K_115;
+			BASTXT = 21619;
+			PROGND = 21894;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K116") {
+			firmware = rom_64K_116;
+			BASTXT = 21679;
+			PROGND = 21954;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K117") {
+			firmware = rom_64K_117;
+			BASTXT = 21679;
+			PROGND = 21954;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K118") {
+			firmware = rom_64K_118;
+			BASTXT = 21713;
+			PROGND = 21988;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K119") {
+			firmware = rom_64K_119;
+			BASTXT = 21720;
+			PROGND = 21995;
+			LM80C_model = 1;
+		}
 		if (options.rom == "64K120") {
 			firmware = rom_64K_120;
 			BASTXT = 21720;
