@@ -1,13 +1,14 @@
+import { saveAs } from 'file-saver';
+import { Store, get, set, del, keys } from 'idb-keyval';
+
 class BrowserStorage
 {
    STORAGE_KEY: string;
-   idb: any;
-   store: any;
+   store: Store;
 
    constructor(key) {
       this.STORAGE_KEY = key;
-      this.idb = idbKeyval;
-      this.store = new this.idb.Store(this.STORAGE_KEY, this.STORAGE_KEY);
+      this.store = new Store(this.STORAGE_KEY, this.STORAGE_KEY);
 
       (window as any).dir      = ()   => this.dir();
       (window as any).remove   = (fn) => this.remove(fn);
@@ -18,26 +19,27 @@ class BrowserStorage
    // ===================== private methods ============================================
 
    async readFile(fileName) {
-      const bytes = await this.idb.get(fileName, this.store);
+      const bytes = await get(fileName, this.store);
       return bytes;
    }
 
    async writeFile(fileName, bytes) {
-      await this.idb.set(fileName, bytes, this.store);
+      await set(fileName, bytes, this.store);
    }
 
    async removeFile(fileName) {
-      await this.idb.del(fileName, this.store);
+      await del(fileName, this.store);
    }
 
+
    async fileExists(fileName) {
-      return await this.idb.get(fileName, this.store) !== undefined;
+      return await get(fileName, this.store) !== undefined;
    }
 
    // ===================== command line commands ======================================
 
    async dir() {
-      const fileNames = await this.idb.keys(this.store);
+      const fileNames = await keys(this.store);
       fileNames.forEach(async fn=>{
          const file = await this.readFile(fn);
          const length = file.length;

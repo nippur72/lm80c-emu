@@ -2,7 +2,6 @@
 
 declare var ram: any;
 declare var rom: any;
-declare var idbKeyval: any;
 declare var KEY_F4: any;
 declare var KEY_DEL_LINE: any;
 declare var topaz: any;
@@ -12,7 +11,6 @@ declare var cpu_started_msec: any;
 declare var define: any;
 
 declare var averageLoad: any;
-declare var saveAs: any;
 declare var border_top: any;
 declare var border_bottom: any;
 declare var border_h: any;

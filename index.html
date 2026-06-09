@@ -2,6 +2,7 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
       <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />					
+      <link rel="icon" type="image/png" href="icon.png">
       <style>
          .keyboardpanel
          {
@@ -95,12 +96,11 @@
    <script type="text/javascript" src="roms/rom_64K_118.js"></script>
    <script type="text/javascript" src="roms/rom_64K_119.js"></script>
 
-   <script type="text/javascript" src="bbs.js"></script>
-   <script type="text/javascript" src="FileSaver.js"></script>               <!-- allows to "Save As..." programs from the emulator -->
-   <script type="text/javascript" src="idb-keyval-iife.min.js"></script>     <!-- allows to used a keyval store with IndexedDB -->
+
    <script type="module">
       import { main, load_wasm } from './dist/bundle.js';
-      load_wasm(main);
+      await load_wasm();
+      main();
    </script>
 </body>
 </html>

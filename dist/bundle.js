@@ -1,3 +1,6 @@
+//#region \0rolldown/runtime.js
+var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
+//#endregion
 //#region src/audio.ts
 var LMAudio = class {
 	constructor(bufsize) {
@@ -38,32 +41,178 @@ var LMAudio = class {
 		});
 	}
 };
+/*! @source http://purl.eligrey.com/github/FileSaver.js/blob/master/FileSaver.js */
+//#endregion
+//#region node_modules/idb-keyval/dist/idb-keyval.mjs
+var import_FileSaver = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
+	var saveAs = saveAs || function(view) {
+		"use strict";
+		if (typeof view === "undefined" || typeof navigator !== "undefined" && /MSIE [1-9]\./.test(navigator.userAgent)) return;
+		var doc = view.document, get_URL = function() {
+			return view.URL || view.webkitURL || view;
+		}, save_link = doc.createElementNS("http://www.w3.org/1999/xhtml", "a"), can_use_save_link = "download" in save_link, click = function(node) {
+			var event = new MouseEvent("click");
+			node.dispatchEvent(event);
+		}, is_safari = /constructor/i.test(view.HTMLElement) || view.safari, is_chrome_ios = /CriOS\/[\d]+/.test(navigator.userAgent), throw_outside = function(ex) {
+			(view.setImmediate || view.setTimeout)(function() {
+				throw ex;
+			}, 0);
+		}, force_saveable_type = "application/octet-stream", arbitrary_revoke_timeout = 1e3 * 40, revoke = function(file) {
+			var revoker = function() {
+				if (typeof file === "string") get_URL().revokeObjectURL(file);
+				else file.remove();
+			};
+			setTimeout(revoker, arbitrary_revoke_timeout);
+		}, dispatch = function(filesaver, event_types, event) {
+			event_types = [].concat(event_types);
+			var i = event_types.length;
+			while (i--) {
+				var listener = filesaver["on" + event_types[i]];
+				if (typeof listener === "function") try {
+					listener.call(filesaver, event || filesaver);
+				} catch (ex) {
+					throw_outside(ex);
+				}
+			}
+		}, auto_bom = function(blob) {
+			if (/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) return new Blob([String.fromCharCode(65279), blob], { type: blob.type });
+			return blob;
+		}, FileSaver = function(blob, name, no_auto_bom) {
+			if (!no_auto_bom) blob = auto_bom(blob);
+			var filesaver = this, force = blob.type === force_saveable_type, object_url, dispatch_all = function() {
+				dispatch(filesaver, "writestart progress write writeend".split(" "));
+			}, fs_error = function() {
+				if ((is_chrome_ios || force && is_safari) && view.FileReader) {
+					var reader = new FileReader();
+					reader.onloadend = function() {
+						var url = is_chrome_ios ? reader.result : reader.result.replace(/^data:[^;]*;/, "data:attachment/file;");
+						if (!view.open(url, "_blank")) view.location.href = url;
+						url = void 0;
+						filesaver.readyState = filesaver.DONE;
+						dispatch_all();
+					};
+					reader.readAsDataURL(blob);
+					filesaver.readyState = filesaver.INIT;
+					return;
+				}
+				if (!object_url) object_url = get_URL().createObjectURL(blob);
+				if (force) view.location.href = object_url;
+				else if (!view.open(object_url, "_blank")) view.location.href = object_url;
+				filesaver.readyState = filesaver.DONE;
+				dispatch_all();
+				revoke(object_url);
+			};
+			filesaver.readyState = filesaver.INIT;
+			if (can_use_save_link) {
+				object_url = get_URL().createObjectURL(blob);
+				setTimeout(function() {
+					save_link.href = object_url;
+					save_link.download = name;
+					click(save_link);
+					dispatch_all();
+					revoke(object_url);
+					filesaver.readyState = filesaver.DONE;
+				});
+				return;
+			}
+			fs_error();
+		}, FS_proto = FileSaver.prototype, saveAs = function(blob, name, no_auto_bom) {
+			return new FileSaver(blob, name || blob.name || "download", no_auto_bom);
+		};
+		if (typeof navigator !== "undefined" && navigator.msSaveOrOpenBlob) return function(blob, name, no_auto_bom) {
+			name = name || blob.name || "download";
+			if (!no_auto_bom) blob = auto_bom(blob);
+			return navigator.msSaveOrOpenBlob(blob, name);
+		};
+		FS_proto.abort = function() {};
+		FS_proto.readyState = FS_proto.INIT = 0;
+		FS_proto.WRITING = 1;
+		FS_proto.DONE = 2;
+		FS_proto.error = FS_proto.onwritestart = FS_proto.onprogress = FS_proto.onwrite = FS_proto.onabort = FS_proto.onerror = FS_proto.onwriteend = null;
+		return saveAs;
+	}(typeof self !== "undefined" && self || typeof window !== "undefined" && window || exports.content);
+	if (typeof module !== "undefined" && module.exports) module.exports.saveAs = saveAs;
+	else if (typeof define !== "undefined" && define !== null && define.amd !== null) define("FileSaver.js", function() {
+		return saveAs;
+	});
+})))();
+var Store = class {
+	constructor(dbName = "keyval-store", storeName = "keyval") {
+		this.storeName = storeName;
+		this._dbp = new Promise((resolve, reject) => {
+			const openreq = indexedDB.open(dbName, 1);
+			openreq.onerror = () => reject(openreq.error);
+			openreq.onsuccess = () => resolve(openreq.result);
+			openreq.onupgradeneeded = () => {
+				openreq.result.createObjectStore(storeName);
+			};
+		});
+	}
+	_withIDBStore(type, callback) {
+		return this._dbp.then((db) => new Promise((resolve, reject) => {
+			const transaction = db.transaction(this.storeName, type);
+			transaction.oncomplete = () => resolve();
+			transaction.onabort = transaction.onerror = () => reject(transaction.error);
+			callback(transaction.objectStore(this.storeName));
+		}));
+	}
+};
+var store;
+function getDefaultStore() {
+	if (!store) store = new Store();
+	return store;
+}
+function get(key, store = getDefaultStore()) {
+	let req;
+	return store._withIDBStore("readonly", (store) => {
+		req = store.get(key);
+	}).then(() => req.result);
+}
+function set(key, value, store = getDefaultStore()) {
+	return store._withIDBStore("readwrite", (store) => {
+		store.put(value, key);
+	});
+}
+function del(key, store = getDefaultStore()) {
+	return store._withIDBStore("readwrite", (store) => {
+		store.delete(key);
+	});
+}
+function keys(store = getDefaultStore()) {
+	const keys = [];
+	return store._withIDBStore("readonly", (store) => {
+		(store.openKeyCursor || store.openCursor).call(store).onsuccess = function() {
+			if (!this.result) return;
+			keys.push(this.result.key);
+			this.result.continue();
+		};
+	}).then(() => keys);
+}
 //#endregion
 //#region src/filesystem.ts
 var BrowserStorage = class {
 	constructor(key) {
 		this.STORAGE_KEY = key;
-		this.idb = idbKeyval;
-		this.store = new this.idb.Store(this.STORAGE_KEY, this.STORAGE_KEY);
+		this.store = new Store(this.STORAGE_KEY, this.STORAGE_KEY);
 		window.dir = () => this.dir();
 		window.remove = (fn) => this.remove(fn);
 		window.download = (fn) => this.download(fn);
 		window.upload = (fn) => this.upload(fn);
 	}
 	async readFile(fileName) {
-		return await this.idb.get(fileName, this.store);
+		return await get(fileName, this.store);
 	}
 	async writeFile(fileName, bytes) {
-		await this.idb.set(fileName, bytes, this.store);
+		await set(fileName, bytes, this.store);
 	}
 	async removeFile(fileName) {
-		await this.idb.del(fileName, this.store);
+		await del(fileName, this.store);
 	}
 	async fileExists(fileName) {
-		return await this.idb.get(fileName, this.store) !== void 0;
+		return await get(fileName, this.store) !== void 0;
 	}
 	async dir() {
-		(await this.idb.keys(this.store)).forEach(async (fn) => {
+		(await keys(this.store)).forEach(async (fn) => {
 			const length = (await this.readFile(fn)).length;
 			console.log(`${fn} (${length} bytes)`);
 		});
@@ -80,8 +229,7 @@ var BrowserStorage = class {
 			return;
 		}
 		const bytes = await this.readFile(fileName);
-		let blob = new Blob([bytes], { type: "application/octet-stream" });
-		saveAs(blob, fileName);
+		(0, import_FileSaver.saveAs)(new Blob([bytes], { type: "application/octet-stream" }), fileName);
 		console.log(`downloaded "${fileName}"`);
 	}
 	async upload(fileName) {
@@ -205,107 +353,103 @@ var lm80c_ticks;
 var keyboard_reset;
 var keyboard_press;
 var SIO_receiveChar;
-function load_wasm(ready_cb) {
-	import("./emscripten_module-_mwPEk15.mjs").then((module) => {
-		const emscripten_module = module.default;
-		emscripten_module({ locateFile: (path) => {
-			if (path.endsWith(".wasm")) return "./emscripten_module.wasm";
-			return path;
-		} }).then((instance) => {
-			instance.cwrap("test_function");
-			psg_init = instance.cwrap("psg_init");
-			psg_reset = instance.cwrap("psg_reset");
-			instance.cwrap("psg_ticks", "void", ["number"]);
-			instance.cwrap("psg_read", "number", ["number"]);
-			instance.cwrap("psg_write", null, ["number", "number"]);
-			ctc_init = instance.cwrap("ctc_init");
-			ctc_reset = instance.cwrap("ctc_reset");
-			instance.cwrap("ctc_ticks", "number", ["number"]);
-			instance.cwrap("ctc_read", "number", ["number"]);
-			instance.cwrap("ctc_write", null, ["number", "number"]);
-			instance.cwrap("ctc_set_reti");
-			get_z80_a = instance.cwrap("get_z80_a", "number");
-			get_z80_f = instance.cwrap("get_z80_f", "number");
-			get_z80_l = instance.cwrap("get_z80_l", "number");
-			get_z80_h = instance.cwrap("get_z80_h", "number");
-			get_z80_e = instance.cwrap("get_z80_e", "number");
-			get_z80_d = instance.cwrap("get_z80_d", "number");
-			get_z80_c = instance.cwrap("get_z80_c", "number");
-			get_z80_b = instance.cwrap("get_z80_b", "number");
-			instance.cwrap("get_z80_fa", "number");
-			instance.cwrap("get_z80_af", "number");
-			instance.cwrap("get_z80_hl", "number");
-			instance.cwrap("get_z80_de", "number");
-			instance.cwrap("get_z80_bc", "number");
-			instance.cwrap("get_z80_fa_", "number");
-			instance.cwrap("get_z80_af_", "number");
-			instance.cwrap("get_z80_hl_", "number");
-			instance.cwrap("get_z80_de_", "number");
-			instance.cwrap("get_z80_bc_", "number");
-			get_z80_sp = instance.cwrap("get_z80_sp", "number");
-			get_z80_iy = instance.cwrap("get_z80_iy", "number");
-			get_z80_ix = instance.cwrap("get_z80_ix", "number");
-			instance.cwrap("get_z80_wz", "number");
-			get_z80_pc = instance.cwrap("get_z80_pc", "number");
-			instance.cwrap("get_z80_ir", "number");
-			instance.cwrap("get_z80_i", "number");
-			instance.cwrap("get_z80_r", "number");
-			instance.cwrap("get_z80_im", "number");
-			instance.cwrap("get_z80_iff1", "number");
-			instance.cwrap("get_z80_iff2", "number");
-			instance.cwrap("get_z80_ei_pending", "number");
-			set_z80_a = instance.cwrap("set_z80_a", null, ["number"]);
-			set_z80_f = instance.cwrap("set_z80_f", null, ["number"]);
-			set_z80_l = instance.cwrap("set_z80_l", null, ["number"]);
-			set_z80_h = instance.cwrap("set_z80_h", null, ["number"]);
-			set_z80_e = instance.cwrap("set_z80_e", null, ["number"]);
-			set_z80_d = instance.cwrap("set_z80_d", null, ["number"]);
-			set_z80_c = instance.cwrap("set_z80_c", null, ["number"]);
-			set_z80_b = instance.cwrap("set_z80_b", null, ["number"]);
-			instance.cwrap("set_z80_af", null, ["number"]);
-			instance.cwrap("set_z80_fa", null, ["number"]);
-			instance.cwrap("set_z80_hl", null, ["number"]);
-			instance.cwrap("set_z80_de", null, ["number"]);
-			instance.cwrap("set_z80_bc", null, ["number"]);
-			instance.cwrap("set_z80_fa_", null, ["number"]);
-			instance.cwrap("set_z80_af_", null, ["number"]);
-			instance.cwrap("set_z80_hl_", null, ["number"]);
-			instance.cwrap("set_z80_de_", null, ["number"]);
-			instance.cwrap("set_z80_bc_", null, ["number"]);
-			set_z80_sp = instance.cwrap("set_z80_sp", null, ["number"]);
-			set_z80_iy = instance.cwrap("set_z80_iy", null, ["number"]);
-			set_z80_ix = instance.cwrap("set_z80_ix", null, ["number"]);
-			instance.cwrap("set_z80_wz", null, ["number"]);
-			set_z80_pc = instance.cwrap("set_z80_pc", null, ["number"]);
-			instance.cwrap("set_z80_ir", null, ["number"]);
-			instance.cwrap("set_z80_i", null, ["number"]);
-			instance.cwrap("set_z80_r", null, ["number"]);
-			instance.cwrap("set_z80_im", null, ["number"]);
-			instance.cwrap("set_z80_iff1", null, ["number"]);
-			instance.cwrap("set_z80_iff2", null, ["number"]);
-			instance.cwrap("set_z80_ei_pending", null, ["number"]);
-			cpu_init = instance.cwrap("cpu_init", null);
-			cpu_reset = instance.cwrap("cpu_reset", null);
-			mem_read = instance.cwrap("mem_read", "number", ["number"]);
-			mem_write = instance.cwrap("mem_write", null, ["number", "number"]);
-			rom_load = instance.cwrap("rom_load", null, ["number", "number"]);
-			instance.cwrap("io_read", "number", ["number"]);
-			instance.cwrap("io_write", null, ["number", "number"]);
-			instance.cwrap("lm80c_tick", "number");
-			instance.cwrap("lm80c_set_debug", null, ["bool"]);
-			lm80c_init = instance.cwrap("lm80c_init", ["number"]);
-			lm80c_reset = instance.cwrap("lm80c_reset", null);
-			lm80c_ticks = instance.cwrap("lm80c_ticks", "number", ["number", "number"]);
-			keyboard_reset = instance.cwrap("keyboard_reset", null);
-			keyboard_press = instance.cwrap("keyboard_press", null, ["number", "number"]);
-			instance.cwrap("keyboard_release", null, ["number", "number"]);
-			instance.cwrap("keyboard_poll", "number", ["number"]);
-			SIO_receiveChar = instance.cwrap("SIO_receiveChar", null, ["number"]);
-			window.wasm_instance = instance;
-			wasm_instance = instance;
-			ready_cb();
-		});
-	});
+async function load_wasm() {
+	const emscripten_module = (await import("./emscripten_module-_mwPEk15.mjs")).default;
+	const instance = await emscripten_module({ locateFile: (path) => {
+		if (path.endsWith(".wasm")) return "./emscripten_module.wasm";
+		return path;
+	} });
+	instance.cwrap("test_function");
+	psg_init = instance.cwrap("psg_init");
+	psg_reset = instance.cwrap("psg_reset");
+	instance.cwrap("psg_ticks", "void", ["number"]);
+	instance.cwrap("psg_read", "number", ["number"]);
+	instance.cwrap("psg_write", null, ["number", "number"]);
+	ctc_init = instance.cwrap("ctc_init");
+	ctc_reset = instance.cwrap("ctc_reset");
+	instance.cwrap("ctc_ticks", "number", ["number"]);
+	instance.cwrap("ctc_read", "number", ["number"]);
+	instance.cwrap("ctc_write", null, ["number", "number"]);
+	instance.cwrap("ctc_set_reti");
+	get_z80_a = instance.cwrap("get_z80_a", "number");
+	get_z80_f = instance.cwrap("get_z80_f", "number");
+	get_z80_l = instance.cwrap("get_z80_l", "number");
+	get_z80_h = instance.cwrap("get_z80_h", "number");
+	get_z80_e = instance.cwrap("get_z80_e", "number");
+	get_z80_d = instance.cwrap("get_z80_d", "number");
+	get_z80_c = instance.cwrap("get_z80_c", "number");
+	get_z80_b = instance.cwrap("get_z80_b", "number");
+	instance.cwrap("get_z80_fa", "number");
+	instance.cwrap("get_z80_af", "number");
+	instance.cwrap("get_z80_hl", "number");
+	instance.cwrap("get_z80_de", "number");
+	instance.cwrap("get_z80_bc", "number");
+	instance.cwrap("get_z80_fa_", "number");
+	instance.cwrap("get_z80_af_", "number");
+	instance.cwrap("get_z80_hl_", "number");
+	instance.cwrap("get_z80_de_", "number");
+	instance.cwrap("get_z80_bc_", "number");
+	get_z80_sp = instance.cwrap("get_z80_sp", "number");
+	get_z80_iy = instance.cwrap("get_z80_iy", "number");
+	get_z80_ix = instance.cwrap("get_z80_ix", "number");
+	instance.cwrap("get_z80_wz", "number");
+	get_z80_pc = instance.cwrap("get_z80_pc", "number");
+	instance.cwrap("get_z80_ir", "number");
+	instance.cwrap("get_z80_i", "number");
+	instance.cwrap("get_z80_r", "number");
+	instance.cwrap("get_z80_im", "number");
+	instance.cwrap("get_z80_iff1", "number");
+	instance.cwrap("get_z80_iff2", "number");
+	instance.cwrap("get_z80_ei_pending", "number");
+	set_z80_a = instance.cwrap("set_z80_a", null, ["number"]);
+	set_z80_f = instance.cwrap("set_z80_f", null, ["number"]);
+	set_z80_l = instance.cwrap("set_z80_l", null, ["number"]);
+	set_z80_h = instance.cwrap("set_z80_h", null, ["number"]);
+	set_z80_e = instance.cwrap("set_z80_e", null, ["number"]);
+	set_z80_d = instance.cwrap("set_z80_d", null, ["number"]);
+	set_z80_c = instance.cwrap("set_z80_c", null, ["number"]);
+	set_z80_b = instance.cwrap("set_z80_b", null, ["number"]);
+	instance.cwrap("set_z80_af", null, ["number"]);
+	instance.cwrap("set_z80_fa", null, ["number"]);
+	instance.cwrap("set_z80_hl", null, ["number"]);
+	instance.cwrap("set_z80_de", null, ["number"]);
+	instance.cwrap("set_z80_bc", null, ["number"]);
+	instance.cwrap("set_z80_fa_", null, ["number"]);
+	instance.cwrap("set_z80_af_", null, ["number"]);
+	instance.cwrap("set_z80_hl_", null, ["number"]);
+	instance.cwrap("set_z80_de_", null, ["number"]);
+	instance.cwrap("set_z80_bc_", null, ["number"]);
+	set_z80_sp = instance.cwrap("set_z80_sp", null, ["number"]);
+	set_z80_iy = instance.cwrap("set_z80_iy", null, ["number"]);
+	set_z80_ix = instance.cwrap("set_z80_ix", null, ["number"]);
+	instance.cwrap("set_z80_wz", null, ["number"]);
+	set_z80_pc = instance.cwrap("set_z80_pc", null, ["number"]);
+	instance.cwrap("set_z80_ir", null, ["number"]);
+	instance.cwrap("set_z80_i", null, ["number"]);
+	instance.cwrap("set_z80_r", null, ["number"]);
+	instance.cwrap("set_z80_im", null, ["number"]);
+	instance.cwrap("set_z80_iff1", null, ["number"]);
+	instance.cwrap("set_z80_iff2", null, ["number"]);
+	instance.cwrap("set_z80_ei_pending", null, ["number"]);
+	cpu_init = instance.cwrap("cpu_init", null);
+	cpu_reset = instance.cwrap("cpu_reset", null);
+	mem_read = instance.cwrap("mem_read", "number", ["number"]);
+	mem_write = instance.cwrap("mem_write", null, ["number", "number"]);
+	rom_load = instance.cwrap("rom_load", null, ["number", "number"]);
+	instance.cwrap("io_read", "number", ["number"]);
+	instance.cwrap("io_write", null, ["number", "number"]);
+	instance.cwrap("lm80c_tick", "number");
+	instance.cwrap("lm80c_set_debug", null, ["number"]);
+	lm80c_init = instance.cwrap("lm80c_init", null, ["number"]);
+	lm80c_reset = instance.cwrap("lm80c_reset", null);
+	lm80c_ticks = instance.cwrap("lm80c_ticks", "number", ["number", "number"]);
+	keyboard_reset = instance.cwrap("keyboard_reset", null);
+	keyboard_press = instance.cwrap("keyboard_press", null, ["number", "number"]);
+	instance.cwrap("keyboard_release", null, ["number", "number"]);
+	instance.cwrap("keyboard_poll", "number", ["number"]);
+	SIO_receiveChar = instance.cwrap("SIO_receiveChar", null, ["number"]);
+	window.wasm_instance = instance;
+	wasm_instance = instance;
 }
 var KA0 = 0;
 var KA1 = 1;
