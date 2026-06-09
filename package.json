@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "LM80C emulator",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "all": "npm run buildwasm && npm run build && npm run serve",
     "buildwasm": "mkwasm.bat",
     "build": "vite build",
     "serve": "http-server -p 8080"
