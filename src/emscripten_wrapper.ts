@@ -92,6 +92,7 @@ let lm80c_tick_line;
 let lm80c_set_debug;
 let lm80c_init;
 let lm80c_reset;
+let lm80c_ticks;
 
 let keyboard_reset;
 let keyboard_press;
@@ -102,10 +103,17 @@ let SIO_receiveChar;
 
 function load_wasm(ready_cb) {
 
-   import('./emscripten_module.js').then((module) => {
+   import('../emscripten_module.js').then((module) => {
       const emscripten_module = module.default;
 
-      emscripten_module().then((instance) => {
+      emscripten_module({
+         locateFile: (path: string) => {
+            if (path.endsWith('.wasm')) {
+               return './emscripten_module.wasm';
+            }
+            return path;
+         }
+      }).then((instance) => {
       // makes C exported functions available globally
       test_function = instance.cwrap("test_function");
 
@@ -206,7 +214,8 @@ function load_wasm(ready_cb) {
 
       SIO_receiveChar    = instance.cwrap("SIO_receiveChar"   , null, ['number'] );
 
-         // export instance globally (not strictly required)
+         // export instance globally
+         (window as any).wasm_instance = instance;
          wasm_instance = instance;
 
          // finished
@@ -214,4 +223,101 @@ function load_wasm(ready_cb) {
       });
    });
 }
+
+export {
+   wasm_instance,
+   test_function,
+   psg_init,
+   psg_reset,
+   psg_ticks,
+   psg_read,
+   psg_write,
+   ctc_init,
+   ctc_reset,
+   ctc_ticks,
+   ctc_read,
+   ctc_write,
+   ctc_set_reti,
+   ctc_int_ack,
+   get_z80_a,
+   get_z80_f,
+   get_z80_l,
+   get_z80_h,
+   get_z80_e,
+   get_z80_d,
+   get_z80_c,
+   get_z80_b,
+   get_z80_fa,
+   get_z80_af,
+   get_z80_hl,
+   get_z80_de,
+   get_z80_bc,
+   get_z80_fa_,
+   get_z80_af_,
+   get_z80_hl_,
+   get_z80_de_,
+   get_z80_bc_,
+   get_z80_sp,
+   get_z80_iy,
+   get_z80_ix,
+   get_z80_wz,
+   get_z80_pc,
+   get_z80_ir,
+   get_z80_i,
+   get_z80_r,
+   get_z80_im,
+   get_z80_iff1,
+   get_z80_iff2,
+   get_z80_ei_pending,
+   set_z80_a,
+   set_z80_f,
+   set_z80_l,
+   set_z80_h,
+   set_z80_e,
+   set_z80_d,
+   set_z80_c,
+   set_z80_b,
+   set_z80_af,
+   set_z80_fa,
+   set_z80_hl,
+   set_z80_de,
+   set_z80_bc,
+   set_z80_fa_,
+   set_z80_af_,
+   set_z80_hl_,
+   set_z80_de_,
+   set_z80_bc_,
+   set_z80_sp,
+   set_z80_iy,
+   set_z80_ix,
+   set_z80_wz,
+   set_z80_pc,
+   set_z80_ir,
+   set_z80_i,
+   set_z80_r,
+   set_z80_im,
+   set_z80_iff1,
+   set_z80_iff2,
+   set_z80_ei_pending,
+   cpu_init,
+   cpu_reset,
+   mem_read,
+   mem_write,
+   rom_load,
+   io_read,
+   io_write,
+   lm80c_tick,
+   lm80c_tick_line,
+   lm80c_set_debug,
+   lm80c_init,
+   lm80c_reset,
+   lm80c_ticks,
+   keyboard_reset,
+   keyboard_press,
+   keyboard_release,
+   keyboard_poll,
+   SIO_receiveChar,
+   load_wasm
+};
+
 

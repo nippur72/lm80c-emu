@@ -1,9 +1,19 @@
 // handles interaction between browser and emulation 
 
-let aspect = 1.25;
+import { saveState, restoreState } from './utils.js';
+import { getFileExtension } from './bytes.js';
+import { run } from './files.js';
+import { calculateGeometry } from './video.js';
+import { externalLoad } from './mdawson.js';
+import { stopped, audio, oneFrame, options, setStopped, storage } from './emulator.js';
 
-function onResize(e) {
-   const canvas = document.getElementById("canvas");   
+let aspect = 1.25;
+let border_top = 0;
+let border_bottom = 0;
+let border_h = 0;
+
+function onResize(e?: any) {
+   const canvas = document.getElementById("canvas") as HTMLCanvasElement;   
 
    if(window.innerWidth > (window.innerHeight*aspect))
    {
@@ -24,8 +34,11 @@ function onResize(e) {
 
 function goFullScreen() 
 {
-        if(canvas.webkitRequestFullscreen !== undefined) canvas.webkitRequestFullscreen();
-   else if(canvas.mozRequestFullScreen !== undefined) canvas.mozRequestFullScreen();      
+   const canvas = document.getElementById("canvas") as any;
+   if(canvas) {
+      if(canvas.webkitRequestFullscreen !== undefined) canvas.webkitRequestFullscreen();
+      else if(canvas.mozRequestFullScreen !== undefined) canvas.mozRequestFullScreen();      
+   }
    onResize();
 }
 
@@ -45,12 +58,12 @@ window.onbeforeunload = function(e) {
 window.addEventListener("visibilitychange", function() {
    if(document.visibilityState === "hidden")
    {
-      stopped = true;
+      setStopped(true);
       audio.stop();
    }
    else if(document.visibilityState === "visible")
    {
-      stopped = false;
+      setStopped(false);
       oneFrame();
       audio.start();
    }
@@ -59,30 +72,35 @@ window.addEventListener("visibilitychange", function() {
 // **** drag & drop ****
 
 const dropZone = document.getElementById('screen');
+if (dropZone) {
+   // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
+   dropZone.addEventListener('dragover', function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+   });
 
-// Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
-dropZone.addEventListener('dragover', function(e) {
-   e.stopPropagation();
-   e.preventDefault();
-   e.dataTransfer.dropEffect = 'copy';
-});
+   // Get file data on drop
+   dropZone.addEventListener('drop', e => {
+      audio.resume();
 
-// Get file data on drop
-dropZone.addEventListener('drop', e => {
-   audio.resume();
+      e.stopPropagation();
+      e.preventDefault();
+      const files = e.dataTransfer.files; // Array of all files
 
-   e.stopPropagation();
-   e.preventDefault();
-   const files = e.dataTransfer.files; // Array of all files
+      for(let i=0, file; file=files[i]; i++) {                   
+         const reader = new FileReader();      
+         reader.onload = e2 => {
+            if (e2.target && e2.target.result) {
+               droppedFile(file.name, new Uint8Array(e2.target.result as ArrayBuffer));
+            }
+         };
+         reader.readAsArrayBuffer(file); 
+      }
+   });
+}
 
-   for(let i=0, file; file=files[i]; i++) {                   
-      const reader = new FileReader();      
-      reader.onload = e2 => droppedFile(file.name, new Uint8Array(e2.target.result));
-      reader.readAsArrayBuffer(file); 
-   }
-});
-
-async function droppedFile(outName, bytes) {
+async function droppedFile(outName: string, bytes: Uint8Array) {
    const ext = getFileExtension(outName);
 
    if(ext == ".prg") {
@@ -91,22 +109,25 @@ async function droppedFile(outName, bytes) {
    }
 }
 
-function getQueryStringObject(options) {
+// Attach droppedFile to window for console/drop integration
+(window as any).droppedFile = droppedFile;
+
+function getQueryStringObject(opts: any) {
    let a = window.location.search.split("&");
    let o = a.reduce((o, v) =>{
       var kv = v.split("=");
       const key = kv[0].replace("?", "");
-      let value = kv[1];
+      let value: any = kv[1];
            if(value === "true") value = true;
       else if(value === "false") value = false;
       o[key] = value;
       return o;
-   }, options);
+   }, opts);
    return o;
 }
 
 async function parseQueryStringCommands() {
-   options = getQueryStringObject(options);
+   Object.assign(options, getQueryStringObject(options));
 
    if(options.restore !== false) {
       // try to restore previous state, if any
@@ -143,7 +164,7 @@ async function parseQueryStringCommands() {
    }
 }
 
-async function fetchProgram(name)
+async function fetchProgram(name: string)
 {
    //console.log(`wanting to load ${name}`);
    try
@@ -159,3 +180,5 @@ async function fetchProgram(name)
       return false;
    }
 }
+
+export { parseQueryStringCommands };

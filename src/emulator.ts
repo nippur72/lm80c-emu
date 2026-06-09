@@ -1,24 +1,21 @@
 "use strict";
 
-// TODO support .bas loading
-// TODO persisent CF card
-// TODO emulate second VRAM bank
-// TODO allow phisical keyboard
-// TODO drop bomb sound for "air attack" differs from FPGA
-// TODO check again NMI interrupt, behaves differently than fpga
-// TODO stereo audio: A right, B left, C common
-// TODO keyboard buffering
-// TODO check actual timings (elapsed)
-// TODO check cpu speed, is it too fast?
-// TODO rename paste into serial
-// TODO serial output buffer for printing
-// TODO investigate why dropping "screen2_putc.prg" hangs it
-// TODO implement SIO-CTC-PIO daisy chain
-// TODO tms timings check 30 T states
-// TODO mobile keyboard
-// TODO save WAV files of AY38910
-// TODO pseudo VZ files with version
-
+import { LMAudio } from './audio.js';
+import { BrowserStorage } from './filesystem.js';
+import { BBS } from './bbs.js';
+import { keyboardReset, keyPress, keyRelease } from './keys.js';
+import { keyboard_buffer } from './keyboard.js';
+import { parseQueryStringCommands } from './browser.js';
+import { printerWrite } from './printer.js';
+import {
+   cpu_init, cpu_reset, lm80c_init, lm80c_reset, lm80c_ticks,
+   keyboard_reset, psg_init, psg_reset, ctc_init, ctc_reset,
+   get_z80_pc, get_z80_a, get_z80_f, get_z80_b, get_z80_c,
+   get_z80_d, get_z80_e, get_z80_h, get_z80_l, get_z80_ix,
+   get_z80_iy, get_z80_sp, set_z80_a, set_z80_f, set_z80_b,
+   set_z80_c, set_z80_d, set_z80_e, set_z80_h, set_z80_l,
+   set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, wasm_instance, load_wasm
+} from './emscripten_wrapper.js';
 
 // firmware 3.14
 let LM80C_model = 0;         // 0=LM80C 32K, 1=64K
@@ -26,7 +23,7 @@ let BASTXT      = 0x8133;    // points to basic free area (start of program)
 let PROGND      = 0x81BB;    // points to end of the basic program
 let CRSR_STATE  = 0x81E9;    // cursor visibility state (for injecting keys)
 
-let cpu;
+let cpu: any;
 
 /******************/
 
@@ -38,18 +35,18 @@ const cyclesPerLine = cpuSpeed / vdcSpeed * 342;
 
 let stopped = false; // allows to stop/resume the emulation
 
-let frames = 0;
+let frameCounter = 0;
 let averageFrameTime = 0;
 
 let cycle = 0;
 let total_cycles = 0;
 
-let options = {
+let options: any = {
    load: undefined,
    restore: false
 };
 
-let audio = new Audio(4096);
+let audio = new LMAudio(4096);
 
 let storage = new BrowserStorage("lm80c");
 
@@ -59,12 +56,12 @@ function renderFrame() {
 
 function poll_keyboard() {
    if(keyboard_buffer.length > 0) {
-      let key_event = keyboard_buffer[0];
-      keyboard_buffer = keyboard_buffer.slice(1);
-
-      keyboardReset();
-      if(key_event.type === "press") {
-         key_event.hardware_keys.forEach((k) => keyPress(k));
+      let key_event = keyboard_buffer.shift();
+      if (key_event) {
+         keyboardReset();
+         if(key_event.type === "press") {
+            key_event.hardware_keys.forEach((k) => keyPress(k));
+         }
       }
    }
 }
@@ -72,7 +69,7 @@ function poll_keyboard() {
 let end_of_frame_hook = undefined;
 
 let last_timestamp = 0;
-function oneFrame(timestamp) {
+function oneFrame(timestamp?: number) {
    let stamp = timestamp == undefined ? last_timestamp : timestamp;
    let msec = stamp - last_timestamp;
    let cycles = cpuSpeed * msec / 1000;
@@ -135,16 +132,56 @@ function main() {
       firmware.forEach((v,i)=>rom_load(i,v));
    }
 
+   const bit = (val: number, n: number) => (val & (1 << n)) > 0 ? 1 : 0;
+
    cpu =
    {
       init: cpu_init,
       reset: cpu_reset,
-      getState: ()=>{
+      getState: () => {
          return {
-            pc: get_z80_pc()
-         }
+            a: get_z80_a(),
+            f: get_z80_f(),
+            b: get_z80_b(),
+            c: get_z80_c(),
+            d: get_z80_d(),
+            e: get_z80_e(),
+            h: get_z80_h(),
+            l: get_z80_l(),
+            ix: get_z80_ix(),
+            iy: get_z80_iy(),
+            sp: get_z80_sp(),
+            pc: get_z80_pc(),
+            flags: {
+               S: bit(get_z80_f(), 7),
+               Z: bit(get_z80_f(), 6),
+               Y: bit(get_z80_f(), 5),
+               H: bit(get_z80_f(), 4),
+               X: bit(get_z80_f(), 3),
+               P: bit(get_z80_f(), 2),
+               N: bit(get_z80_f(), 1),
+               C: bit(get_z80_f(), 0)
+            }
+         };
+      },
+      setState: (state: any) => {
+         set_z80_a(state.a);
+         set_z80_f(state.f);
+         set_z80_b(state.b);
+         set_z80_c(state.c);
+         set_z80_d(state.d);
+         set_z80_e(state.e);
+         set_z80_h(state.h);
+         set_z80_l(state.l);
+         set_z80_ix(state.ix);
+         set_z80_iy(state.iy);
+         set_z80_sp(state.sp);
+         set_z80_pc(state.pc);
       }
    };
+
+   // attach cpu to window for developer debug visibility
+   (window as any).cpu = cpu;
 
    cpu.init();
 
@@ -175,7 +212,7 @@ function cpu_actual_speed() {
 // T = (3686400 / 2) / (48000 / BUFFER_SIZE)
 // in msec: t = BUFFER_SIZE / 48000 = 85.3
 
-function ay38910_audio_buf_ready(ptr, size) {
+function ay38910_audio_buf_ready(ptr: number, size: number) {
    if(!audio.playing) return;
    let start = ptr / wasm_instance.HEAPF32.BYTES_PER_ELEMENT;
    let buffer = wasm_instance.HEAPF32.subarray(start,start+size);
@@ -183,12 +220,39 @@ function ay38910_audio_buf_ready(ptr, size) {
 }
 
 // connect the SIO output to the printer
-let sio_write_data = function(port, data) {
+let sio_write_data = function(port: number, data: number) {
    printerWrite(data);
+};
+let sio_write_control = function(port: number, data: number) {
+};
+
+// Attach functions called by WASM runtime to the window object
+(window as any).sio_write_data = sio_write_data;
+(window as any).sio_write_control = sio_write_control;
+(window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
+
+function setStopped(val: boolean) {
+   stopped = val;
 }
-let sio_write_control = function(port, data) {
-}
+
+// Attach main and BBS to window to let index.html and external scripts run them
+(window as any).main = main;
+(window as any).BBS = BBS;
 
 
-
-
+export {
+   cpu,
+   stopped,
+   setStopped,
+   options,
+   audio,
+   oneFrame,
+   averageFrameTime,
+   BASTXT,
+   PROGND,
+   renderFrame,
+   storage,
+   end_of_frame_hook,
+   load_wasm,
+   main
+};

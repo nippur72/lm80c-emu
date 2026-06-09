@@ -1,5 +1,10 @@
+import { getFileExtension, mem_read_word, mem_write_word, hex } from './bytes.js';
+import { storage, BASTXT, PROGND } from './emulator.js';
+import { mem_read, mem_write } from './emscripten_wrapper.js';
+import { paste } from './utils.js';
+
 // console command
-async function run(filename) {
+async function run(filename: string) {
     if(!await storage.fileExists(filename)) {
        console.log(`file "${filename}" not found`);
        return;
@@ -10,7 +15,7 @@ async function run(filename) {
 }
 
 // console command
-async function load(filename) {
+async function load(filename: string) {
     if(!await storage.fileExists(filename)) {
        console.log(`file "${filename}" not found`);
        return;
@@ -21,19 +26,19 @@ async function load(filename) {
 }
 
 // console command
-async function save(filename) {
+async function save(filename: string) {
     const ext = getFileExtension(filename);
     if(ext == ".prg" ) await save_prg(filename, undefined, undefined);
     else console.log(`extension '${ext}' not supported`);
 }
 
-function loadBytes(bytes, address, fileName) {
+function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: string) {
     const startAddress = (address === undefined) ? mem_read_word(BASTXT) : address;
     const endAddress = startAddress + bytes.length - 1;
 
     for(let i=0,t=startAddress;t<=endAddress;i++,t++) {
        mem_write(t, bytes[i]);
-    }
+     }
 
     // modify end of basic program pointer
     if(startAddress === mem_read_word(BASTXT)) mem_write_word(PROGND, endAddress+1);
@@ -42,7 +47,7 @@ function loadBytes(bytes, address, fileName) {
     console.log(`loaded "${fileName}" ${bytes.length} bytes from ${hex(startAddress,4)}h to ${hex(endAddress,4)}h`);
 }
 
-async function load_prg(filename, runAfterLoad) {
+async function load_prg(filename: string, runAfterLoad: boolean) {
     const bytes = await storage.readFile(filename);
 
     // simulate a VZ file
@@ -85,7 +90,7 @@ async function load_prg(filename, runAfterLoad) {
     }
 }
 
-async function save_prg(filename, start, end) {
+async function save_prg(filename: string, start?: number, end?: number) {
     if(start === undefined) start = mem_read_word(BASTXT);
     if(end === undefined) end = mem_read_word(PROGND)-1;
 
@@ -99,3 +104,11 @@ async function save_prg(filename, start, end) {
 
     console.log(`saved "${filename}" ${bytes.length} bytes from ${hex(start,4)}h to ${hex(end,4)}h`);
 }
+
+// Attach to window for browser developer console access
+(window as any).run = run;
+(window as any).load = load;
+(window as any).save = save;
+(window as any).loadBytes = loadBytes;
+
+export { run, load, save, loadBytes };

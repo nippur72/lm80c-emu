@@ -1,3 +1,5 @@
+import { keyboard_reset, keyboard_press, keyboard_release } from './emscripten_wrapper.js';
+
 // all 76 keys on the real LM80C (C16 KEYBOARD)
 
 const KEY_RESET     =  0; // not mapped on the I/O but directly on the /RES line to the CPU
@@ -175,6 +177,17 @@ function keyRelease(hardware_key) {
    keyboard_release(row,col);
    //KAX[row] = set_bit(KAX[row], col);
 }
+
+export {
+   KEY_RESET, KEY_HELP, KEY_F3, KEY_F2, KEY_F1, KEY_AT, KEY_POUND, KEY_RETURN, KEY_INST_DEL,
+   KEY_RIGHT, KEY_PLUS, KEY_EQUAL, KEY_ESC, KEY_SLASH, KEY_SEMICOLON, KEY_ASTERISK, KEY_LEFT,
+   KEY_UP, KEY_MINUS, KEY_COLON, KEY_DOT, KEY_COMMA, KEY_L, KEY_P, KEY_DOWN, KEY_0, KEY_O,
+   KEY_K, KEY_M, KEY_N, KEY_J, KEY_I, KEY_9, KEY_8, KEY_U, KEY_H, KEY_B, KEY_V, KEY_G, KEY_Y,
+   KEY_7, KEY_6, KEY_T, KEY_F, KEY_C, KEY_X, KEY_D, KEY_R, KEY_5, KEY_4, KEY_E, KEY_S, KEY_Z,
+   KEY_SHIFT, KEY_A, KEY_W, KEY_3, KEY_2, KEY_Q, KEY_CBM, KEY_SPACE, KEY_RUN_STOP, KEY_CTRL,
+   KEY_CLR_HOME, KEY_1,
+   key_row_col, keyboardReset, keyPress, keyRelease
+};
 
 /*
 function keyboard_poll(address) 

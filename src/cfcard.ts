@@ -1,3 +1,5 @@
+import { hex } from './bytes.js';
+
 // CF card I/O ports
 const CF_DATA   = 0x50;  // r/w
 const CF_ERR    = 0x51;  // r
@@ -42,7 +44,7 @@ const CF_SECTOR_SIZE          = 512;         // fixed for all CF cards
 
 let cf_ptr    = 0;
 let cf_count  = 0;
-let cf_read_buffer = [];
+let cf_read_buffer: any = [];
 
 let CF_SIZE;
 let cf_card;
@@ -61,7 +63,7 @@ function cf_get_card_id() {
    buffer[0x0E+0] = (nsectors >> 16 ) & 0xFF;
    buffer[0x0E+1] = (nsectors >> 24 ) & 0xFF;
    buffer[0x0E+2] = (nsectors >>  0 ) & 0xFF;
-   buffer[0x0E+3] = (nsectors >> 08 ) & 0xFF;
+   buffer[0x0E+3] = (nsectors >> 8 ) & 0xFF;
    // fill number of cylinders
    buffer[0x02+0] = (cf_geometry.cylinders >> 0 ) & 0xFF;
    buffer[0x02+1] = (cf_geometry.cylinders >> 8 ) & 0xFF;
@@ -232,5 +234,11 @@ let cf_geometry = {
 
 // create the actual CF card space
 cf_create_card();
+
+(window as any).cf_read = cf_read;
+(window as any).cf_write = cf_write;
+
+export { cf_read, cf_write };
+
 
 

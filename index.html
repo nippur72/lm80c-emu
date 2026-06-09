@@ -95,36 +95,17 @@
    <script type="text/javascript" src="roms/rom_64K_118.js"></script>
    <script type="text/javascript" src="roms/rom_64K_119.js"></script>
 
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/bbs.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/wav-decoder.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/wav-encoder.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/FileSaver.js"></script>               <!-- allows to "Save As..." programs from the emulator -->
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/idb-keyval-iife.min.js"></script>     <!-- allows to used a keyval store with IndexedDB -->
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/bytes.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/audio.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/filesystem.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/mdawson.js"></script>
-   <script type="text/javascript" src="node_modules/@nippur72/libemu/printer.js"></script>
-
-   <script type="text/javascript" src="modem_serial.js"></script>
-   <script type="text/javascript" src="cfcard.js"></script>
-   <script type="text/javascript" src="files.js"></script>
-   <script type="text/javascript" src="keyboard_IT.js"></script>
-   <script type="text/javascript" src="keys.js"></script>
-   <script type="text/javascript" src="keyboard.js"></script>
-   <script type="text/javascript" src="video.js"></script>
-   <script type="text/javascript" src="utils.js"></script>
-   <script type="text/javascript" src="browser.js"></script>
-   <script type="text/javascript" src="emulator.js"></script>
+   <script type="text/javascript" src="bbs.js"></script>
+   <script type="text/javascript" src="wav-decoder.js"></script>
+   <script type="text/javascript" src="wav-encoder.js"></script>
+   <script type="text/javascript" src="FileSaver.js"></script>               <!-- allows to "Save As..." programs from the emulator -->
+   <script type="text/javascript" src="idb-keyval-iife.min.js"></script>     <!-- allows to used a keyval store with IndexedDB -->
+   <script type="module">
+      import { main, load_wasm } from './dist/bundle.js';
+      load_wasm(main);
+   </script>
 </body>
 </html>
-
-<script type="text/javascript" src="emscripten_wrapper.js"></script>
-
-<script>
-   load_wasm(main);
-   // main();
-</script>
 
 <!--
 <script>

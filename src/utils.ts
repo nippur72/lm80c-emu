@@ -1,3 +1,8 @@
+import { hex, copyArray, mem_read_word } from './bytes.js';
+import { load } from './files.js';
+import { cpu, BASTXT, PROGND, renderFrame } from './emulator.js';
+import { mem_read, SIO_receiveChar } from './emscripten_wrapper.js';
+
 // **** machine-specific utility functions ****
 
 function cpu_status() {
@@ -60,9 +65,9 @@ function restoreState() {
    {
       let s = window.localStorage.getItem(`lm80c_emu_state`);
       if(s === null) return;   
-      s = JSON.parse(s);            
-      copyArray( s.ram, ram);
-      cpu.setState(s.cpu);
+      let state = JSON.parse(s);            
+      copyArray( state.ram, ram);
+      cpu.setState(state.cpu);
    }
    catch(error)
    {
@@ -135,7 +140,33 @@ function led_read() {
    return LED;
 }
 
-function led_write(value) {
+function led_write(value: number) {
    LED = value;
 }
+
+// Attach to window for developer console and WASM visibility
+(window as any).cpu_status = cpu_status;
+(window as any).crun = crun;
+(window as any).paste = paste;
+(window as any).zap = zap;
+(window as any).power = power;
+(window as any).saveState = saveState;
+(window as any).restoreState = restoreState;
+(window as any).dumpPointers = dumpPointers;
+(window as any).dumpStack = dumpStack;
+(window as any).make_lm = make_lm;
+(window as any).start_counter = start_counter;
+(window as any).stop_counter = stop_counter;
+(window as any).led_read = led_read;
+(window as any).led_write = led_write;
+
+(window as any).debugBefore = debugBefore;
+(window as any).debugAfter = debugAfter;
+
+export {
+   cpu_status, crun, paste, zap, power, saveState, restoreState,
+   dumpPointers, dumpStack, make_lm, start_counter, stop_counter,
+   led_read, led_write, debugBefore, debugAfter
+};
+
 
