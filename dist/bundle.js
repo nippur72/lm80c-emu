@@ -1186,7 +1186,7 @@ function main() {
 	parseQueryStringCommands();
 	{
 		let firmware;
-		if (options.rom == void 0) options.rom = "64K119";
+		if (options.rom == void 0) options.rom = "64K120";
 		if (options.rom == "310") firmware = rom_310;
 		if (options.rom == "311") firmware = rom_311;
 		if (options.rom == "312") firmware = rom_312;
@@ -1333,6 +1333,12 @@ function main() {
 		}
 		if (options.rom == "64K119") {
 			firmware = rom_64K_119;
+			BASTXT = 21720;
+			PROGND = 21995;
+			LM80C_model = 1;
+		}
+		if (options.rom == "64K120") {
+			firmware = rom_64K_120;
 			BASTXT = 21720;
 			PROGND = 21995;
 			LM80C_model = 1;
