@@ -5,18 +5,18 @@ import { mem_read, SIO_receiveChar } from './emscripten_wrapper.js';
 
 // **** machine-specific utility functions ****
 
-function cpu_status() {
+function cpu_status(): string {
    const state = cpu.getState();
    return `A=${hex(state.a)} BC=${hex(state.b)}${hex(state.c)} DE=${hex(state.d)}${hex(state.e)} HL=${hex(state.h)}${hex(state.l)} IX=${hex(state.ix,4)} IY=${hex(state.iy,4)} SP=${hex(state.sp,4)} PC=${hex(state.pc,4)} S=${state.flags.S}, Z=${state.flags.Z}, Y=${state.flags.Y}, H=${state.flags.H}, X=${state.flags.X}, P=${state.flags.P}, N=${state.flags.N}, C=${state.flags.C}`;   
 }
 
-async function crun(filename) {
+async function crun(filename: string): Promise<void> {
    await load(filename);
    //await print_string("\nrun:\n");
    pasteLine("RUN\r\n");
 }
 
-function paste(text) {
+function paste(text: string): void {
    const lines = text.split("\n");
    for(let t=0; t<lines.length; t++) {
       const linea = lines[t];
@@ -26,7 +26,7 @@ function paste(text) {
    }
 }
 
-function pasteLine(line) {
+function pasteLine(line: string): void {
    renderFrame();
 
    for(let t=0;t<line.length;t++) {
@@ -35,7 +35,7 @@ function pasteLine(line) {
    }
 }
 
-function pasteChar(c) {
+function pasteChar(c: number): void {
    SIO_receiveChar(c);
 }
 
@@ -85,10 +85,10 @@ function dumpPointers() {
 `);
 }
 
-let debugBefore = undefined;
-let debugAfter = undefined;
+let debugBefore: (() => void) | undefined = undefined;
+let debugAfter: (() => void) | undefined = undefined;
 
-function dumpStack() {
+function dumpStack(): void {
    const sp = cpu.getState().sp;
 
    for(let t=sp;t<=0xffff;t+=2) {
@@ -97,7 +97,7 @@ function dumpStack() {
    }
 }
 
-function make_lm(start, end, rows) {
+function make_lm(start: number, end: number, rows: number = 8): void {
    let s;
    s = `10 FOR T=&H${hex(start,4)} TO &H${hex(end,4)}\n`;
    s+= `20 READ B:POKE T,B\n`;
@@ -105,7 +105,6 @@ function make_lm(start, end, rows) {
    s+= `40 SYS &H${hex(start,4)}\n`;
    s+= `50 END\n`;
    let nline = 1000;
-   if(rows==undefined) rows=8;
    for(let r=start;r<=end;r+=rows) {
       s+= `${nline} DATA `;
       for(let c=0;c<rows && (r+c)<=end;c++) {

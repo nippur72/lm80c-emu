@@ -1,12 +1,12 @@
 class LMAudio {
    AUDIO_BUFSIZE: number;
    playing: boolean;
-   buffers: any[];
+   buffers: number[][];
    audioContext: AudioContext;
    sampleRate: number;
    speakerSound: ScriptProcessorNode;
 
-   constructor(bufsize) {
+   constructor(bufsize: number) {
       this.AUDIO_BUFSIZE = bufsize;  // must match psg.c
       this.playing = false;
       this.buffers = [];
@@ -36,9 +36,9 @@ class LMAudio {
       }
    }
 
-   playBuffer(buffer) {
+   playBuffer(buffer: ArrayLike<number>) {
       if(!this.playing) return;
-      this.buffers.push([ ...buffer ]);  // push a cloned copy
+      this.buffers.push(Array.from(buffer));  // push a cloned copy
    }
 
    start() {

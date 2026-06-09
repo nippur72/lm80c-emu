@@ -3,7 +3,6 @@ import { audio, oneFrame, averageFrameTime, setStopped } from './emulator.js';
 import { saveAs } from 'file-saver';
 
 function dumpMem(start: number, end: number, rows: number = 16) {
-   if(rows==undefined) rows=16;
    let s="\r\n";
    for(let r=start;r<=end;r+=rows) {
       s+= hex(r, 4) + ": ";
@@ -20,8 +19,7 @@ function dumpMem(start: number, end: number, rows: number = 16) {
    console.log(s);
 }
 
-function dumpBytes(bytes: any, start: number, end: number, rows: number = 16) {
-   if(rows==undefined) rows=16;
+function dumpBytes(bytes: Uint8Array | number[], start: number, end: number, rows: number = 16) {
    let s="\r\n";
    for(let r=start;r<=end;r+=rows) {
       s+= hex(r, 4) + ": ";
@@ -38,13 +36,13 @@ function dumpBytes(bytes: any, start: number, end: number, rows: number = 16) {
    console.log(s);
 }
 
-function downloadBytes(fileName, buffer) {
+function downloadBytes(fileName: string, buffer: BlobPart) {
    let blob = new Blob([buffer], {type: "application/octet-stream"});
    saveAs(blob, fileName);
    console.log(`downloaded "${fileName}"`);
 }
 
-function hexDump(memory: any, start: number, end: number, rows: number = 16) {
+function hexDump(memory: Uint8Array | number[], start: number, end: number, rows: number = 16): string {
    let s="";
    for(let r=start;r<end;r+=rows) {
       s+= hex(r, 4) + ": ";
@@ -61,58 +59,57 @@ function hexDump(memory: any, start: number, end: number, rows: number = 16) {
    return s;
 }
 
-function hex(value: number, size: number = 2) {
-   if(size === undefined) size = 2;
+function hex(value: number, size: number = 2): string {
    let s = "0000" + value.toString(16);
-   return s.substr(s.length - size);
+   return s.substring(s.length - size);
 }
 
-function hi(word) {
+function hi(word: number): number {
    return (word >> 8) & 0xFF;
 }
 
-function lo(word) {
+function lo(word: number): number {
    return word & 0xFF;
 }
 
-function bin(value: number, size: number = 8) {
-   if(size === undefined) size = 8;
+function bin(value: number, size: number = 8): string {
    let s = "0000000000000000" + value.toString(2);
-   return s.substr(s.length - size);
+   return s.substring(s.length - size);
 }
 
-function mem_write_word(address, word) {
+function mem_write_word(address: number, word: number) {
    mem_write(address + 0, lo(word));
    mem_write(address + 1, hi(word));
 }
 
-function mem_read_word(address) {
+function mem_read_word(address: number): number {
    const lo = mem_read(address + 0);
    const hi = mem_read(address + 1);
    return lo+hi*256;
 }
 
-function set_bit(value, bitn) {
+function set_bit(value: number, bitn: number): number {
    return value | (1<<bitn);
 }
 
-function reset_bit(value, bitn) {
+// bitwise helper functions
+function reset_bit(value: number, bitn: number): number {
    return value & ~(1<<bitn);
 }
 
-function set(value, bitmask) {
+function set(value: number, bitmask: number): number {
    return value | bitmask;
 }
 
-function reset(value, bitmask) {
+function reset(value: number, bitmask: number): number {
    return value & (0xFF ^ bitmask);
 }
 
-function bit(b,n) {
+function bit(b: number, n: number): number {
    return (b & (1<<n))>0 ? 1 : 0;
 }
 
-function not_bit(b,n) {
+function not_bit(b: number, n: number): number {
    return (b & (1<<n))>0 ? 0 : 1;
 }
 
@@ -122,6 +119,7 @@ function stop() {
    console.log("emulation stopped");
 }
 
+// control functions
 function go() {
    setStopped(false);
    oneFrame();
@@ -135,15 +133,15 @@ function info() {
    console.log(`frame rate: ${Math.round(average*10)/10} ms (${Math.round(1000/average)} Hz) CPU load: ${Math.round(averageLoad*10)/10}`);
 }
 
-function endsWith(s, value) {
-   return s.substr(-value.length) === value;
+function endsWith(s: string, value: string): boolean {
+   return s.substring(s.length - value.length) === value;
 }
 
-function copyArray(source, dest) {
+function copyArray(source: Uint8Array | number[], dest: Uint8Array | number[] | { [key: number]: number }) {
    source.forEach((e,i)=>dest[i] = e);
 }
 
-function wait(time: number) {
+function wait(time: number): Promise<void> {
    return new Promise<void>((resolve,reject)=>{
       setTimeout(()=>{
          resolve();
@@ -151,33 +149,33 @@ function wait(time: number) {
    });
 }
 
-function getFileExtension(fileName) {
+function getFileExtension(fileName: string): string {
    let s = fileName.toLowerCase().split(".");
    if(s.length == 1) return "";
    return "." + s[s.length-1];
 }
 
-function get_wasm_float32_array(ptr, size) {
+function get_wasm_float32_array(ptr: number, size: number): Float32Array {
    let start = ptr / wasm_instance.HEAPF32.BYTES_PER_ELEMENT;
    let buffer = wasm_instance.HEAPF32.subarray(start,start+size);
    return buffer;
 }
 
-function get_wasm_uint8_array(ptr, size) {
+function get_wasm_uint8_array(ptr: number, size: number): Uint8Array {
    let start = ptr / wasm_instance.HEAPU8.BYTES_PER_ELEMENT;
    let buffer = wasm_instance.HEAPU8.subarray(start,start+size);
    return buffer;
 }
 
-function stringToUint8(s) {
-   let b = [];
+function stringToUint8(s: string): Uint8Array {
+   let b: number[] = [];
    for(let t=0;t<s.length;t++) {
       b.push(s.charCodeAt(t));
    }
    return new Uint8Array(b);
 }
 
-function uint8ToString(b) {
+function uint8ToString(b: Uint8Array | number[]): string {
    let s = "";
    for(let t=0;t<b.length;t++) {
       s+=String.fromCharCode(b[t]);

@@ -10,9 +10,10 @@ import {
 } from './keys.js';
 import { pckey_to_hardware_keys_ITA } from './keyboard_IT.js';
 import { audio, cpu } from './emulator.js';
+import { KeyboardBufferEntry } from './types.js';
 
-function pckey_to_hwkey(pckey) {
-   let hardware_key;   
+function pckey_to_hwkey(pckey: string): number | undefined {
+   let hardware_key: number | undefined;   
    
    if(pckey === "F1")  hardware_key = KEY_F1 ; 
    if(pckey === "F2")  hardware_key = KEY_F2 ; 
@@ -117,7 +118,7 @@ function pckey_to_hwkey(pckey) {
    return hardware_key;
 }
 
-function keyDown(e) { 
+function keyDown(e: KeyboardEvent) { 
 
    // from Chrome 71 audio is suspended by default and must resume within an user-generated event
    audio.resume();
@@ -152,7 +153,7 @@ function keyDown(e) {
    }
 }
 
-function keyUp(e) {
+function keyUp(e: KeyboardEvent) {
    const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
    if(hardware_keys.length === 0) return;
    /*
@@ -168,6 +169,6 @@ const element = document;
 element.onkeydown = keyDown;
 element.onkeyup = keyUp;
 
-let keyboard_buffer = [];
+let keyboard_buffer: KeyboardBufferEntry[] = [];
 
 export { pckey_to_hwkey, keyDown, keyUp, keyboard_buffer };

@@ -1,4 +1,5 @@
 import { keyboard_reset, keyboard_press, keyboard_release } from './emscripten_wrapper.js';
+import { KeyRowCol } from './types.js';
 
 // all 76 keys on the real LM80C (C16 KEYBOARD)
 
@@ -87,9 +88,9 @@ const KB5 = 5;
 const KB6 = 6; 
 const KB7 = 7; 
 
-const key_row_col = new Array(75); // hardware keys row and col info
+const key_row_col: (KeyRowCol | undefined)[] = new Array(75); // hardware keys row and col info
 
-function mapKey(key, row, col) {
+function mapKey(key: number, row: number, col: number) {
    key_row_col[key] = { row, col };
 }
 
@@ -166,15 +167,19 @@ function keyboardReset() {
    keyboard_reset();
 }
 
-function keyPress(hardware_key) {   
-   const { row, col } = key_row_col[hardware_key];
-   keyboard_press(row,col);
+function keyPress(hardware_key: number) {   
+   const entry = key_row_col[hardware_key];
+   if (entry) {
+      keyboard_press(entry.row, entry.col);
+   }
    //KAX[row] = reset_bit(KAX[row], col);
 }
 
-function keyRelease(hardware_key) {
-   const { row, col } = key_row_col[hardware_key];
-   keyboard_release(row,col);
+function keyRelease(hardware_key: number) {
+   const entry = key_row_col[hardware_key];
+   if (entry) {
+      keyboard_release(entry.row, entry.col);
+   }
    //KAX[row] = set_bit(KAX[row], col);
 }
 

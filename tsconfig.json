@@ -2,12 +2,12 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "esnext",
-    "strict": false,
-    "noImplicitAny": false,
+    "strict": true,
+    "noImplicitAny": true,
     "sourceMap": true
   },
   "include": [
-    "*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",

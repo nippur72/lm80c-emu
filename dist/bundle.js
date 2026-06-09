@@ -24,7 +24,7 @@ var LMAudio = class {
 	}
 	playBuffer(buffer) {
 		if (!this.playing) return;
-		this.buffers.push([...buffer]);
+		this.buffers.push(Array.from(buffer));
 	}
 	start() {
 		this.speakerSound.connect(this.audioContext.destination);
@@ -200,7 +200,7 @@ var BrowserStorage = class {
 		window.upload = (fn) => this.upload(fn);
 	}
 	async readFile(fileName) {
-		return await get(fileName, this.store);
+		return await get(fileName, this.store) || new Uint8Array(0);
 	}
 	async writeFile(fileName, bytes) {
 		await set(fileName, bytes, this.store);
@@ -284,7 +284,7 @@ var BBS = class {
 		}
 	}
 	send(data) {
-		if (!this.connected) {
+		if (!this.connected || !this.ws_connection) {
 			if (this.debug) console.log("websocket: can't send because not connected");
 			return;
 		}
@@ -298,7 +298,7 @@ var BBS = class {
 		this.send(this.string2Array(text));
 	}
 	disconnect() {
-		this.ws_connection.close();
+		if (this.ws_connection) this.ws_connection.close();
 	}
 	string2Array(str) {
 		let arr = [];
@@ -542,8 +542,8 @@ function keyboardReset() {
 	keyboard_reset();
 }
 function keyPress(hardware_key) {
-	const { row, col } = key_row_col[hardware_key];
-	keyboard_press(row, col);
+	const entry = key_row_col[hardware_key];
+	if (entry) keyboard_press(entry.row, entry.col);
 }
 //#endregion
 //#region src/keyboard_IT.ts
@@ -712,9 +712,8 @@ var keyboard_buffer = [];
 //#endregion
 //#region src/bytes.ts
 function hex(value, size = 2) {
-	if (size === void 0) size = 2;
 	let s = "0000" + value.toString(16);
-	return s.substr(s.length - size);
+	return s.substring(s.length - size);
 }
 function hi(word) {
 	return word >> 8 & 255;
@@ -873,7 +872,7 @@ function dumpStack() {
 		console.log(`${hex(t, 4)}: ${hex(word, 4)}  (${word})`);
 	}
 }
-function make_lm(start, end, rows) {
+function make_lm(start, end, rows = 8) {
 	let s;
 	s = `10 FOR T=&H${hex(start, 4)} TO &H${hex(end, 4)}\n`;
 	s += `20 READ B:POKE T,B\n`;
@@ -881,7 +880,6 @@ function make_lm(start, end, rows) {
 	s += `40 SYS &H${hex(start, 4)}\n`;
 	s += `50 END\n`;
 	let nline = 1e3;
-	if (rows == void 0) rows = 8;
 	for (let r = start; r <= end; r += rows) {
 		s += `${nline} DATA `;
 		for (let c = 0; c < rows && r + c <= end; c++) {
@@ -1045,19 +1043,22 @@ if (dropZone) {
 	dropZone.addEventListener("dragover", function(e) {
 		e.stopPropagation();
 		e.preventDefault();
-		e.dataTransfer.dropEffect = "copy";
+		if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
 	});
 	dropZone.addEventListener("drop", (e) => {
 		audio.resume();
 		e.stopPropagation();
 		e.preventDefault();
-		const files = e.dataTransfer.files;
-		for (let i = 0, file; file = files[i]; i++) {
-			const reader = new FileReader();
-			reader.onload = (e2) => {
-				if (e2.target && e2.target.result) droppedFile(file.name, new Uint8Array(e2.target.result));
-			};
-			reader.readAsArrayBuffer(file);
+		if (e.dataTransfer) {
+			const files = e.dataTransfer.files;
+			if (files) for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				const reader = new FileReader();
+				reader.onload = (e2) => {
+					if (e2.target && e2.target.result) droppedFile(file.name, new Uint8Array(e2.target.result));
+				};
+				reader.readAsArrayBuffer(file);
+			}
 		}
 	});
 }
@@ -1087,8 +1088,10 @@ async function parseQueryStringCommands() {
 		setTimeout(async () => {
 			if (name.startsWith("http")) {
 				let bin = await externalLoad(name);
-				await storage.writeFile("autoload.prg", bin);
-				await run("autoload.prg");
+				if (bin) {
+					await storage.writeFile("autoload.prg", bin);
+					await run("autoload.prg");
+				}
 			} else await fetchProgram(name);
 		}, 4e3);
 	}
@@ -1114,7 +1117,7 @@ async function fetchProgram(name) {
 //#endregion
 //#region src/printer.ts
 var printerBuffer = "";
-var printerTimeLastReceived;
+var printerTimeLastReceived = 0;
 function checkPrinterBuffer() {
 	if ((/* @__PURE__ */ new Date()).getTime() - printerTimeLastReceived > 2e3 && printerBuffer !== "") {
 		console.log(printerBuffer);
@@ -1125,7 +1128,7 @@ function checkPrinterBuffer() {
 }
 function printerWrite(byte) {
 	printerBuffer += String.fromCharCode(byte & 255);
-	printerTimeLastReceived = /* @__PURE__ */ new Date();
+	printerTimeLastReceived = (/* @__PURE__ */ new Date()).getTime();
 	checkPrinterBuffer();
 }
 //#endregion
@@ -1148,7 +1151,7 @@ var options = {
 var audio = new LMAudio(4096);
 var storage = new BrowserStorage("lm80c");
 function renderFrame() {
-	total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine);
+	total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine, cyclesPerLine);
 }
 function poll_keyboard() {
 	if (keyboard_buffer.length > 0) {
@@ -1177,163 +1180,13 @@ function main() {
 	{
 		let firmware;
 		if (options.rom == void 0) options.rom = "64K120";
-		if (options.rom == "310") firmware = rom_310;
-		if (options.rom == "311") firmware = rom_311;
-		if (options.rom == "312") firmware = rom_312;
-		if (options.rom == "313") firmware = rom_313;
-		if (options.rom == "3131") firmware = rom_3131;
-		if (options.rom == "3132") firmware = rom_3132;
-		if (options.rom == "3133") firmware = rom_3133;
-		if (options.rom == "3134") firmware = rom_3134;
-		if (options.rom == "3135") firmware = rom_3135;
-		if (options.rom == "3136") firmware = rom_3136;
-		if (options.rom == "3137") firmware = rom_3137;
-		if (options.rom == "3138") firmware = rom_3138;
-		if (options.rom == "314") {
-			firmware = rom_314;
-			BASTXT = 33075;
-			PROGND = 33211;
-			LM80C_model = 0;
-		}
-		if (options.rom == "315") {
-			firmware = rom_315;
-			BASTXT = 33075;
-			PROGND = 33211;
-			LM80C_model = 0;
-		}
-		if (options.rom == "316") {
-			firmware = rom_316;
-			BASTXT = 33075;
-			PROGND = 33310;
-			LM80C_model = 0;
-		}
-		if (options.rom == "317") {
-			firmware = rom_317;
-			BASTXT = 33077;
-			PROGND = 33316;
-			LM80C_model = 0;
-		}
-		if (options.rom == "318") {
-			firmware = rom_318;
-			BASTXT = 33077;
-			PROGND = 33316;
-			LM80C_model = 0;
-		}
-		if (options.rom == "319") {
-			firmware = rom_319;
-			BASTXT = 33077;
-			PROGND = 33315;
-			LM80C_model = 0;
-		}
-		if (options.rom == "321") {
-			firmware = rom_321;
-			BASTXT = 33077;
-			PROGND = 33355;
-			LM80C_model = 0;
-		}
-		if (options.rom == "322") {
-			firmware = rom_322;
-			BASTXT = 33077;
-			PROGND = 33355;
-			LM80C_model = 0;
-		}
-		if (options.rom == "323") {
-			firmware = rom_323;
-			BASTXT = 33077;
-			PROGND = 33356;
-			LM80C_model = 0;
-		}
-		if (options.rom == "324") {
-			firmware = rom_324;
-			BASTXT = 33077;
-			PROGND = 33356;
-			LM80C_model = 0;
-		}
-		if (options.rom == "64K102") {
-			firmware = rom_64K_102;
-			BASTXT = 21043;
-			PROGND = 21282;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K103") {
-			firmware = rom_64K_103;
-			BASTXT = 21028;
-			PROGND = 21267;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K104") {
-			firmware = rom_64K_104;
-			BASTXT = 21076;
-			PROGND = 21315;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K105") {
-			firmware = rom_64K_105;
-			BASTXT = 21114;
-			PROGND = 21352;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K111") {
-			firmware = rom_64K_111;
-			BASTXT = 24654;
-			PROGND = 24932;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K112") {
-			firmware = rom_64K_112;
-			BASTXT = 24718;
-			PROGND = 24996;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K113") {
-			firmware = rom_64K_113;
-			BASTXT = 24726;
-			PROGND = 25005;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K114") {
-			firmware = rom_64K_114;
-			BASTXT = 24746;
-			PROGND = 25025;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K115") {
-			firmware = rom_64K_115;
-			BASTXT = 21619;
-			PROGND = 21894;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K116") {
-			firmware = rom_64K_116;
-			BASTXT = 21679;
-			PROGND = 21954;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K117") {
-			firmware = rom_64K_117;
-			BASTXT = 21679;
-			PROGND = 21954;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K118") {
-			firmware = rom_64K_118;
-			BASTXT = 21713;
-			PROGND = 21988;
-			LM80C_model = 1;
-		}
-		if (options.rom == "64K119") {
-			firmware = rom_64K_119;
-			BASTXT = 21720;
-			PROGND = 21995;
-			LM80C_model = 1;
-		}
 		if (options.rom == "64K120") {
 			firmware = rom_64K_120;
 			BASTXT = 21720;
 			PROGND = 21995;
 			LM80C_model = 1;
 		}
-		firmware.forEach((v, i) => rom_load(i, v));
+		if (firmware) firmware.forEach((v, i) => rom_load(i, v));
 	}
 	const bit = (val, n) => (val & 1 << n) > 0 ? 1 : 0;
 	cpu = {

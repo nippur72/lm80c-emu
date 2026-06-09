@@ -6,6 +6,7 @@ import { run } from './files.js';
 import { calculateGeometry } from './video.js';
 import { externalLoad } from './externalLoad.js';
 import { stopped, audio, oneFrame, options, setStopped, storage } from './emulator.js';
+import { EmulatorOptions } from './types.js';
 
 let aspect = 1.25;
 let border_top = 0;
@@ -74,28 +75,34 @@ window.addEventListener("visibilitychange", function() {
 const dropZone = document.getElementById('screen');
 if (dropZone) {
    // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
-   dropZone.addEventListener('dragover', function(e) {
+   dropZone.addEventListener('dragover', function(e: DragEvent) {
       e.stopPropagation();
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
+      if (e.dataTransfer) {
+         e.dataTransfer.dropEffect = 'copy';
+      }
    });
 
    // Get file data on drop
-   dropZone.addEventListener('drop', e => {
+   dropZone.addEventListener('drop', (e: DragEvent) => {
       audio.resume();
 
       e.stopPropagation();
       e.preventDefault();
-      const files = e.dataTransfer.files; // Array of all files
-
-      for(let i=0, file; file=files[i]; i++) {                   
-         const reader = new FileReader();      
-         reader.onload = e2 => {
-            if (e2.target && e2.target.result) {
-               droppedFile(file.name, new Uint8Array(e2.target.result as ArrayBuffer));
+      if (e.dataTransfer) {
+         const files = e.dataTransfer.files; // Array of all files
+         if (files) {
+            for(let i=0; i<files.length; i++) {
+               const file = files[i];
+               const reader = new FileReader();      
+               reader.onload = e2 => {
+                  if (e2.target && e2.target.result) {
+                     droppedFile(file.name, new Uint8Array(e2.target.result as ArrayBuffer));
+                  }
+               };
+               reader.readAsArrayBuffer(file); 
             }
-         };
-         reader.readAsArrayBuffer(file); 
+         }
       }
    });
 }
@@ -112,12 +119,12 @@ async function droppedFile(outName: string, bytes: Uint8Array) {
 // Attach droppedFile to window for console/drop integration
 (window as any).droppedFile = droppedFile;
 
-function getQueryStringObject(opts: any) {
+function getQueryStringObject(opts: EmulatorOptions): EmulatorOptions {
    let a = window.location.search.split("&");
-   let o = a.reduce((o, v) =>{
+   let o = a.reduce((o: EmulatorOptions, v: string) =>{
       var kv = v.split("=");
       const key = kv[0].replace("?", "");
-      let value: any = kv[1];
+      let value: string | boolean | undefined = kv[1];
            if(value === "true") value = true;
       else if(value === "false") value = false;
       o[key] = value;
@@ -140,8 +147,10 @@ async function parseQueryStringCommands() {
          if(name.startsWith("http")) {
             // external load
             let bin = await externalLoad(name);
-            await storage.writeFile("autoload.prg", bin);
-            await run("autoload.prg");
+            if (bin) {
+               await storage.writeFile("autoload.prg", bin);
+               await run("autoload.prg");
+            }
          }
          else {
             // internal load

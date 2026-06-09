@@ -1,4 +1,6 @@
 
+import { EmscriptenInstance } from './types.js';
+
 // Type aliases for WASM-exported function signatures
 type WasmVoidFn = () => void;
 type WasmGetFn = () => number;
@@ -7,7 +9,7 @@ type WasmGet1Fn = (addr: number) => number;
 type WasmSet2Fn = (a: number, b: number) => void;
 type WasmGet2Fn = (a: number, b: number) => number;
 
-let wasm_instance: any;
+let wasm_instance: EmscriptenInstance;
 let test_function: WasmVoidFn;
 
 let psg_init: WasmVoidFn;
@@ -112,14 +114,14 @@ async function load_wasm(): Promise<void> {
    const module = await import('../emscripten_module.js');
    const emscripten_module = module.default;
 
-   const instance = await emscripten_module({
+   const instance = (await emscripten_module({
       locateFile: (path: string) => {
          if (path.endsWith('.wasm')) {
             return './emscripten_module.wasm';
          }
          return path;
       }
-   });
+   })) as EmscriptenInstance;
 
    // makes C exported functions available as typed wrappers
    test_function = instance.cwrap("test_function");

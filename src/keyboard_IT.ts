@@ -8,10 +8,10 @@ import {
    KEY_CLR_HOME, KEY_1
 } from './keys.js';
 
-function pckey_to_hardware_keys_ITA(code, key, e) {
+function pckey_to_hardware_keys_ITA(code: string, key: string, e: KeyboardEvent): number[] {
    // console.log(code, key, e);
 
-   let hardware_keys = [];
+   let hardware_keys: number[] = [];
 
    if(e.ctrlKey) hardware_keys.push( KEY_CTRL );
    if(e.altKey) hardware_keys.push( KEY_CBM );

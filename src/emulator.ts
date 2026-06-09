@@ -16,6 +16,7 @@ import {
    set_z80_c, set_z80_d, set_z80_e, set_z80_h, set_z80_l,
    set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, wasm_instance, load_wasm
 } from './emscripten_wrapper.js';
+import { CpuController, EmulatorOptions, Z80State } from './types.js';
 
 // firmware 3.14
 let LM80C_model = 0;         // 0=LM80C 32K, 1=64K
@@ -23,7 +24,7 @@ let BASTXT      = 0x8133;    // points to basic free area (start of program)
 let PROGND      = 0x81BB;    // points to end of the basic program
 let CRSR_STATE  = 0x81E9;    // cursor visibility state (for injecting keys)
 
-let cpu: any;
+let cpu: CpuController;
 
 /******************/
 
@@ -41,7 +42,7 @@ let averageFrameTime = 0;
 let cycle = 0;
 let total_cycles = 0;
 
-let options: any = {
+let options: EmulatorOptions = {
    load: undefined,
    restore: false
 };
@@ -51,7 +52,7 @@ let audio = new LMAudio(4096);
 let storage = new BrowserStorage("lm80c");
 
 function renderFrame() {
-   total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine);
+   total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine, cyclesPerLine);
 }
 
 function poll_keyboard() {
@@ -66,7 +67,7 @@ function poll_keyboard() {
    }
 }
 
-let end_of_frame_hook = undefined;
+let end_of_frame_hook: (() => void) | undefined = undefined;
 
 let last_timestamp = 0;
 function oneFrame(timestamp?: number) {
@@ -92,8 +93,9 @@ function main() {
 
    // loads the eprom
    {
-      let firmware;
+      let firmware: Uint8Array | undefined;
       if(options.rom == undefined) options.rom = "64K120";
+      /*
       if(options.rom == "310")    { firmware = rom_310; }
       if(options.rom == "311")    { firmware = rom_311; }
       if(options.rom == "312")    { firmware = rom_312; }
@@ -129,8 +131,11 @@ function main() {
       if(options.rom == "64K117") { firmware = rom_64K_117; BASTXT=0x54AF; PROGND=0x55C2; CRSR_STATE=0x5576; LM80C_model=1; }
       if(options.rom == "64K118") { firmware = rom_64K_118; BASTXT=0x54D1; PROGND=0x55E4; CRSR_STATE=0x5598; LM80C_model=1; }
       if(options.rom == "64K119") { firmware = rom_64K_119; BASTXT=0x54D8; PROGND=0x55EB; CRSR_STATE=0x559F; LM80C_model=1; }
+      */
       if(options.rom == "64K120") { firmware = rom_64K_120; BASTXT=0x54D8; PROGND=0x55EB; CRSR_STATE=0x559F; LM80C_model=1; }
-      firmware.forEach((v,i)=>rom_load(i,v));
+      if (firmware) {
+         firmware.forEach((v,i)=>rom_load(i,v));
+      }
    }
 
    const bit = (val: number, n: number) => (val & (1 << n)) > 0 ? 1 : 0;
@@ -165,7 +170,7 @@ function main() {
             }
          };
       },
-      setState: (state: any) => {
+      setState: (state: Z80State) => {
          set_z80_a(state.a);
          set_z80_f(state.f);
          set_z80_b(state.b);

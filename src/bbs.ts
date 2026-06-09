@@ -19,8 +19,8 @@
 
 class BBS {
    connected: boolean;
-   ws_connection: any;
-   onreceive: any;
+   ws_connection: WebSocket | undefined;
+   onreceive: ((data: Uint8Array) => void) | undefined;
    debug: boolean;
 
    constructor() {
@@ -30,8 +30,8 @@ class BBS {
       this.debug = false;
    }
 
-   async connect(url, protocol) {
-      return new Promise((resolve,reject)=>{
+   async connect(url?: string, protocol?: string): Promise<string> {
+      return new Promise<string>((resolve,reject)=>{
          if(url === undefined) url = "wss://bbs.sblendorio.eu:8080";
          if(protocol === undefined) protocol = "bbs";
 
@@ -53,7 +53,7 @@ class BBS {
       });
    }
 
-   onerror(err) {
+   onerror(err: Event) {
       if(this.debug) console.log('websocket: connection error');
       this.connected = false;
    }
@@ -64,7 +64,7 @@ class BBS {
    }
 
    // function called when bytes are received from the WebSocket
-   async onmessage(e) {
+   async onmessage(e: MessageEvent) {
       if(!this.connected) return;
 
       if (typeof e.data === 'string') {
@@ -83,13 +83,13 @@ class BBS {
       }
    }
 
-   send(data) {
-      if(!this.connected) {
+   send(data: ArrayLike<number> | ArrayBufferLike) {
+      if(!this.connected || !this.ws_connection) {
          if(this.debug) console.log("websocket: can't send because not connected");
          return;
       }
 
-      let bytes = new Uint8Array(data);
+      let bytes = new Uint8Array(data as any);
       if(this.ws_connection.readyState === this.ws_connection.OPEN) {
          //console.log(`transmitting ${bytes.length} bytes`);
          this.ws_connection.send(bytes);
@@ -100,22 +100,24 @@ class BBS {
       }
    }
 
-   sendText(text) {
+   sendText(text: string) {
       this.send(this.string2Array(text));
    }
 
    disconnect() {
-      this.ws_connection.close();
+      if (this.ws_connection) {
+         this.ws_connection.close();
+      }
    }
 
-   string2Array(str) {
-      let arr = [];
+   string2Array(str: string): Uint8Array {
+      let arr: number[] = [];
       for(let t=0; t<str.length; t++)
          arr.push(str.charCodeAt(t) & 0xFF);
       return new Uint8Array(arr);
    }
 
-   array2String(data) {
+   array2String(data: Uint8Array): string {
       let str = "";
       for(var index=0; index<data.length; index++)
          str += String.fromCharCode(data[index]);

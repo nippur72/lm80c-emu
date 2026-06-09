@@ -32,7 +32,7 @@ async function save(filename: string) {
     else console.log(`extension '${ext}' not supported`);
 }
 
-function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: string) {
+function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: string): void {
     const startAddress = (address === undefined) ? mem_read_word(BASTXT) : address;
     const endAddress = startAddress + bytes.length - 1;
 
@@ -47,7 +47,7 @@ function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: st
     console.log(`loaded "${fileName}" ${bytes.length} bytes from ${hex(startAddress,4)}h to ${hex(endAddress,4)}h`);
 }
 
-async function load_prg(filename: string, runAfterLoad: boolean) {
+async function load_prg(filename: string, runAfterLoad: boolean): Promise<void> {
     const bytes = await storage.readFile(filename);
 
     // simulate a VZ file
@@ -90,11 +90,11 @@ async function load_prg(filename: string, runAfterLoad: boolean) {
     }
 }
 
-async function save_prg(filename: string, start?: number, end?: number) {
+async function save_prg(filename: string, start?: number, end?: number): Promise<void> {
     if(start === undefined) start = mem_read_word(BASTXT);
     if(end === undefined) end = mem_read_word(PROGND)-1;
 
-    const prg = [];
+    const prg: number[] = [];
     for(let i=0,t=start; t<=end; i++,t++) {
        prg.push(mem_read(t));
     }

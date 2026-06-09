@@ -1,19 +1,28 @@
 // Ambient global declarations for name resolution
 
-declare var ram: any;
-declare var rom: any;
-declare var KEY_F4: any;
-declare var KEY_DEL_LINE: any;
-declare var topaz: any;
-declare var charset_laser500: any;
-declare var VirtualModem: any;
-declare var cpu_started_msec: any;
+declare var ram: Uint8Array;
+declare var rom: Uint8Array;
+declare var KEY_F4: number;
+declare var KEY_DEL_LINE: number;
+declare var topaz: Uint8Array;
+declare var charset_laser500: Uint8Array;
+interface VirtualModemInstance {
+   onreceive: (() => void) | undefined;
+   read_status: () => number;
+   read_byte: () => number;
+   write_byte: (byte: number) => void;
+   connect: () => void;
+}
+declare var VirtualModem: {
+   new (): VirtualModemInstance;
+};
+declare var cpu_started_msec: number;
 declare var define: any;
 
-declare var averageLoad: any;
-declare var border_top: any;
-declare var border_bottom: any;
-declare var border_h: any;
+declare var averageLoad: number;
+declare var border_top: number;
+declare var border_bottom: number;
+declare var border_h: number;
 
 // ROM arrays loaded dynamically or via script tags
 declare var rom_310: Uint8Array;
@@ -51,3 +60,10 @@ declare var rom_64K_116: Uint8Array;
 declare var rom_64K_117: Uint8Array;
 declare var rom_64K_118: Uint8Array;
 declare var rom_64K_119: Uint8Array;
+declare var rom_64K_120: Uint8Array;
+
+declare module '*/emscripten_module.js' {
+   const value: any;
+   export default value;
+}
+

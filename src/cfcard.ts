@@ -1,4 +1,5 @@
 import { hex } from './bytes.js';
+import { CfGeometry } from './types.js';
 
 // CF card I/O ports
 const CF_DATA   = 0x50;  // r/w
@@ -44,17 +45,17 @@ const CF_SECTOR_SIZE          = 512;         // fixed for all CF cards
 
 let cf_ptr    = 0;
 let cf_count  = 0;
-let cf_read_buffer: any = [];
+let cf_read_buffer: Uint8Array = new Uint8Array(0);
 
-let CF_SIZE;
-let cf_card;
+let CF_SIZE: number = 0;
+let cf_card: Uint8Array = new Uint8Array(0);
 
 function cf_create_card() {
    CF_SIZE = CF_SECTOR_SIZE * cf_geometry.heads * cf_geometry.sectorsPerCylinder * cf_geometry.cylinders;
    cf_card = new Uint8Array(CF_SIZE).fill(0x00);
 }
 
-function cf_get_card_id() {
+function cf_get_card_id(): Uint8Array {
    let buffer = new Uint8Array(512).fill(0x00);
 
    let nsectors = cf_geometry.heads * cf_geometry.sectorsPerCylinder * cf_geometry.cylinders;
@@ -100,7 +101,7 @@ DOSBFR[6] = IOBUF[0x0C]; // 2 bytes sectors per cylinder $20 $00
 DOSBFR[8] = IOBUF[0x06]; // 2 bytes number of heads      $10 $00
 */
 
-function cf_read(port) {
+function cf_read(port: number): number {
    if(port === CF_DATA) {
       if(cf_count > 0) {
          cf_data = cf_read_buffer[cf_ptr];
@@ -137,7 +138,7 @@ function cf_read(port) {
    }
 }
 
-function cf_write(port, data) {
+function cf_write(port: number, data: number): void {
    if(port === CF_DATA) {
       //console.log(`CF: write to CF_DATAREG port ${hex(port)} data=${data}`);
       cf_data = data;
@@ -222,11 +223,11 @@ function cf_write(port, data) {
    }
    else {
       console.log(`CF: illegal write to port ${hex(port)} data=${data}`);
-      return 0x00;
+      return;
    }
 }
 
-let cf_geometry = {
+let cf_geometry: CfGeometry = {
    heads: 0x10,
    cylinders: 0x03d4,
    sectorsPerCylinder: 0x20
