@@ -1132,6 +1132,150 @@ function printerWrite(byte) {
 	checkPrinterBuffer();
 }
 //#endregion
+//#region src/cfcard.ts
+var CF_DATA = 80;
+var CF_ERR = 81;
+var CF_FTR = 81;
+var CF_SECCNT = 82;
+var CF_LBA0 = 83;
+var CF_LBA1 = 84;
+var CF_LBA2 = 85;
+var CF_LBA3 = 86;
+var CF_STAT = 87;
+var CF_CMD = 87;
+var cf_data = 0;
+var cf_err = 0;
+var cf_ftr = 0;
+var cf_seccnt = 0;
+var cf_stat = 0;
+var cf_lba = 0;
+var cf_cmd = 0;
+var CF_STAT_RDY = 64;
+var CF_STAT_DRQ = 8;
+var CF_STAT_ERR = 1;
+var CF_FTR_8BIT = 1;
+var CF_FTR_NOP = 105;
+var CF_CMD_MODE = 239;
+var CF_CMD_READ = 32;
+var CF_CMD_WRITE = 48;
+var CF_CMD_STDBY = 146;
+var CF_CMD_DRIVEID = 236;
+var CF_SECTOR_SIZE = 512;
+var cf_ptr = 0;
+var cf_count = 0;
+var cf_read_buffer = new Uint8Array(0);
+var CF_SIZE = 0;
+var cf_card = new Uint8Array(0);
+function cf_create_card() {
+	CF_SIZE = CF_SECTOR_SIZE * cf_geometry.heads * cf_geometry.sectorsPerCylinder * cf_geometry.cylinders;
+	cf_card = new Uint8Array(CF_SIZE).fill(0);
+}
+function cf_get_card_id() {
+	let buffer = new Uint8Array(512).fill(0);
+	let nsectors = cf_geometry.heads * cf_geometry.sectorsPerCylinder * cf_geometry.cylinders;
+	buffer[14] = nsectors >> 16 & 255;
+	buffer[15] = nsectors >> 24 & 255;
+	buffer[16] = nsectors >> 0 & 255;
+	buffer[17] = nsectors >> 8 & 255;
+	buffer[2] = cf_geometry.cylinders >> 0 & 255;
+	buffer[3] = cf_geometry.cylinders >> 8 & 255;
+	buffer[12] = cf_geometry.sectorsPerCylinder >> 0 & 255;
+	buffer[13] = cf_geometry.sectorsPerCylinder >> 8 & 255;
+	buffer[6] = cf_geometry.heads >> 0 & 255;
+	buffer[7] = cf_geometry.heads >> 8 & 255;
+	return buffer;
+}
+function cf_read(port) {
+	if (port === CF_DATA) {
+		if (cf_count > 0) {
+			cf_data = cf_read_buffer[cf_ptr];
+			cf_ptr++;
+			cf_count--;
+			if (cf_count > 0) cf_stat = CF_STAT_DRQ;
+			else cf_stat = CF_STAT_RDY;
+		} else cf_stat = CF_STAT_RDY;
+		return cf_data;
+	} else if (port === CF_ERR) return cf_err;
+	else if (port === CF_SECCNT) return cf_seccnt;
+	else if (port === CF_LBA0) return cf_lba >> 0 & 255;
+	else if (port === CF_LBA1) return cf_lba >> 8 & 255;
+	else if (port === CF_LBA2) return cf_lba >> 16 & 255;
+	else if (port === CF_LBA3) return cf_lba >> 24 & 255;
+	else if (port === CF_STAT) return cf_stat;
+	else {
+		console.log(`CF: illegal read from port ${hex(port)}`);
+		return 0;
+	}
+}
+function cf_write(port, data) {
+	if (port === CF_DATA) {
+		cf_data = data;
+		if (cf_count > 0) {
+			cf_card[cf_ptr] = cf_data;
+			cf_ptr++;
+			cf_count--;
+			if (cf_count > 0) cf_stat = CF_STAT_RDY;
+			else cf_stat = CF_STAT_RDY;
+		} else cf_stat = CF_STAT_RDY;
+	} else if (port === CF_FTR) cf_ftr = data;
+	else if (port === CF_SECCNT) cf_seccnt = data;
+	else if (port === CF_LBA0) cf_lba = cf_lba & 4294967040 | data << 0;
+	else if (port === CF_LBA1) cf_lba = cf_lba & 4294902015 | data << 8;
+	else if (port === CF_LBA2) cf_lba = cf_lba & 4278255615 | data << 16;
+	else if (port === CF_LBA3) cf_lba = cf_lba & 16777215 | data << 24;
+	else if (port === CF_CMD) {
+		cf_cmd = data;
+		if (cf_cmd === CF_CMD_MODE && cf_ftr === CF_FTR_NOP) {
+			cf_stat = CF_STAT_RDY;
+			console.log(`CF: wake up`);
+		} else if (cf_cmd === CF_CMD_MODE && cf_ftr === CF_FTR_8BIT) {
+			cf_stat = CF_STAT_RDY;
+			console.log(`CF: set 8 bit mode`);
+		} else if (cf_cmd === CF_CMD_READ) {
+			let sector = cf_lba & 134217727;
+			let start = sector * 512;
+			let end = start + cf_seccnt * 512;
+			if (start >= CF_SIZE || end > CF_SIZE || start < 0 || end < 0) cf_stat = CF_STAT_ERR;
+			else {
+				cf_read_buffer = cf_card.slice(start, end);
+				cf_ptr = 0;
+				cf_count = cf_seccnt * 512;
+				cf_stat = CF_STAT_DRQ;
+			}
+			console.log(`CF: read sector #${sector} (count ${cf_seccnt})`);
+		} else if (cf_cmd === CF_CMD_WRITE) {
+			let sector = cf_lba & 134217727;
+			cf_ptr = sector * 512;
+			cf_count = cf_seccnt * 512;
+			if (cf_ptr >= CF_SIZE) cf_stat = CF_STAT_ERR;
+			else {
+				cf_stat = CF_STAT_DRQ;
+				console.log(`CF: write sector #${sector} (count ${cf_seccnt})`);
+			}
+		} else if (cf_cmd === CF_CMD_STDBY) {
+			cf_stat = CF_STAT_RDY;
+			console.log(`CF: standby`);
+		} else if (cf_cmd === CF_CMD_DRIVEID) {
+			cf_read_buffer = cf_get_card_id();
+			cf_ptr = 0;
+			cf_count = 512;
+			cf_stat = CF_STAT_DRQ;
+			console.log(`CF: read drive ID`);
+		} else console.log(`CF: unknown CF_CMD port ${hex(port)} data=${data}`);
+	} else {
+		console.log(`CF: illegal write to port ${hex(port)} data=${data}`);
+		return;
+	}
+}
+var cf_geometry = {
+	heads: 16,
+	cylinders: 980,
+	sectorsPerCylinder: 32
+};
+cf_create_card();
+window.cf_read = cf_read;
+window.cf_write = cf_write;
+//#endregion
 //#region src/emulator.ts
 var LM80C_model = 0;
 var BASTXT = 33075;

@@ -1,5 +1,5 @@
-import { mem_read, mem_write, wasm_instance } from './emscripten_wrapper.js';
-import { audio, oneFrame, averageFrameTime, setStopped } from './emulator.js';
+import { mem_read, mem_write, wasm_instance } from './emscripten_wrapper';
+import { audio, oneFrame, averageFrameTime, setStopped } from './emulator';
 import { saveAs } from 'file-saver';
 
 function dumpMem(start: number, end: number, rows: number = 16) {

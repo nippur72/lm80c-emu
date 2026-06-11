@@ -6,7 +6,7 @@ import {
    KEY_7, KEY_6, KEY_T, KEY_F, KEY_C, KEY_X, KEY_D, KEY_R, KEY_5, KEY_4, KEY_E, KEY_S, KEY_Z,
    KEY_SHIFT, KEY_A, KEY_W, KEY_3, KEY_2, KEY_Q, KEY_CBM, KEY_SPACE, KEY_RUN_STOP, KEY_CTRL,
    KEY_CLR_HOME, KEY_1
-} from './keys.js';
+} from './keys';
 
 function pckey_to_hardware_keys_ITA(code: string, key: string, e: KeyboardEvent): number[] {
    // console.log(code, key, e);

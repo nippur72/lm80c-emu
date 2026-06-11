@@ -1,5 +1,5 @@
-import { keyboard_reset, keyboard_press, keyboard_release } from './emscripten_wrapper.js';
-import { KeyRowCol } from './types.js';
+import { keyboard_reset, keyboard_press, keyboard_release } from './emscripten_wrapper';
+import { KeyRowCol } from './types';
 
 // all 76 keys on the real LM80C (C16 KEYBOARD)
 

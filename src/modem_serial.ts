@@ -1,4 +1,4 @@
-import { SIO_receiveChar } from './emscripten_wrapper.js';
+import { SIO_receiveChar } from './emscripten_wrapper';
 
 // this function overrides the normal serial behaviour
 // attaching to it a virtual modem connected to the BBS

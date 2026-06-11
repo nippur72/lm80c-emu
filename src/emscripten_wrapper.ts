@@ -1,5 +1,5 @@
 
-import { EmscriptenInstance } from './types.js';
+import { EmscriptenInstance } from './types';
 
 // Type aliases for WASM-exported function signatures
 type WasmVoidFn = () => void;
@@ -111,7 +111,7 @@ let SIO_receiveChar: WasmSet1Fn;
 
 async function load_wasm(): Promise<void> {
 
-   const module = await import('../emscripten_module.js');
+   const module = await import('../emscripten_module');
    const emscripten_module = module.default;
 
    const instance = (await emscripten_module({

@@ -1,7 +1,7 @@
-import { getFileExtension, mem_read_word, mem_write_word, hex } from './bytes.js';
-import { storage, BASTXT, PROGND } from './emulator.js';
-import { mem_read, mem_write } from './emscripten_wrapper.js';
-import { paste } from './utils.js';
+import { getFileExtension, mem_read_word, mem_write_word, hex } from './bytes';
+import { storage, BASTXT, PROGND } from './emulator';
+import { mem_read, mem_write } from './emscripten_wrapper';
+import { paste } from './utils';
 
 // console command
 async function run(filename: string) {

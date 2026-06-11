@@ -1,12 +1,12 @@
 "use strict";
 
-import { LMAudio } from './audio.js';
-import { BrowserStorage } from './filesystem.js';
-import { BBS } from './bbs.js';
-import { keyboardReset, keyPress, keyRelease } from './keys.js';
-import { keyboard_buffer } from './keyboard.js';
-import { parseQueryStringCommands } from './browser.js';
-import { printerWrite } from './printer.js';
+import { LMAudio } from './audio';
+import { BrowserStorage } from './filesystem';
+import { BBS } from './bbs';
+import { keyboardReset, keyPress, keyRelease } from './keys';
+import { keyboard_buffer } from './keyboard';
+import { parseQueryStringCommands } from './browser';
+import { printerWrite } from './printer';
 import {
    cpu_init, cpu_reset, lm80c_init, lm80c_reset, lm80c_ticks,
    keyboard_reset, psg_init, psg_reset, ctc_init, ctc_reset,
@@ -15,8 +15,9 @@ import {
    get_z80_iy, get_z80_sp, set_z80_a, set_z80_f, set_z80_b,
    set_z80_c, set_z80_d, set_z80_e, set_z80_h, set_z80_l,
    set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, wasm_instance, load_wasm
-} from './emscripten_wrapper.js';
-import { CpuController, EmulatorOptions, Z80State } from './types.js';
+} from './emscripten_wrapper';
+import { CpuController, EmulatorOptions, Z80State } from './types';
+import './cfcard';
 
 // firmware 3.14
 let LM80C_model = 0;         // 0=LM80C 32K, 1=64K

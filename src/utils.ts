@@ -1,7 +1,7 @@
-import { hex, copyArray, mem_read_word } from './bytes.js';
-import { load } from './files.js';
-import { cpu, BASTXT, PROGND, renderFrame } from './emulator.js';
-import { mem_read, SIO_receiveChar } from './emscripten_wrapper.js';
+import { hex, copyArray, mem_read_word } from './bytes';
+import { load } from './files';
+import { cpu, BASTXT, PROGND, renderFrame } from './emulator';
+import { mem_read, SIO_receiveChar } from './emscripten_wrapper';
 
 // **** machine-specific utility functions ****
 

@@ -1,12 +1,12 @@
 // handles interaction between browser and emulation 
 
-import { saveState, restoreState } from './utils.js';
-import { getFileExtension } from './bytes.js';
-import { run } from './files.js';
-import { calculateGeometry } from './video.js';
-import { externalLoad } from './externalLoad.js';
-import { stopped, audio, oneFrame, options, setStopped, storage } from './emulator.js';
-import { EmulatorOptions } from './types.js';
+import { saveState, restoreState } from './utils';
+import { getFileExtension } from './bytes';
+import { run } from './files';
+import { calculateGeometry } from './video';
+import { externalLoad } from './externalLoad';
+import { stopped, audio, oneFrame, options, setStopped, storage } from './emulator';
+import { EmulatorOptions } from './types';
 
 let aspect = 1.25;
 let border_top = 0;

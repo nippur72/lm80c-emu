@@ -1,6 +1,6 @@
-import { wasm_instance } from './emscripten_wrapper.js';
-import { led_read } from './utils.js';
-import { end_of_frame_hook } from './emulator.js';
+import { wasm_instance } from './emscripten_wrapper';
+import { led_read } from './utils';
+import { end_of_frame_hook } from './emulator';
 
 let frameCounter = 0;
 

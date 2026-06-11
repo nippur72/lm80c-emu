@@ -1,5 +1,5 @@
-import { hex } from './bytes.js';
-import { CfGeometry } from './types.js';
+import { hex } from './bytes';
+import { CfGeometry } from './types';
 
 // CF card I/O ports
 const CF_DATA   = 0x50;  // r/w

@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "esnext",
+    "moduleResolution": "bundler",
     "strict": true,
     "noImplicitAny": true,
     "sourceMap": true

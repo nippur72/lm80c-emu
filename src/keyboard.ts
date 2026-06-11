@@ -7,10 +7,10 @@ import {
    KEY_7, KEY_6, KEY_T, KEY_F, KEY_C, KEY_X, KEY_D, KEY_R, KEY_5, KEY_4, KEY_E, KEY_S, KEY_Z,
    KEY_SHIFT, KEY_A, KEY_W, KEY_3, KEY_2, KEY_Q, KEY_CBM, KEY_SPACE, KEY_RUN_STOP, KEY_CTRL,
    KEY_CLR_HOME, KEY_1
-} from './keys.js';
-import { pckey_to_hardware_keys_ITA } from './keyboard_IT.js';
-import { audio, cpu } from './emulator.js';
-import { KeyboardBufferEntry } from './types.js';
+} from './keys';
+import { pckey_to_hardware_keys_ITA } from './keyboard_IT';
+import { audio, cpu } from './emulator';
+import { KeyboardBufferEntry } from './types';
 
 function pckey_to_hwkey(pckey: string): number | undefined {
    let hardware_key: number | undefined;   
