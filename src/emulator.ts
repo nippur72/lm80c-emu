@@ -3,8 +3,8 @@
 import { LMAudio } from './audio';
 import { BrowserStorage } from './filesystem';
 import { BBS } from './bbs';
-import { keyboardReset, keyPress, keyRelease } from './keys';
-import { keyboard_buffer } from './keyboard';
+import { keyboardReset } from './keys';
+import { kb0_frame, KBTYPE, setKbType } from './keyboard';
 import { parseQueryStringCommands } from './browser';
 import { printerWrite } from './printer';
 import {
@@ -14,7 +14,7 @@ import {
    get_z80_d, get_z80_e, get_z80_h, get_z80_l, get_z80_ix,
    get_z80_iy, get_z80_sp, set_z80_a, set_z80_f, set_z80_b,
    set_z80_c, set_z80_d, set_z80_e, set_z80_h, set_z80_l,
-   set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, wasm_instance, load_wasm
+   set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, keyboard_poll, wasm_instance, load_wasm
 } from './emscripten_wrapper';
 import { CpuController, EmulatorOptions, Z80State } from './types';
 import './cfcard';
@@ -56,16 +56,10 @@ function renderFrame() {
    total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine, cyclesPerLine);
 }
 
-function poll_keyboard() {
-   if(keyboard_buffer.length > 0) {
-      let key_event = keyboard_buffer.shift();
-      if (key_event) {
-         keyboardReset();
-         if(key_event.type === "press") {
-            key_event.hardware_keys.forEach((k) => keyPress(k));
-         }
-      }
-   }
+function update_keyboard() {
+   // expire the minimum-hold latches of the immediate keyboard mode
+   if(KBTYPE === 0) kb0_frame();
+   // KBTYPE === 1: keystrokes travel on the serial line, nothing to do here
 }
 
 let end_of_frame_hook: (() => void) | undefined = undefined;
@@ -79,7 +73,7 @@ function oneFrame(timestamp?: number) {
 
    if(msec > frameRate*2) cycles = cpuSpeed * (frameRate*2 / 1000);
 
-   poll_keyboard();
+   update_keyboard();
 
    total_cycles += lm80c_ticks(cycles, cyclesPerLine);
 
@@ -91,6 +85,8 @@ function oneFrame(timestamp?: number) {
 function main() {
 
    parseQueryStringCommands();
+
+   if(options.kbtype !== undefined) setKbType(Number(options.kbtype));
 
    // loads the eprom
    {
@@ -235,6 +231,11 @@ let sio_write_control = function(port: number, data: number) {
 (window as any).sio_write_data = sio_write_data;
 (window as any).sio_write_control = sio_write_control;
 (window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
+
+// Attach the keyboard mode switch and a matrix probe (bit cleared = key pressed)
+(window as any).setKbType = setKbType;
+(window as any).getKbType = () => KBTYPE;
+(window as any).keyboard_poll = (address: number) => keyboard_poll(address);
 
 function setStopped(val: boolean) {
    stopped = val;

@@ -48,6 +48,21 @@ https://nippur72.github.io/lm80c-emu?rom=314
 to start with firmware named "LM80C-firmware-r314.rom"
 
 
+KEYBOARD MODES
+==============
+
+The querystring parameter `kbtype` selects how the PC keyboard drives the emulated one:
+
+- `kbtype=0` (default) immediate: the hardware matrix mirrors the real key state, so multiple
+  keys can be held at the same time and there is no queue. Best for games and for fast typing.
+- `kbtype=1` serial: keystrokes are sent as characters over the LM80C serial line, as in
+  the original project (before the matrix keyboard). Meant for typing, not for games.
+
+https://nippur72.github.io/lm80c-emu?kbtype=1
+
+The mode can also be changed at runtime from the JavaScript console with `setKbType(n)`.
+
+
 AUTOLOADING
 =================
 The emulator can be used in cross-development allowing to automate the process of 

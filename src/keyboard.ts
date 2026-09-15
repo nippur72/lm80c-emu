@@ -6,11 +6,12 @@ import {
    KEY_K, KEY_M, KEY_N, KEY_J, KEY_I, KEY_9, KEY_8, KEY_U, KEY_H, KEY_B, KEY_V, KEY_G, KEY_Y,
    KEY_7, KEY_6, KEY_T, KEY_F, KEY_C, KEY_X, KEY_D, KEY_R, KEY_5, KEY_4, KEY_E, KEY_S, KEY_Z,
    KEY_SHIFT, KEY_A, KEY_W, KEY_3, KEY_2, KEY_Q, KEY_CBM, KEY_SPACE, KEY_RUN_STOP, KEY_CTRL,
-   KEY_CLR_HOME, KEY_1
+   KEY_CLR_HOME, KEY_1, keyboardReset, keyPress
 } from './keys';
 import { pckey_to_hardware_keys_ITA } from './keyboard_IT';
+import { pckey_to_lm80c_char } from './keyboard_SIO';
+import { SIO_receiveChar } from './emscripten_wrapper';
 import { audio, cpu } from './emulator';
-import { KeyboardBufferEntry } from './types';
 
 function pckey_to_hwkey(pckey: string): number | undefined {
    let hardware_key: number | undefined;   
@@ -124,7 +125,8 @@ function keyDown(e: KeyboardEvent) {
    audio.resume();
 
    // disable auto repeat, as it is handled on the firmware
-   if(e.repeat) {
+   // (in SIO mode there is no matrix scanning, so the browser's auto repeat is used)
+   if(e.repeat && KBTYPE !== 1) {
       e.preventDefault(); 
       return;
    }   
@@ -141,26 +143,34 @@ function keyDown(e: KeyboardEvent) {
    // const hardware_key = pckey_to_hwkey(e.code);
 
    // if keyboard ITA
-   {
-      const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
-      if(hardware_keys.length === 0) return;
-      /*
-      keyboardReset();
-      hardware_keys.forEach((k) => keyPress(k));
-      */
-      keyboard_buffer.push({ type: "press", hardware_keys });
-      e.preventDefault();
+   const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
+   if(hardware_keys.length === 0) return;
+
+   if(KBTYPE === 0) {
+      kb_code_keys.set(e.code, hardware_keys);
+      kb0_press(hardware_keys);
    }
+   else {
+      // KBTYPE === 1: the character goes to the serial line
+      const c = pckey_to_lm80c_char(hardware_keys);
+      if(c !== undefined) SIO_receiveChar(c);
+   }
+
+   e.preventDefault();
 }
 
 function keyUp(e: KeyboardEvent) {
    const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
    if(hardware_keys.length === 0) return;
-   /*
-   keyboardReset();
-   //laser_keys.forEach((k) => keyRelease(k));
-   */
-   keyboard_buffer.push({ type: "release", hardware_keys });
+
+   if(KBTYPE === 0) {
+      // hardware_keys is recomputed with the current modifiers, so it may differ from the
+      // list generated on keydown: release the keys that were actually pressed
+      kb0_release(kb_code_keys.get(e.code) ?? hardware_keys);
+      kb_code_keys.delete(e.code);
+   }
+   // KBTYPE === 1: nothing to do, the SIO receives the key pressure only
+
    e.preventDefault();
 }
 
@@ -169,6 +179,85 @@ const element = document;
 element.onkeydown = keyDown;
 element.onkeyup = keyUp;
 
-let keyboard_buffer: KeyboardBufferEntry[] = [];
+/** how the PC keyboard drives the emulated one:
+ *     0 = immediate (default): the hardware matrix mirrors the real key state (no queue)
+ *     1 = serial: keystrokes are sent as characters over the LM80C serial line
+ */
+let KBTYPE = 0;
 
-export { pckey_to_hwkey, keyDown, keyUp, keyboard_buffer };
+// minimum time a released key is kept visible in the matrix, so that short taps are not
+// lost between two firmware scans (~15.6 ms at 64 Hz)
+const KB_MIN_HOLD_MS = 30;
+
+const kb_held_count = new Map<number, number>();   // hardware key -> how many PC keys hold it down
+const kb_latch_ms   = new Map<number, number>();   // hardware key -> latch expiry time
+const kb_code_keys  = new Map<string, number[]>(); // e.code -> hardware keys generated on keydown
+
+function kb0_apply() {
+   const keys = new Set<number>([...kb_held_count.keys(), ...kb_latch_ms.keys()]);
+   keyboardReset();
+   for(const k of keys) keyPress(k);
+}
+
+function kb0_press(hardware_keys: number[]) {
+   for(const k of hardware_keys) {
+      kb_held_count.set(k, (kb_held_count.get(k) ?? 0) + 1);
+      kb_latch_ms.delete(k);
+   }
+   kb0_apply();
+}
+
+function kb0_release(hardware_keys: number[]) {
+   const now = performance.now();
+   for(const k of hardware_keys) {
+      const count = (kb_held_count.get(k) ?? 1) - 1;
+      if(count > 0) kb_held_count.set(k, count);
+      else {
+         kb_held_count.delete(k);
+         kb_latch_ms.set(k, now + KB_MIN_HOLD_MS);
+      }
+   }
+   kb0_apply();
+}
+
+function kb0_frame() {
+   if(kb_latch_ms.size === 0) return;
+
+   const now = performance.now();
+   let expired = false;
+   for(const [k, t] of kb_latch_ms) {
+      if(t <= now) {
+         kb_latch_ms.delete(k);
+         expired = true;
+      }
+   }
+   if(expired) kb0_apply();
+}
+
+function setKbType(type: number) {
+   if(type !== 0 && type !== 1) return;
+
+   KBTYPE = type;
+   kb_held_count.clear();
+   kb_latch_ms.clear();
+   kb_code_keys.clear();
+   keyboardReset();
+}
+
+// a keyup can be missed when the page loses focus while a key is held down (e.g. alt+tab):
+// release everything instead of leaving the key stuck in the matrix
+function kb_releaseAll() {
+   if(KBTYPE !== 0) return;
+
+   kb_held_count.clear();
+   kb_latch_ms.clear();
+   kb_code_keys.clear();
+   kb0_apply();
+}
+
+window.addEventListener("blur", kb_releaseAll);
+document.addEventListener("visibilitychange", () => {
+   if(document.visibilityState === "hidden") kb_releaseAll();
+});
+
+export { pckey_to_hwkey, keyDown, keyUp, KBTYPE, setKbType, kb0_frame };

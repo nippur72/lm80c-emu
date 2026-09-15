@@ -40,17 +40,12 @@ export interface EmulatorOptions {
    load?: string;
    restore: boolean;
    rom?: string;
+   kbtype?: string;
    bt?: string;
    bb?: string;
    bh?: string;
    aspect?: string;
    [key: string]: string | boolean | undefined;
-}
-
-/** Keyboard event in the input buffer */
-export interface KeyboardBufferEntry {
-   type: "press" | "release";
-   hardware_keys: number[];
 }
 
 /** Emscripten module instance with typed heap views */

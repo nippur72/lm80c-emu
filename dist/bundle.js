@@ -352,6 +352,7 @@ var lm80c_reset;
 var lm80c_ticks;
 var keyboard_reset;
 var keyboard_press;
+var keyboard_poll;
 var SIO_receiveChar;
 async function load_wasm() {
 	const emscripten_module = (await import("./emscripten_module-_mwPEk15.mjs")).default;
@@ -446,7 +447,7 @@ async function load_wasm() {
 	keyboard_reset = instance.cwrap("keyboard_reset", null);
 	keyboard_press = instance.cwrap("keyboard_press", null, ["number", "number"]);
 	instance.cwrap("keyboard_release", null, ["number", "number"]);
-	instance.cwrap("keyboard_poll", "number", ["number"]);
+	keyboard_poll = instance.cwrap("keyboard_poll", "number", ["number"]);
 	SIO_receiveChar = instance.cwrap("SIO_receiveChar", null, ["number"]);
 	window.wasm_instance = instance;
 	wasm_instance = instance;
@@ -674,10 +675,285 @@ function pckey_to_hardware_keys_ITA(code, key, e) {
 	return hardware_keys;
 }
 //#endregion
+//#region src/keyboard_SIO.ts
+var asc = (c) => c.charCodeAt(0);
+var KBMAP = [
+	asc("1"),
+	25,
+	14,
+	3,
+	asc(" "),
+	16,
+	asc("q"),
+	asc("2"),
+	asc("3"),
+	asc("w"),
+	asc("a"),
+	20,
+	asc("z"),
+	asc("s"),
+	asc("e"),
+	asc("4"),
+	asc("5"),
+	asc("r"),
+	asc("d"),
+	asc("x"),
+	asc("c"),
+	asc("f"),
+	asc("t"),
+	asc("6"),
+	asc("7"),
+	asc("y"),
+	asc("g"),
+	asc("v"),
+	asc("b"),
+	asc("h"),
+	asc("u"),
+	asc("8"),
+	asc("9"),
+	asc("i"),
+	asc("j"),
+	asc("n"),
+	asc("m"),
+	asc("k"),
+	asc("o"),
+	asc("0"),
+	31,
+	asc("p"),
+	asc("l"),
+	asc(","),
+	asc("."),
+	asc(":"),
+	asc("-"),
+	30,
+	28,
+	asc("*"),
+	asc(";"),
+	asc("/"),
+	27,
+	asc("="),
+	asc("+"),
+	29,
+	8,
+	13,
+	252,
+	asc("@"),
+	1,
+	2,
+	4,
+	24
+];
+var KBMAP_SFT = [
+	asc("!"),
+	12,
+	14,
+	3,
+	asc(" "),
+	16,
+	asc("Q"),
+	34,
+	asc("#"),
+	asc("W"),
+	asc("A"),
+	20,
+	asc("Z"),
+	asc("S"),
+	asc("E"),
+	asc("$"),
+	asc("%"),
+	asc("R"),
+	asc("D"),
+	asc("X"),
+	asc("C"),
+	asc("F"),
+	asc("T"),
+	asc("&"),
+	39,
+	asc("Y"),
+	asc("G"),
+	asc("V"),
+	asc("B"),
+	asc("H"),
+	asc("U"),
+	asc("("),
+	asc(")"),
+	asc("I"),
+	asc("J"),
+	asc("N"),
+	asc("M"),
+	asc("K"),
+	asc("O"),
+	94,
+	31,
+	asc("P"),
+	asc("L"),
+	asc("<"),
+	asc(">"),
+	asc("["),
+	asc("_"),
+	30,
+	28,
+	asc("*"),
+	asc("]"),
+	asc("?"),
+	27,
+	198,
+	asc("+"),
+	29,
+	26,
+	13,
+	211,
+	asc("@"),
+	5,
+	6,
+	22,
+	23
+];
+var KBMAP_ALT = [
+	asc("1"),
+	12,
+	14,
+	3,
+	asc(" "),
+	16,
+	222,
+	196,
+	asc("3"),
+	221,
+	133,
+	20,
+	131,
+	130,
+	165,
+	asc("4"),
+	asc("5"),
+	162,
+	166,
+	132,
+	157,
+	163,
+	168,
+	asc("6"),
+	asc("7"),
+	171,
+	169,
+	161,
+	158,
+	172,
+	213,
+	asc("8"),
+	asc("9"),
+	214,
+	216,
+	159,
+	160,
+	215,
+	135,
+	195,
+	31,
+	136,
+	138,
+	193,
+	192,
+	123,
+	144,
+	30,
+	28,
+	143,
+	125,
+	254,
+	27,
+	209,
+	148,
+	29,
+	8,
+	13,
+	224,
+	137,
+	5,
+	6,
+	22,
+	23
+];
+var KBMAP_CTRL = [
+	asc("1"),
+	25,
+	14,
+	3,
+	asc(" "),
+	16,
+	154,
+	asc("2"),
+	asc("3"),
+	156,
+	149,
+	20,
+	152,
+	150,
+	153,
+	asc("4"),
+	asc("5"),
+	155,
+	176,
+	151,
+	177,
+	175,
+	165,
+	asc("6"),
+	asc("7"),
+	166,
+	168,
+	178,
+	179,
+	169,
+	167,
+	asc("8"),
+	asc("9"),
+	184,
+	170,
+	172,
+	171,
+	181,
+	164,
+	asc("0"),
+	31,
+	163,
+	173,
+	asc(","),
+	asc("."),
+	asc(":"),
+	186,
+	30,
+	28,
+	225,
+	asc(";"),
+	asc("/"),
+	27,
+	212,
+	185,
+	29,
+	8,
+	13,
+	189,
+	162,
+	1,
+	2,
+	4,
+	24
+];
+function pckey_to_lm80c_char(hardware_keys) {
+	const map = hardware_keys.indexOf(53) >= 0 ? KBMAP_SFT : hardware_keys.indexOf(62) >= 0 ? KBMAP_CTRL : hardware_keys.indexOf(59) >= 0 ? KBMAP_ALT : KBMAP;
+	for (const k of hardware_keys) {
+		if (k === 53 || k === 62 || k === 59) continue;
+		const rc = key_row_col[k];
+		if (rc) return map[rc.row * 8 + rc.col];
+	}
+}
+//#endregion
 //#region src/keyboard.ts
 function keyDown(e) {
 	audio.resume();
-	if (e.repeat) {
+	if (e.repeat && KBTYPE !== 1) {
 		e.preventDefault();
 		return;
 	}
@@ -686,29 +962,91 @@ function keyDown(e) {
 		e.preventDefault();
 		return;
 	}
-	{
-		const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
-		if (hardware_keys.length === 0) return;
-		keyboard_buffer.push({
-			type: "press",
-			hardware_keys
-		});
-		e.preventDefault();
+	const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
+	if (hardware_keys.length === 0) return;
+	if (KBTYPE === 0) {
+		kb_code_keys.set(e.code, hardware_keys);
+		kb0_press(hardware_keys);
+	} else {
+		const c = pckey_to_lm80c_char(hardware_keys);
+		if (c !== void 0) SIO_receiveChar(c);
 	}
+	e.preventDefault();
 }
 function keyUp(e) {
 	const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
 	if (hardware_keys.length === 0) return;
-	keyboard_buffer.push({
-		type: "release",
-		hardware_keys
-	});
+	if (KBTYPE === 0) {
+		kb0_release(kb_code_keys.get(e.code) ?? hardware_keys);
+		kb_code_keys.delete(e.code);
+	}
 	e.preventDefault();
 }
 var element = document;
 element.onkeydown = keyDown;
 element.onkeyup = keyUp;
-var keyboard_buffer = [];
+/** how the PC keyboard drives the emulated one:
+*     0 = immediate (default): the hardware matrix mirrors the real key state (no queue)
+*     1 = serial: keystrokes are sent as characters over the LM80C serial line
+*/
+var KBTYPE = 0;
+var KB_MIN_HOLD_MS = 30;
+var kb_held_count = /* @__PURE__ */ new Map();
+var kb_latch_ms = /* @__PURE__ */ new Map();
+var kb_code_keys = /* @__PURE__ */ new Map();
+function kb0_apply() {
+	const keys = new Set([...kb_held_count.keys(), ...kb_latch_ms.keys()]);
+	keyboardReset();
+	for (const k of keys) keyPress(k);
+}
+function kb0_press(hardware_keys) {
+	for (const k of hardware_keys) {
+		kb_held_count.set(k, (kb_held_count.get(k) ?? 0) + 1);
+		kb_latch_ms.delete(k);
+	}
+	kb0_apply();
+}
+function kb0_release(hardware_keys) {
+	const now = performance.now();
+	for (const k of hardware_keys) {
+		const count = (kb_held_count.get(k) ?? 1) - 1;
+		if (count > 0) kb_held_count.set(k, count);
+		else {
+			kb_held_count.delete(k);
+			kb_latch_ms.set(k, now + KB_MIN_HOLD_MS);
+		}
+	}
+	kb0_apply();
+}
+function kb0_frame() {
+	if (kb_latch_ms.size === 0) return;
+	const now = performance.now();
+	let expired = false;
+	for (const [k, t] of kb_latch_ms) if (t <= now) {
+		kb_latch_ms.delete(k);
+		expired = true;
+	}
+	if (expired) kb0_apply();
+}
+function setKbType(type) {
+	if (type !== 0 && type !== 1) return;
+	KBTYPE = type;
+	kb_held_count.clear();
+	kb_latch_ms.clear();
+	kb_code_keys.clear();
+	keyboardReset();
+}
+function kb_releaseAll() {
+	if (KBTYPE !== 0) return;
+	kb_held_count.clear();
+	kb_latch_ms.clear();
+	kb_code_keys.clear();
+	kb0_apply();
+}
+window.addEventListener("blur", kb_releaseAll);
+document.addEventListener("visibilitychange", () => {
+	if (document.visibilityState === "hidden") kb_releaseAll();
+});
 //#endregion
 //#region src/bytes.ts
 function hex(value, size = 2) {
@@ -1311,14 +1649,8 @@ var storage = new BrowserStorage("lm80c");
 function renderFrame() {
 	total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine, cyclesPerLine);
 }
-function poll_keyboard() {
-	if (keyboard_buffer.length > 0) {
-		let key_event = keyboard_buffer.shift();
-		if (key_event) {
-			keyboardReset();
-			if (key_event.type === "press") key_event.hardware_keys.forEach((k) => keyPress(k));
-		}
-	}
+function update_keyboard() {
+	if (KBTYPE === 0) kb0_frame();
 }
 var end_of_frame_hook = void 0;
 var last_timestamp = 0;
@@ -1328,13 +1660,14 @@ function oneFrame(timestamp) {
 	let cycles = cpuSpeed * msec / 1e3;
 	last_timestamp = stamp;
 	if (msec > frameRate * 2) cycles = cpuSpeed * (frameRate * 2 / 1e3);
-	poll_keyboard();
+	update_keyboard();
 	total_cycles += lm80c_ticks(cycles, cyclesPerLine);
 	averageFrameTime = averageFrameTime * .992 + msec * .008;
 	if (!stopped) requestAnimationFrame(oneFrame);
 }
 function main() {
 	parseQueryStringCommands();
+	if (options.kbtype !== void 0) setKbType(Number(options.kbtype));
 	{
 		let firmware;
 		if (options.rom == void 0) options.rom = "64K120";
@@ -1567,6 +1900,9 @@ var sio_write_control = function(port, data) {};
 window.sio_write_data = sio_write_data;
 window.sio_write_control = sio_write_control;
 window.ay38910_audio_buf_ready = ay38910_audio_buf_ready;
+window.setKbType = setKbType;
+window.getKbType = () => KBTYPE;
+window.keyboard_poll = (address) => keyboard_poll(address);
 function setStopped(val) {
 	stopped = val;
 }
