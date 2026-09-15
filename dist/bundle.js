@@ -830,6 +830,19 @@ function pasteLine(line) {
 function pasteChar(c) {
 	SIO_receiveChar(c);
 }
+function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+var APASTE_MS_PER_CHAR = 7;
+async function apaste(text, msPerChar = APASTE_MS_PER_CHAR) {
+	const lines = text.replace(/\r\n?/g, "\n").split("\n");
+	for (const linea of lines) {
+		console.log(linea);
+		for (let t = 0; t < linea.length; t++) pasteChar(linea.charCodeAt(t));
+		pasteChar(13);
+		await sleep(msPerChar * (linea.length + 1));
+	}
+}
 function zap() {
 	ram.forEach((e, i) => ram[i] = 0);
 	let state = cpu.getState();
@@ -915,6 +928,7 @@ function led_write(value) {
 window.cpu_status = cpu_status;
 window.crun = crun;
 window.paste = paste;
+window.apaste = apaste;
 window.zap = zap;
 window.power = power;
 window.saveState = saveState;

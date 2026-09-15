@@ -39,6 +39,28 @@ function pasteChar(c: number): void {
    SIO_receiveChar(c);
 }
 
+function sleep(ms: number): Promise<void> {
+   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// like paste(), but asynchronous: it sends one line at a time and waits for the
+// host to digest the bytes, so that long BASIC listings don't overflow the SIO
+// receive buffer (4096 bytes). The SIO delivers 1 char every 25000 CPU cycles
+// (3.6864 MHz) ≈ 6.78 ms, so characters are spaced by ~7 ms.
+const APASTE_MS_PER_CHAR = 7;
+
+async function apaste(text: string, msPerChar: number = APASTE_MS_PER_CHAR): Promise<void> {
+   const lines = text.replace(/\r\n?/g, "\n").split("\n");
+   for(const linea of lines) {
+      console.log(linea);
+      for(let t=0; t<linea.length; t++) {
+         pasteChar(linea.charCodeAt(t));
+      }
+      pasteChar(13);   // CR
+      await sleep(msPerChar * (linea.length + 1));
+   }
+}
+
 function zap() {            
    ram.forEach((e,i)=>ram[i]=0x00);
    let state = cpu.getState();
@@ -147,6 +169,7 @@ function led_write(value: number) {
 (window as any).cpu_status = cpu_status;
 (window as any).crun = crun;
 (window as any).paste = paste;
+(window as any).apaste = apaste;
 (window as any).zap = zap;
 (window as any).power = power;
 (window as any).saveState = saveState;
@@ -163,7 +186,7 @@ function led_write(value: number) {
 (window as any).debugAfter = debugAfter;
 
 export {
-   cpu_status, crun, paste, zap, power, saveState, restoreState,
+   cpu_status, crun, paste, apaste, zap, power, saveState, restoreState,
    dumpPointers, dumpStack, make_lm, start_counter, stop_counter,
    led_read, led_write, debugBefore, debugAfter
 };

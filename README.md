@@ -22,6 +22,7 @@ These are the commands you can type from the JavaScript console (F12 key):
 - `remove("file.prg")` remove file from browser's cache
 - `dir()` lists files on browser's cache
 - `paste(text)` paste a string of text (e.g. containing a BASIC program) via the LM80C serial line
+- `apaste(text)` like `paste(text)`, but asynchronous: sends the text line by line, pacing the serial so that long BASIC listings don't overflow the receive buffer (use `await apaste(...)`)
 
 DEBUGGER
 ========
