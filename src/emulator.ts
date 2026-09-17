@@ -1,8 +1,6 @@
 "use strict";
 
 import { LMAudio } from './audio';
-import { BrowserStorage } from './filesystem';
-import { BBS } from './bbs';
 import { keyboardReset } from './keys';
 import { kb0_frame, KBTYPE, setKbType } from './keyboard';
 import { parseQueryStringCommands } from './browser';
@@ -14,9 +12,10 @@ import {
    get_z80_d, get_z80_e, get_z80_h, get_z80_l, get_z80_ix,
    get_z80_iy, get_z80_sp, set_z80_a, set_z80_f, set_z80_b,
    set_z80_c, set_z80_d, set_z80_e, set_z80_h, set_z80_l,
-   set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, keyboard_poll, wasm_instance, load_wasm
+   set_z80_ix, set_z80_iy, set_z80_sp, set_z80_pc, rom_load, wasm_instance, load_wasm
 } from './emscripten_wrapper';
 import { CpuController, EmulatorOptions, Z80State } from './types';
+import { mountMenuBar } from './ui/mount';
 import './cfcard';
 
 // firmware 3.14
@@ -44,14 +43,12 @@ let cycle = 0;
 let total_cycles = 0;
 
 let options: EmulatorOptions = {
-   load: undefined,
-   restore: false
+   load: undefined
 };
 
 let audio = new LMAudio(4096);
 
-let storage = new BrowserStorage("lm80c");
-
+// not used, for reference only. It advances the emulation by one frame synchronously.
 function renderFrame() {
    total_cycles += lm80c_ticks(262 * 2 * cyclesPerLine, cyclesPerLine);
 }
@@ -201,6 +198,9 @@ function main() {
 
    audio.start();
 
+   // the menu bar is a fixed overlay, so mounting it does not change the page layout
+   mountMenuBar();
+
    // starts drawing frames
    oneFrame();
 }
@@ -232,19 +232,9 @@ let sio_write_control = function(port: number, data: number) {
 (window as any).sio_write_control = sio_write_control;
 (window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
 
-// Attach the keyboard mode switch and a matrix probe (bit cleared = key pressed)
-(window as any).setKbType = setKbType;
-(window as any).getKbType = () => KBTYPE;
-(window as any).keyboard_poll = (address: number) => keyboard_poll(address);
-
 function setStopped(val: boolean) {
    stopped = val;
 }
-
-// Attach main and BBS to window to let index.html and external scripts run them
-(window as any).main = main;
-(window as any).BBS = BBS;
-
 
 export {
    cpu,
@@ -257,7 +247,6 @@ export {
    BASTXT,
    PROGND,
    renderFrame,
-   storage,
    end_of_frame_hook,
    load_wasm,
    main

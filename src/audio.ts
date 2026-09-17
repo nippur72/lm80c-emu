@@ -1,6 +1,7 @@
 class LMAudio {
    AUDIO_BUFSIZE: number;
    playing: boolean;
+   enabled: boolean;
    buffers: number[][];
    audioContext: AudioContext;
    sampleRate: number;
@@ -9,6 +10,7 @@ class LMAudio {
    constructor(bufsize: number) {
       this.AUDIO_BUFSIZE = bufsize;  // must match psg.c
       this.playing = false;
+      this.enabled = true;
       this.buffers = [];
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       this.sampleRate = this.audioContext.sampleRate;
@@ -42,6 +44,7 @@ class LMAudio {
    }
 
    start() {
+      if(!this.enabled) return;
       this.speakerSound.connect(this.audioContext.destination);
       this.playing = true;
       this.buffers = [];
@@ -50,6 +53,19 @@ class LMAudio {
    stop() {
       this.speakerSound.disconnect(this.audioContext.destination);
       this.playing = false;
+   }
+
+   // distinct from "playing": start()/stop() are also driven by the page visibility, so
+   // the user's choice has to survive a tab switch
+   setEnabled(value: boolean) {
+      if(this.enabled === value) return;
+      this.enabled = value;
+      if(value) this.start();
+      else this.stop();
+   }
+
+   isEnabled(): boolean {
+      return this.enabled;
    }
 
    resume() {

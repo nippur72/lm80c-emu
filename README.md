@@ -9,20 +9,14 @@ LOADING AND SAVING FILES
 
 - prg files (`.prg`) are plain files that are loaded in memory as-is
 
-Dragging & dropping a file on the emulator's window causes the file to be loaded.
-
-Once a file is loaded, it's also stored on the browser cache so that you don't have
-to drag&drop it again; you can use the `load()` function from the JavaScript console.
+Use File → Open program… (or drag & drop a `.prg` file on the emulator's window) to load
+a program into memory; type `RUN` at the BASIC prompt to execute it. File → Save program…
+downloads the program currently in memory.
 
 These are the commands you can type from the JavaScript console (F12 key):
 
-- `load("file.prg" [,start])` loads a file at the specified address
-- `save("file.prg" [,start, end])` saves a file 
-- `download("file.prg")` gets the file as a browser download
-- `remove("file.prg")` remove file from browser's cache
-- `dir()` lists files on browser's cache
-- `paste(text)` paste a string of text (e.g. containing a BASIC program) via the LM80C serial line
-- `apaste(text)` like `paste(text)`, but asynchronous: sends the text line by line, pacing the serial so that long BASIC listings don't overflow the receive buffer (use `await apaste(...)`)
+- `loadBytes(bytes [,address])` writes a byte array into memory
+- `paste(text)` paste a string of text (e.g. containing a BASIC program) via the LM80C serial line; the text is sent line by line and paced so that long BASIC listings don't overflow the receive buffer (use `await paste(...)`)
 
 DEBUGGER
 ========
@@ -68,13 +62,12 @@ AUTOLOADING
 The emulator can be used in cross-development allowing to automate the process of 
 loading and executing the program being developed. This will save lot of annoying drag&drops. 
 
-To enable "autoload":
-- clone the emulator on your local machine (it won't work in the online-version because of browser restrictions)
-- in your compile chain (`make` etc..), copy the binary you want to execute in the emulator directory naming it `autoload.bin`
-- execute `node makeautoload`, this will turn `autoload.bin` into JavaScript code (`autoload.js`).
-- refresh the browser, the program will be loaded in memory and make it RUN
+Pass the program to the `load` querystring parameter:
 
-When you no longer want the file to be autoloaded, delete `autoload.bin` and run again `node makeautoload`.
+https://nippur72.github.io/lm80c-emu?load=software/prg/wave.prg
+
+The file is fetched from the `software/` directory, copied into memory and run. An absolute
+`http(s)` URL can be used instead to fetch the program from a remote location.
 
 
 

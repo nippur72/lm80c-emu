@@ -1,0 +1,144 @@
+/* System 6 look for the menu bar. Visual reference: system.css (sakofchit). */
+
+:root {
+   /* one knob: every other metric below is in em and follows this size */
+   --menubar-font-size: 16px;
+   --menubar-h: calc(var(--menubar-font-size) + 12px);
+   --sys6-ink: #000000;
+   --sys6-paper: #ffffff;
+   --sys6-dim: #808080;
+   --sys6-font: Chicago, Geneva, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* ---------- the bar: hidden until the pointer reaches the top edge ---------- */
+
+.menubar-bar {
+   position: fixed;
+   top: 0;
+   left: 50%;
+   /* same width and same centre as the emulated screen (browser.ts keeps --screen-w in
+      sync); 100vw is only the fallback for the very first paint */
+   width: var(--screen-w, 100vw);
+   max-width: 100vw;
+   height: var(--menubar-h);
+   z-index: 1000;
+   transform: translate(-50%, -100%);
+   transition: transform 120ms ease-out;
+   /* while hidden it must not swallow clicks aimed at the emulator screen */
+   pointer-events: none;
+}
+
+.menubar-bar[data-visible="true"] {
+   transform: translate(-50%, 0);
+   pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+   .menubar-bar {
+      transition: none;
+   }
+}
+
+.menubar {
+   box-sizing: border-box;
+   display: flex;
+   align-items: stretch;
+   height: 100%;
+   background: var(--sys6-paper);
+   border-bottom: 1px solid var(--sys6-ink);
+   font-family: var(--sys6-font);
+   font-size: var(--menubar-font-size);
+   color: var(--sys6-ink);
+   -webkit-font-smoothing: none;
+   user-select: none;
+   -webkit-user-select: none;
+}
+
+.menubar__title {
+   appearance: none;
+   display: flex;
+   align-items: center;
+   height: 100%;
+   margin: 0;
+   padding: 0 0.75em;
+   background: none;
+   border: 0;
+   border-right: 1px solid var(--sys6-ink);
+   font-family: inherit;
+   font-size: inherit;
+   font-weight: bold;
+   line-height: 1;
+   color: inherit;
+   cursor: default;
+   outline: none;
+}
+
+.menubar__title[data-state="open"],
+.menubar__title[data-highlighted] {
+   background: var(--sys6-ink);
+   color: var(--sys6-paper);
+}
+
+/* ---------- dropdowns ---------- */
+
+.menu {
+   box-sizing: border-box;
+   z-index: 1001;
+   min-width: 11em;
+   padding: 0.2em 0;
+   background: var(--sys6-paper);
+   color: var(--sys6-ink);
+   border: 1px solid var(--sys6-ink);
+   /* 1px of white between the outline and the items: the classic double menu border */
+   box-shadow: inset 0 0 0 1px var(--sys6-paper);
+   font-family: var(--sys6-font);
+   font-size: var(--menubar-font-size);
+   -webkit-font-smoothing: none;
+   user-select: none;
+   -webkit-user-select: none;
+}
+
+.menu__item {
+   position: relative;
+   display: flex;
+   align-items: center;
+   padding: 0.25em 0.75em 0.25em 1.5em;
+   cursor: default;
+   outline: none;
+   white-space: nowrap;
+}
+
+/* System 6 highlights with an inverted row, screen-wide */
+.menu__item[data-highlighted] {
+   background: var(--sys6-ink);
+   color: var(--sys6-paper);
+}
+
+.menu__item[data-disabled] {
+   color: var(--sys6-dim);
+}
+
+.menu__item[data-disabled][data-highlighted] {
+   background: none;
+   color: var(--sys6-dim);
+}
+
+/* the tick sits in a fixed gutter, so labels stay aligned whether checked or not */
+.menu__indicator {
+   position: absolute;
+   left: 0.5em;
+   display: inline-flex;
+   justify-content: center;
+   width: 0.75em;
+}
+
+.menu__shortcut {
+   margin-left: auto;
+   padding-left: 1.5em;
+}
+
+.menu__separator {
+   height: 1px;
+   margin: 0.25em 0.5em;
+   background: var(--sys6-ink);
+}

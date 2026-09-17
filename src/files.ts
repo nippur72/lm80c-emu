@@ -1,36 +1,7 @@
-import { getFileExtension, mem_read_word, mem_write_word, hex } from './bytes';
-import { storage, BASTXT, PROGND } from './emulator';
+import { downloadBytes, mem_read_word, mem_write_word, hex } from './bytes';
+import { BASTXT, PROGND } from './emulator';
 import { mem_read, mem_write } from './emscripten_wrapper';
 import { paste } from './utils';
-
-// console command
-async function run(filename: string) {
-    if(!await storage.fileExists(filename)) {
-       console.log(`file "${filename}" not found`);
-       return;
-    }
-    const ext = getFileExtension(filename);
-    if(ext === ".prg" ) await load_prg(filename, true);
-    else console.log(`extension '${ext}' not supported`);
-}
-
-// console command
-async function load(filename: string) {
-    if(!await storage.fileExists(filename)) {
-       console.log(`file "${filename}" not found`);
-       return;
-    }
-    const ext = getFileExtension(filename);
-    if(ext === ".prg" ) await load_prg(filename, false);
-    else console.log(`extension '${ext}' not supported`);
-}
-
-// console command
-async function save(filename: string) {
-    const ext = getFileExtension(filename);
-    if(ext == ".prg" ) await save_prg(filename, undefined, undefined);
-    else console.log(`extension '${ext}' not supported`);
-}
 
 function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: string): void {
     const startAddress = (address === undefined) ? mem_read_word(BASTXT) : address;
@@ -47,68 +18,43 @@ function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: st
     console.log(`loaded "${fileName}" ${bytes.length} bytes from ${hex(startAddress,4)}h to ${hex(endAddress,4)}h`);
 }
 
-async function load_prg(filename: string, runAfterLoad: boolean): Promise<void> {
-    const bytes = await storage.readFile(filename);
+async function loadProgram(bytes: Uint8Array, name: string, runAfterLoad: boolean): Promise<void> {
+    const start = mem_read_word(BASTXT);
 
-    // simulate a VZ file
-    let VZ_BASIC = 0xF0;
-    let VZ_BINARY = 0xF1;
-    let VZ = {
-        type: VZ_BASIC,
-        filename: filename,
-        data: bytes,
-        start: mem_read_word(BASTXT)
-    };
-
-    // write data into memory
-    for(let i=0; i<VZ.data.length; i++) {
-        mem_write(i+VZ.start, VZ.data[i]);
+    for(let i=0; i<bytes.length; i++) {
+        mem_write(i+start, bytes[i]);
     }
 
-    if(VZ.type == VZ_BASIC) {
-        console.log(`loaded "${filename}" ('${VZ.filename}') as BASIC program of ${VZ.data.length} bytes from ${hex(VZ.start,4)}h to ${hex(VZ.start+VZ.data.length,4)}h`);
-    }
-    else if(VZ.type == VZ_BINARY) {
-        console.log(`loaded "${filename}" ('${VZ.filename}') as binary data of ${VZ.data.length} bytes from ${hex(VZ.start,4)}h to ${hex(VZ.start+VZ.data.length,4)}h`);
-    }
+    console.log(`loaded "${name}" as BASIC program of ${bytes.length} bytes from ${hex(start,4)}h to ${hex(start+bytes.length,4)}h`);
 
-    // binary program
-    if(VZ.type == VZ_BINARY) {
-        if(runAfterLoad) {
-            throw "not yet implemented";
-        }
-    }
+    // modify end of basic program pointer
+    if(start === mem_read_word(BASTXT)) mem_write_word(PROGND, start + bytes.length + 1);
 
-    // basic program
-    if(VZ.type == VZ_BASIC) {
-        // modify end of basic program pointer
-        let end = VZ.start + VZ.data.length;
-        if(VZ.start === mem_read_word(BASTXT)) mem_write_word(PROGND, end+1);
-        if(runAfterLoad) {
-            paste("RUN\r\n");
-        }
+    if(runAfterLoad) {
+        await paste("RUN\r\n");
     }
 }
 
-async function save_prg(filename: string, start?: number, end?: number): Promise<void> {
-    if(start === undefined) start = mem_read_word(BASTXT);
-    if(end === undefined) end = mem_read_word(PROGND)-1;
+function programRange(start?: number, end?: number): [number, number] {
+    const from = (start === undefined) ? mem_read_word(BASTXT) : start;
+    const to = (end === undefined) ? mem_read_word(PROGND)-1 : end;
+    return [from, to];
+}
 
+function readProgram(from: number, to: number): Uint8Array {
     const prg: number[] = [];
-    for(let i=0,t=start; t<=end; i++,t++) {
+    for(let i=0,t=from; t<=to; i++,t++) {
        prg.push(mem_read(t));
     }
-    const bytes = new Uint8Array(prg);
-
-    await storage.writeFile(filename, bytes);
-
-    console.log(`saved "${filename}" ${bytes.length} bytes from ${hex(start,4)}h to ${hex(end,4)}h`);
+    return new Uint8Array(prg);
 }
 
-// Attach to window for browser developer console access
-(window as any).run = run;
-(window as any).load = load;
-(window as any).save = save;
-(window as any).loadBytes = loadBytes;
+// menu command: write the program straight to the local file system
+async function download_prg(filename: string): Promise<void> {
+    const [from, to] = programRange();
+    const bytes = readProgram(from, to);
 
-export { run, load, save, loadBytes };
+    downloadBytes(filename, bytes);
+}
+
+export { loadProgram, loadBytes, download_prg };

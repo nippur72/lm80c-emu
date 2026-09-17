@@ -38,7 +38,6 @@ export interface CpuController {
 /** Emulator runtime options parsed from query string */
 export interface EmulatorOptions {
    load?: string;
-   restore: boolean;
    rom?: string;
    kbtype?: string;
    bt?: string;

@@ -55,6 +55,29 @@ function cf_create_card() {
    cf_card = new Uint8Array(CF_SIZE).fill(0x00);
 }
 
+/** replaces the card contents with an image coming from a file */
+function cf_card_mount(bytes: Uint8Array): void {
+   cf_card = bytes;
+   CF_SIZE = bytes.length;
+
+   // the drive ID must describe the mounted image, not the default card
+   const sectors = Math.floor(CF_SIZE / CF_SECTOR_SIZE);
+   cf_geometry.cylinders = Math.max(1, Math.floor(sectors / (cf_geometry.heads * cf_geometry.sectorsPerCylinder)));
+
+   // drop any transfer left over from the previous card
+   cf_ptr = 0;
+   cf_count = 0;
+   cf_read_buffer = new Uint8Array(0);
+   cf_stat = CF_STAT_RDY;
+
+   console.log(`CF: mounted card of ${CF_SIZE} bytes`);
+}
+
+/** the card contents, ready to be written to an image file */
+function cf_card_dump(): Uint8Array {
+   return cf_card.slice(0, CF_SIZE);
+}
+
 function cf_get_card_id(): Uint8Array {
    let buffer = new Uint8Array(512).fill(0x00);
 
@@ -239,7 +262,7 @@ cf_create_card();
 (window as any).cf_read = cf_read;
 (window as any).cf_write = cf_write;
 
-export { cf_read, cf_write };
+export { cf_read, cf_write, cf_card_mount, cf_card_dump };
 
 
 

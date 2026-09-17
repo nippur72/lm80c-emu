@@ -223,8 +223,6 @@ async function load_wasm(): Promise<void> {
 
    SIO_receiveChar    = instance.cwrap("SIO_receiveChar"   , null, ['number'] );
 
-   // expose instance globally for developer console debugging
-   (window as any).wasm_instance = instance;
    wasm_instance = instance;
 }
 

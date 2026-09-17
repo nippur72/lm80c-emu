@@ -1,11 +1,11 @@
 // handles interaction between browser and emulation 
 
-import { saveState, restoreState } from './utils';
 import { getFileExtension } from './bytes';
-import { run } from './files';
+import { loadProgram } from './files';
 import { calculateGeometry } from './video';
 import { externalLoad } from './externalLoad';
-import { stopped, audio, oneFrame, options, setStopped, storage } from './emulator';
+import { stopped, audio, oneFrame, options, setStopped } from './emulator';
+import { isUiTarget } from './ui/uiState';
 import { EmulatorOptions } from './types';
 
 let aspect = 1.25;
@@ -31,10 +31,18 @@ function onResize(e?: any) {
       canvas.style.width  = "100vmin";
       canvas.style.height = `${(1/aspect)*100}vmin`;
    }
+
+   // read back the width the browser actually resolved (vmin/vmax depend on the aspect
+   // option) so that the menu bar can align itself with the emulated screen
+   const screenWidth = canvas.getBoundingClientRect().width;
+   document.documentElement.style.setProperty("--screen-w", `${screenWidth}px`);
 }
 
-function goFullScreen() 
+function goFullScreen(e?: Event) 
 {
+   // a double click on the menu bar must not enter fullscreen
+   if(e !== undefined && isUiTarget(e.target)) return;
+
    const canvas = document.getElementById("canvas") as any;
    if(canvas) {
       if(canvas.webkitRequestFullscreen !== undefined) canvas.webkitRequestFullscreen();
@@ -47,12 +55,6 @@ window.addEventListener("resize", onResize);
 window.addEventListener("dblclick", goFullScreen);
 
 onResize();
-
-// **** save state on close ****
-
-window.onbeforeunload = function(e) {
-   saveState();   
- };
 
 // **** visibility change ****
 
@@ -111,13 +113,9 @@ async function droppedFile(outName: string, bytes: Uint8Array) {
    const ext = getFileExtension(outName);
 
    if(ext == ".prg") {
-      await storage.writeFile(outName, bytes);
-      await run(outName);
+      await loadProgram(bytes, outName, false);
    }
 }
-
-// Attach droppedFile to window for console/drop integration
-(window as any).droppedFile = droppedFile;
 
 function getQueryStringObject(opts: EmulatorOptions): EmulatorOptions {
    let a = window.location.search.split("&");
@@ -136,11 +134,6 @@ function getQueryStringObject(opts: EmulatorOptions): EmulatorOptions {
 async function parseQueryStringCommands() {
    Object.assign(options, getQueryStringObject(options));
 
-   if(options.restore !== false) {
-      // try to restore previous state, if any
-      restoreState();
-   }
-
    if(options.load !== undefined) {
       const name = options.load;
       setTimeout(async ()=>{
@@ -148,8 +141,7 @@ async function parseQueryStringCommands() {
             // external load
             let bin = await externalLoad(name);
             if (bin) {
-               await storage.writeFile("autoload.prg", bin);
-               await run("autoload.prg");
+               await loadProgram(bin, "autoload", true);
             }
          }
          else {
@@ -181,7 +173,7 @@ async function fetchProgram(name: string)
       const response = await fetch(`software/${name}`);
       if(response.status === 404) return false;
       const bytes = new Uint8Array(await response.arrayBuffer());
-      droppedFile(name, bytes);
+      await loadProgram(bytes, name, true);
       return true;
    }
    catch(err)
@@ -190,4 +182,4 @@ async function fetchProgram(name: string)
    }
 }
 
-export { parseQueryStringCommands };
+export { parseQueryStringCommands, goFullScreen, droppedFile };

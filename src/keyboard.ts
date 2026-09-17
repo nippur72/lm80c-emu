@@ -12,6 +12,7 @@ import { pckey_to_hardware_keys_ITA } from './keyboard_IT';
 import { pckey_to_lm80c_char } from './keyboard_SIO';
 import { SIO_receiveChar } from './emscripten_wrapper';
 import { audio, cpu } from './emulator';
+import { isUiCapturingKeyboard, isUiTarget } from './ui/uiState';
 
 function pckey_to_hwkey(pckey: string): number | undefined {
    let hardware_key: number | undefined;   
@@ -121,6 +122,10 @@ function pckey_to_hwkey(pckey: string): number | undefined {
 
 function keyDown(e: KeyboardEvent) { 
 
+   // the UI (menu bar, dialogs) owns the keyboard: do not consume the event, so that
+   // Tab, arrows and typing keep working natively inside it
+   if(isUiCapturingKeyboard() || isUiTarget(e.target)) return;
+
    // from Chrome 71 audio is suspended by default and must resume within an user-generated event
    audio.resume();
 
@@ -160,6 +165,8 @@ function keyDown(e: KeyboardEvent) {
 }
 
 function keyUp(e: KeyboardEvent) {
+   if(isUiCapturingKeyboard() || isUiTarget(e.target)) return;
+
    const hardware_keys = pckey_to_hardware_keys_ITA(e.code, e.key, e);
    if(hardware_keys.length === 0) return;
 
@@ -207,6 +214,14 @@ function kb0_press(hardware_keys: number[]) {
    kb0_apply();
 }
 
+/** hold a key combination on the matrix as if it was tapped, then release it */
+function tapKeys(hardware_keys: number[]) {
+   if(hardware_keys.length === 0) return;
+
+   kb0_press(hardware_keys);
+   window.setTimeout(() => kb0_release(hardware_keys), KB_MIN_HOLD_MS);
+}
+
 function kb0_release(hardware_keys: number[]) {
    const now = performance.now();
    for(const k of hardware_keys) {
@@ -244,6 +259,10 @@ function setKbType(type: number) {
    keyboardReset();
 }
 
+function getKbType(): number {
+   return KBTYPE;
+}
+
 // a keyup can be missed when the page loses focus while a key is held down (e.g. alt+tab):
 // release everything instead of leaving the key stuck in the matrix
 function kb_releaseAll() {
@@ -260,4 +279,4 @@ document.addEventListener("visibilitychange", () => {
    if(document.visibilityState === "hidden") kb_releaseAll();
 });
 
-export { pckey_to_hwkey, keyDown, keyUp, KBTYPE, setKbType, kb0_frame };
+export { pckey_to_hwkey, keyDown, keyUp, KBTYPE, setKbType, getKbType, kb0_frame, tapKeys };

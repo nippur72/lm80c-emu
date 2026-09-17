@@ -1,6 +1,5 @@
-import { hex, copyArray, mem_read_word } from './bytes';
-import { load } from './files';
-import { cpu, BASTXT, PROGND, renderFrame } from './emulator';
+import { hex, mem_read_word } from './bytes';
+import { cpu, BASTXT, PROGND } from './emulator';
 import { mem_read, SIO_receiveChar } from './emscripten_wrapper';
 
 // **** machine-specific utility functions ****
@@ -8,31 +7,6 @@ import { mem_read, SIO_receiveChar } from './emscripten_wrapper';
 function cpu_status(): string {
    const state = cpu.getState();
    return `A=${hex(state.a)} BC=${hex(state.b)}${hex(state.c)} DE=${hex(state.d)}${hex(state.e)} HL=${hex(state.h)}${hex(state.l)} IX=${hex(state.ix,4)} IY=${hex(state.iy,4)} SP=${hex(state.sp,4)} PC=${hex(state.pc,4)} S=${state.flags.S}, Z=${state.flags.Z}, Y=${state.flags.Y}, H=${state.flags.H}, X=${state.flags.X}, P=${state.flags.P}, N=${state.flags.N}, C=${state.flags.C}`;   
-}
-
-async function crun(filename: string): Promise<void> {
-   await load(filename);
-   //await print_string("\nrun:\n");
-   pasteLine("RUN\r\n");
-}
-
-function paste(text: string): void {
-   const lines = text.split("\n");
-   for(let t=0; t<lines.length; t++) {
-      const linea = lines[t];
-      console.log(linea);
-      pasteLine(linea);
-      pasteChar(13);   // CR
-   }
-}
-
-function pasteLine(line: string): void {
-   renderFrame();
-
-   for(let t=0;t<line.length;t++) {
-      let c = line.charCodeAt(t);
-      pasteChar(c);
-   }
 }
 
 function pasteChar(c: number): void {
@@ -43,13 +17,13 @@ function sleep(ms: number): Promise<void> {
    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// like paste(), but asynchronous: it sends one line at a time and waits for the
-// host to digest the bytes, so that long BASIC listings don't overflow the SIO
-// receive buffer (4096 bytes). The SIO delivers 1 char every 25000 CPU cycles
-// (3.6864 MHz) ≈ 6.78 ms, so characters are spaced by ~7 ms.
-const APASTE_MS_PER_CHAR = 7;
+// sends one line at a time and waits for the host to digest the bytes, so that
+// long BASIC listings don't overflow the SIO receive buffer (4096 bytes). The SIO
+// delivers 1 char every 25000 CPU cycles (3.6864 MHz) ≈ 6.78 ms, so characters
+// are spaced by ~7 ms.
+const PASTE_MS_PER_CHAR = 7;
 
-async function apaste(text: string, msPerChar: number = APASTE_MS_PER_CHAR): Promise<void> {
+async function paste(text: string, msPerChar: number = PASTE_MS_PER_CHAR): Promise<void> {
    const lines = text.replace(/\r\n?/g, "\n").split("\n");
    for(const linea of lines) {
       console.log(linea);
@@ -71,30 +45,6 @@ function zap() {
 function power() {      
    zap();
    setTimeout(()=>cpu.reset(), 200);
-}
-
-function saveState() {
-   const saveObject = {
-      ram: Array.from(ram),
-      cpu: cpu.getState()  
-   };   
-
-   window.localStorage.setItem(`lm80c_emu_state`, JSON.stringify(saveObject));
-}
-
-function restoreState() {   
-   try
-   {
-      let s = window.localStorage.getItem(`lm80c_emu_state`);
-      if(s === null) return;   
-      let state = JSON.parse(s);            
-      copyArray( state.ram, ram);
-      cpu.setState(state.cpu);
-   }
-   catch(error)
-   {
-
-   }
 }
 
 function dumpPointers() {
@@ -167,13 +117,7 @@ function led_write(value: number) {
 
 // Attach to window for developer console and WASM visibility
 (window as any).cpu_status = cpu_status;
-(window as any).crun = crun;
 (window as any).paste = paste;
-(window as any).apaste = apaste;
-(window as any).zap = zap;
-(window as any).power = power;
-(window as any).saveState = saveState;
-(window as any).restoreState = restoreState;
 (window as any).dumpPointers = dumpPointers;
 (window as any).dumpStack = dumpStack;
 (window as any).make_lm = make_lm;
@@ -186,7 +130,7 @@ function led_write(value: number) {
 (window as any).debugAfter = debugAfter;
 
 export {
-   cpu_status, crun, paste, apaste, zap, power, saveState, restoreState,
+   cpu_status, paste, zap, power,
    dumpPointers, dumpStack, make_lm, start_counter, stop_counter,
    led_read, led_write, debugBefore, debugAfter
 };

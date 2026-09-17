@@ -1,6 +1,6 @@
 import { mem_read, mem_write, wasm_instance } from './emscripten_wrapper';
 import { audio, oneFrame, averageFrameTime, setStopped } from './emulator';
-import { saveAs } from 'file-saver';
+import { saveAs } from './save-file';
 
 function dumpMem(start: number, end: number, rows: number = 16) {
    let s="\r\n";
@@ -36,8 +36,8 @@ function dumpBytes(bytes: Uint8Array | number[], start: number, end: number, row
    console.log(s);
 }
 
-function downloadBytes(fileName: string, buffer: BlobPart) {
-   let blob = new Blob([buffer], {type: "application/octet-stream"});
+function downloadBytes(fileName: string, buffer: Uint8Array) {
+   const blob = new Blob([buffer as BlobPart], {type: "application/octet-stream"});
    saveAs(blob, fileName);
    console.log(`downloaded "${fileName}"`);
 }

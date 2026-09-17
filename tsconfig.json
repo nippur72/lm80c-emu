@@ -3,12 +3,20 @@
     "target": "ES6",
     "module": "esnext",
     "moduleResolution": "bundler",
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "react-jsx",
     "strict": true,
     "noImplicitAny": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "noEmit": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx"
   ],
   "exclude": [
     "node_modules",

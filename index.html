@@ -3,6 +3,8 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
       <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />					
       <link rel="icon" type="image/png" href="icon.png">
+      <!-- emitted by the vite build together with dist/bundle.js -->
+      <link rel="stylesheet" href="./dist/style.css">
       <style>
          .keyboardpanel
          {
@@ -53,6 +55,9 @@
    
 
 <body style="padding:0; margin:0; background: black; color: green;">
+
+   <!-- mount point of the React menu bar (it renders itself as a fixed overlay) -->
+   <div id="menubar-root"></div>
 
    <div style="margin: auto" id="screen">
       <div id="LED" style="position: absolute; background-color: orange; visibility: hidden;">&nbsp;&nbsp;&nbsp;&nbsp;</div>
