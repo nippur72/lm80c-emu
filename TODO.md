@@ -1,3 +1,3 @@
 - serial bbs on menu
 - crt effect
-
+- mobile keyboard
