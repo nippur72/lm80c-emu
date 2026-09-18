@@ -1,6 +1,7 @@
 // handles interaction between browser and emulation 
 
 import { getFileExtension } from './bytes';
+import { cf_card_mount } from './cfcard';
 import { loadProgram } from './files';
 import { calculateGeometry } from './video';
 import { externalLoad } from './externalLoad';
@@ -163,6 +164,27 @@ async function parseQueryStringCommands() {
       calculateGeometry();
       onResize();
    }
+
+   const cfname = options.cfcard ?? "cfcard.img";
+   await mountCfCard(cfname);   
+}
+
+/** loads a CF card image and mounts it; on failure the empty card is left in place */
+async function mountCfCard(name: string): Promise<void> {
+   let bytes: Uint8Array | undefined;
+
+   if(name.startsWith("http")) {
+      // external load
+      bytes = await externalLoad(name);
+   }
+   else {
+      // internal load
+      const response = await fetch(`software/${name}`);
+      if(response.ok) bytes = new Uint8Array(await response.arrayBuffer());
+   }
+
+   if(bytes !== undefined) cf_card_mount(bytes);
+   else console.log(`CF: could not load "${name}", keeping the empty card`);
 }
 
 async function fetchProgram(name: string)

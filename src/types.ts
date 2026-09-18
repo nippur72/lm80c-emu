@@ -44,6 +44,7 @@ export interface EmulatorOptions {
    bb?: string;
    bh?: string;
    aspect?: string;
+   cfcard?: string;
    [key: string]: string | boolean | undefined;
 }
 

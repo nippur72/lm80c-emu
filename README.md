@@ -49,6 +49,18 @@ https://nippur72.github.io/lm80c-emu?load=software/prg/wave.prg
 The file is fetched from the `software/` directory, copied into memory and run. An absolute
 `http(s)` URL can be used instead to fetch the program from a remote location.
 
+CF CARD
+=======
+
+By default the emulator mounts `software/cfcard.img` as the CF card at startup. Pass a
+different image to the `cfcard` querystring parameter to mount it instead:
+
+https://nippur72.github.io/lm80c-emu?cfcard=mycard.img
+
+The file is fetched from the `software/` directory; an absolute `http(s)` URL can be used
+instead to fetch the image from a remote location. If the image cannot be loaded, the
+emulator keeps the empty, unformatted CF card.
+
 BUILD AND RUN LOCALLY
 =====================
 
