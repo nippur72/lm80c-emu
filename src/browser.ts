@@ -5,7 +5,7 @@ import { cf_card_mount } from './cfcard';
 import { loadProgram } from './files';
 import { calculateGeometry } from './video';
 import { externalLoad } from './externalLoad';
-import { stopped, audio, oneFrame, options, setStopped } from './emulator';
+import { audio, options } from './emulator';
 import { isUiTarget } from './ui/uiState';
 import { EmulatorOptions } from './types';
 
@@ -62,13 +62,10 @@ onResize();
 window.addEventListener("visibilitychange", function() {
    if(document.visibilityState === "hidden")
    {
-      setStopped(true);
       audio.stop();
    }
    else if(document.visibilityState === "visible")
    {
-      setStopped(false);
-      oneFrame();
       audio.start();
    }
 });

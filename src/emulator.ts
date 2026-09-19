@@ -35,8 +35,6 @@ const frameRate = vdcSpeed/(342*262*2);   // ~60 Hz
 const frameDuration = 1000/frameRate;     // duration of 1 frame in msec
 const cyclesPerLine = cpuSpeed / vdcSpeed * 342;
 
-let stopped = false; // allows to stop/resume the emulation
-
 let frameCounter = 0;
 let averageFrameTime = 0;
 
@@ -77,7 +75,7 @@ function oneFrame(timestamp?: number) {
 
    averageFrameTime = averageFrameTime * 0.992 + msec * 0.008;
 
-   if(!stopped) requestAnimationFrame(oneFrame);
+   requestAnimationFrame(oneFrame);
 }
 
 function main() {
@@ -246,14 +244,8 @@ function sio_get_rts(): boolean {
 (window as any).SIO_setCTS = (ch: number, v: boolean) => SIO_setCTS(ch, v ? 1 : 0);
 (window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
 
-function setStopped(val: boolean) {
-   stopped = val;
-}
-
 export {
    cpu,
-   stopped,
-   setStopped,
    options,
    audio,
    oneFrame,

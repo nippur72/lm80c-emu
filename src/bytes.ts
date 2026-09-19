@@ -1,5 +1,5 @@
 import { mem_read, mem_write, wasm_instance } from './emscripten_wrapper';
-import { audio, oneFrame, averageFrameTime, setStopped } from './emulator';
+import { averageFrameTime } from './emulator';
 import { saveAs } from './save-file';
 
 function dumpMem(start: number, end: number, rows: number = 16) {
@@ -113,19 +113,6 @@ function not_bit(b: number, n: number): number {
    return (b & (1<<n))>0 ? 0 : 1;
 }
 
-function stop() {
-   audio.stop();
-   setStopped(true);
-   console.log("emulation stopped");
-}
-
-// control functions
-function go() {
-   setStopped(false);
-   oneFrame();
-   console.log("emulation resumed");
-}
-
 let show_info = false;
 function info() {
    show_info = true;
@@ -186,7 +173,7 @@ function uint8ToString(b: Uint8Array | number[]): string {
 export {
    dumpMem, dumpBytes, downloadBytes, hexDump, hex, hi, lo, bin,
    mem_write_word, mem_read_word, set_bit, reset_bit, set, reset,
-   bit, not_bit, stop, go, show_info, info, endsWith, copyArray,
+   bit, not_bit, show_info, info, endsWith, copyArray,
    wait, getFileExtension, get_wasm_float32_array, get_wasm_uint8_array,
    stringToUint8, uint8ToString
 };
