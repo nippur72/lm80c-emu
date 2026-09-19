@@ -8,6 +8,7 @@ import { printerWrite } from './printer';
 import {
    cpu_init, cpu_reset, lm80c_init, lm80c_reset, lm80c_ticks,
    keyboard_reset, psg_init, psg_reset, ctc_init, ctc_reset,
+   SIO_getRTS, SIO_getCTS, SIO_setCTS,
    get_z80_pc, get_z80_a, get_z80_f, get_z80_b, get_z80_c,
    get_z80_d, get_z80_e, get_z80_h, get_z80_l, get_z80_ix,
    get_z80_iy, get_z80_sp, set_z80_a, set_z80_f, set_z80_b,
@@ -224,12 +225,25 @@ function ay38910_audio_buf_ready(ptr: number, size: number) {
 let sio_write_data = function(port: number, data: number) {
    printerWrite(data);
 };
+
+// hook pass-through: il modello del SIO vive in wasm (wasm/sio.c), qui si notificano
+// verso l'esterno soltanto le scritture di controllo (port = 0 canale A, 1 canale B)
 let sio_write_control = function(port: number, data: number) {
 };
+
+// RTS/DTR/CTS sono forniti dal modello C: questi wrapper servono solo alla console di
+// debug (le arrow leggono il binding importato al momento della chiamata)
+function sio_get_rts(): boolean {
+   return SIO_getRTS(0) !== 0;
+}
 
 // Attach functions called by WASM runtime to the window object
 (window as any).sio_write_data = sio_write_data;
 (window as any).sio_write_control = sio_write_control;
+(window as any).sio_get_rts = sio_get_rts;
+(window as any).SIO_getRTS = (ch: number) => SIO_getRTS(ch);
+(window as any).SIO_getCTS = (ch: number) => SIO_getCTS(ch);
+(window as any).SIO_setCTS = (ch: number, v: boolean) => SIO_setCTS(ch, v ? 1 : 0);
 (window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
 
 function setStopped(val: boolean) {

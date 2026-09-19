@@ -1,6 +1,7 @@
 import { hex, mem_read_word } from './bytes';
 import { cpu, BASTXT, PROGND } from './emulator';
-import { mem_read, SIO_receiveChar } from './emscripten_wrapper';
+import { mem_read, SIO_getRxAvail, SIO_getFifoLen, SIO_getOverrun } from './emscripten_wrapper';
+import { sendSerialChar, resetSerial } from './serial';
 
 // **** machine-specific utility functions ****
 
@@ -9,33 +10,18 @@ function cpu_status(): string {
    return `A=${hex(state.a)} BC=${hex(state.b)}${hex(state.c)} DE=${hex(state.d)}${hex(state.e)} HL=${hex(state.h)}${hex(state.l)} IX=${hex(state.ix,4)} IY=${hex(state.iy,4)} SP=${hex(state.sp,4)} PC=${hex(state.pc,4)} S=${state.flags.S}, Z=${state.flags.Z}, Y=${state.flags.Y}, H=${state.flags.H}, X=${state.flags.X}, P=${state.flags.P}, N=${state.flags.N}, C=${state.flags.C}`;   
 }
 
-function pasteChar(c: number): void {
-   SIO_receiveChar(c);
-}
-
-function sleep(ms: number): Promise<void> {
-   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// sends one line at a time and waits for the host to digest the bytes, so that
-// long BASIC listings don't overflow the SIO receive buffer (4096 bytes). The SIO
-// delivers 1 char every 25000 CPU cycles (3.6864 MHz) ≈ 6.78 ms, so characters
-// are spaced by ~7 ms.
-const PASTE_MS_PER_CHAR = 7;
-
-async function paste(text: string, msPerChar: number = PASTE_MS_PER_CHAR): Promise<void> {
+async function paste(text: string): Promise<void> {
    const lines = text.replace(/\r\n?/g, "\n").split("\n");
    for(const linea of lines) {
-      console.log(linea);
       for(let t=0; t<linea.length; t++) {
-         pasteChar(linea.charCodeAt(t));
+         await sendSerialChar(linea.charCodeAt(t));
       }
-      pasteChar(13);   // CR
-      await sleep(msPerChar * (linea.length + 1));
+      await sendSerialChar(13);   // CR
    }
 }
 
 function zap() {            
+   resetSerial();
    ram.forEach((e,i)=>ram[i]=0x00);
    let state = cpu.getState();
    state.halted = true;
@@ -118,6 +104,9 @@ function led_write(value: number) {
 // Attach to window for developer console and WASM visibility
 (window as any).cpu_status = cpu_status;
 (window as any).paste = paste;
+(window as any).SIO_getRxAvail = (ch: number) => SIO_getRxAvail(ch);
+(window as any).SIO_getFifoLen = (ch: number) => SIO_getFifoLen(ch);
+(window as any).SIO_getOverrun = (ch: number) => SIO_getOverrun(ch);
 (window as any).dumpPointers = dumpPointers;
 (window as any).dumpStack = dumpStack;
 (window as any).make_lm = make_lm;

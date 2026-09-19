@@ -10,7 +10,7 @@ import {
 } from './keys';
 import { pckey_to_hardware_keys_ITA } from './keyboard_IT';
 import { pckey_to_lm80c_char } from './keyboard_SIO';
-import { SIO_receiveChar } from './emscripten_wrapper';
+import { sendSerialChar } from './serial';
 import { audio, cpu } from './emulator';
 import { isUiCapturingKeyboard, isUiTarget } from './ui/uiState';
 
@@ -158,7 +158,7 @@ function keyDown(e: KeyboardEvent) {
    else {
       // KBTYPE === 1: the character goes to the serial line
       const c = pckey_to_lm80c_char(hardware_keys);
-      if(c !== undefined) SIO_receiveChar(c);
+      if(c !== undefined) sendSerialChar(c);
    }
 
    e.preventDefault();

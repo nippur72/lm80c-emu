@@ -1,4 +1,4 @@
-import { SIO_receiveChar } from './emscripten_wrapper';
+import { sendSerialChar } from './serial';
 
 // this function overrides the normal serial behaviour
 // attaching to it a virtual modem connected to the BBS
@@ -10,7 +10,7 @@ function start_bbs() {
    // redirects received characters to SIO
    modem.onreceive = () => {
       while(modem.read_status() != 0) {
-         SIO_receiveChar(modem.read_byte());
+         sendSerialChar(modem.read_byte());
       }
    }
 

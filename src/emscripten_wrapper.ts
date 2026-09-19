@@ -108,6 +108,15 @@ let keyboard_release: WasmSet2Fn;
 let keyboard_poll: WasmGet1Fn;
 
 let SIO_receiveChar: WasmSet1Fn;
+let SIO_getRTS: WasmGet1Fn;
+let SIO_getDTR: WasmGet1Fn;
+let SIO_getCTS: WasmGet1Fn;
+let SIO_getRxAvail: WasmGet1Fn;
+let SIO_getFifoLen: WasmGet1Fn;
+let SIO_getOverrun: WasmGet1Fn;
+let SIO_setCTS: WasmSet2Fn;
+let SIO_setDCD: WasmSet2Fn;
+let SIO_setDSR: WasmSet2Fn;
 
 async function load_wasm(): Promise<void> {
 
@@ -223,6 +232,16 @@ async function load_wasm(): Promise<void> {
 
    SIO_receiveChar    = instance.cwrap("SIO_receiveChar"   , null, ['number'] );
 
+   SIO_getRTS         = instance.cwrap("SIO_getRTS"       , 'number', ['number'] );
+   SIO_getDTR         = instance.cwrap("SIO_getDTR"       , 'number', ['number'] );
+   SIO_getCTS         = instance.cwrap("SIO_getCTS"       , 'number', ['number'] );
+   SIO_getRxAvail     = instance.cwrap("SIO_getRxAvail"   , 'number', ['number'] );
+   SIO_getFifoLen     = instance.cwrap("SIO_getFifoLen"   , 'number', ['number'] );
+   SIO_getOverrun     = instance.cwrap("SIO_getOverrun"   , 'number', ['number'] );
+   SIO_setCTS         = instance.cwrap("SIO_setCTS"       , null, ['number', 'number'] );
+   SIO_setDCD         = instance.cwrap("SIO_setDCD"       , null, ['number', 'number'] );
+   SIO_setDSR         = instance.cwrap("SIO_setDSR"       , null, ['number', 'number'] );
+
    wasm_instance = instance;
 }
 
@@ -317,5 +336,14 @@ export {
    keyboard_release,
    keyboard_poll,
    SIO_receiveChar,
+   SIO_getRTS,
+   SIO_getDTR,
+   SIO_getCTS,
+   SIO_getRxAvail,
+   SIO_getFifoLen,
+   SIO_getOverrun,
+   SIO_setCTS,
+   SIO_setDCD,
+   SIO_setDSR,
    load_wasm
 };

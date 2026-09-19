@@ -68,10 +68,11 @@ void lm80c_init(byte model) {
    vdp_init();
    LM80C_64K = model;
    if(LM80C_64K) PIO_data_B = 1;
+   SIO_init();
 }
 
 EMSCRIPTEN_KEEPALIVE
 void lm80c_reset() {
-
+   SIO_reset();
 }
 
