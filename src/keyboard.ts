@@ -181,11 +181,6 @@ function keyUp(e: KeyboardEvent) {
    e.preventDefault();
 }
 
-// connect DOM events
-const element = document; 
-element.onkeydown = keyDown;
-element.onkeyup = keyUp;
-
 /** how the PC keyboard drives the emulated one:
  *     0 = immediate (default): the hardware matrix mirrors the real key state (no queue)
  *     1 = serial: keystrokes are sent as characters over the LM80C serial line
@@ -274,9 +269,14 @@ function kb_releaseAll() {
    kb0_apply();
 }
 
-window.addEventListener("blur", kb_releaseAll);
-document.addEventListener("visibilitychange", () => {
-   if(document.visibilityState === "hidden") kb_releaseAll();
-});
+// connects the DOM events; called once the emulator is running, never at import time
+function initKeyboard() {
+   document.onkeydown = keyDown;
+   document.onkeyup = keyUp;
+   window.addEventListener("blur", kb_releaseAll);
+   document.addEventListener("visibilitychange", () => {
+      if(document.visibilityState === "hidden") kb_releaseAll();
+   });
+}
 
-export { pckey_to_hwkey, keyDown, keyUp, KBTYPE, setKbType, getKbType, kb0_frame, tapKeys };
+export { pckey_to_hwkey, keyDown, keyUp, KBTYPE, setKbType, getKbType, kb0_frame, tapKeys, initKeyboard };

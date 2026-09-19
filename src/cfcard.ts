@@ -256,13 +256,15 @@ let cf_geometry: CfGeometry = {
    sectorsPerCylinder: 0x20
 };
 
-// create the actual CF card space
-cf_create_card();
+// allocates the default CF card and exposes the I/O handlers to WASM;
+// called once the emulator is running, never at import time
+function initCfCard(): void {
+   cf_create_card();
+   (window as any).cf_read = cf_read;
+   (window as any).cf_write = cf_write;
+}
 
-(window as any).cf_read = cf_read;
-(window as any).cf_write = cf_write;
-
-export { cf_read, cf_write, cf_card_mount, cf_card_dump };
+export { cf_read, cf_write, cf_card_mount, cf_card_dump, initCfCard };
 
 
 

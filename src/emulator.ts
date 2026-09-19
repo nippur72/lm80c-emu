@@ -2,8 +2,8 @@
 
 import { LMAudio } from './audio';
 import { keyboardReset } from './keys';
-import { kb0_frame, KBTYPE, setKbType } from './keyboard';
-import { parseQueryStringCommands } from './browser';
+import { kb0_frame, KBTYPE, setKbType, initKeyboard } from './keyboard';
+import { parseQueryStringCommands, initBrowser } from './browser';
 import { printerWrite } from './printer';
 import {
    cpu_init, cpu_reset, lm80c_init, lm80c_reset, lm80c_ticks,
@@ -17,7 +17,9 @@ import {
 } from './emscripten_wrapper';
 import { CpuController, EmulatorOptions, Z80State } from './types';
 import { mountMenuBar } from './ui/mount';
-import './cfcard';
+import { initCfCard } from './cfcard';
+import { initVideo } from './video';
+import { initUtils } from './utils';
 
 // firmware 3.14
 let LM80C_model = 0;         // 0=LM80C 32K, 1=64K
@@ -45,7 +47,7 @@ let options: EmulatorOptions = {
    load: undefined
 };
 
-let audio = new LMAudio(4096);
+let audio: LMAudio;
 
 // not used, for reference only. It advances the emulation by one frame synchronously.
 function renderFrame() {
@@ -79,6 +81,13 @@ function oneFrame(timestamp?: number) {
 }
 
 function main() {
+
+   // nothing here may run before WASM is loaded: start() awaits it first
+   audio = new LMAudio(4096);
+   initVideo();
+   initCfCard();
+   initUtils();
+   registerWasmCallbacks();
 
    parseQueryStringCommands();
 
@@ -197,11 +206,21 @@ function main() {
 
    audio.start();
 
+   // the machine is up: only now the user can drive it
+   initKeyboard();
+   initBrowser();
+
    // the menu bar is a fixed overlay, so mounting it does not change the page layout
    mountMenuBar();
 
    // starts drawing frames
    oneFrame();
+}
+
+/** entry point: WASM is loaded before any other part of the emulator starts */
+async function start(): Promise<void> {
+   await load_wasm();
+   main();
 }
 
 function cpu_actual_speed() {
@@ -235,14 +254,17 @@ function sio_get_rts(): boolean {
    return SIO_getRTS(0) !== 0;
 }
 
-// Attach functions called by WASM runtime to the window object
-(window as any).sio_write_data = sio_write_data;
-(window as any).sio_write_control = sio_write_control;
-(window as any).sio_get_rts = sio_get_rts;
-(window as any).SIO_getRTS = (ch: number) => SIO_getRTS(ch);
-(window as any).SIO_getCTS = (ch: number) => SIO_getCTS(ch);
-(window as any).SIO_setCTS = (ch: number, v: boolean) => SIO_setCTS(ch, v ? 1 : 0);
-(window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
+// exposes to the WASM runtime the callbacks it invokes through EM_ASM;
+// called from main() once WASM is loaded
+function registerWasmCallbacks() {
+   (window as any).sio_write_data = sio_write_data;
+   (window as any).sio_write_control = sio_write_control;
+   (window as any).sio_get_rts = sio_get_rts;
+   (window as any).SIO_getRTS = (ch: number) => SIO_getRTS(ch);
+   (window as any).SIO_getCTS = (ch: number) => SIO_getCTS(ch);
+   (window as any).SIO_setCTS = (ch: number, v: boolean) => SIO_setCTS(ch, v ? 1 : 0);
+   (window as any).ay38910_audio_buf_ready = ay38910_audio_buf_ready;
+}
 
 export {
    cpu,
@@ -255,5 +277,6 @@ export {
    renderFrame,
    end_of_frame_hook,
    load_wasm,
-   main
+   main,
+   start
 };

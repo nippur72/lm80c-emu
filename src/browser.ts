@@ -52,59 +52,62 @@ function goFullScreen(e?: Event)
    onResize();
 }
 
-window.addEventListener("resize", onResize);
-window.addEventListener("dblclick", goFullScreen);
+// connects the DOM events; called once the emulator is running, never at import time
+function initBrowser() {
+   window.addEventListener("resize", onResize);
+   window.addEventListener("dblclick", goFullScreen);
 
-onResize();
+   onResize();
 
-// **** visibility change ****
+   // **** visibility change ****
 
-window.addEventListener("visibilitychange", function() {
-   if(document.visibilityState === "hidden")
-   {
-      audio.stop();
-   }
-   else if(document.visibilityState === "visible")
-   {
-      audio.start();
-   }
-});
-
-// **** drag & drop ****
-
-const dropZone = document.getElementById('screen');
-if (dropZone) {
-   // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
-   dropZone.addEventListener('dragover', function(e: DragEvent) {
-      e.stopPropagation();
-      e.preventDefault();
-      if (e.dataTransfer) {
-         e.dataTransfer.dropEffect = 'copy';
+   window.addEventListener("visibilitychange", function() {
+      if(document.visibilityState === "hidden")
+      {
+         audio.stop();
+      }
+      else if(document.visibilityState === "visible")
+      {
+         audio.start();
       }
    });
 
-   // Get file data on drop
-   dropZone.addEventListener('drop', (e: DragEvent) => {
-      audio.resume();
+   // **** drag & drop ****
 
-      e.stopPropagation();
-      e.preventDefault();
-      if (e.dataTransfer) {
-         const files = e.dataTransfer.files; // Array of all files
-         if (files) {
-            for(let i=0; i<files.length; i++) {
-               const file = files[i];
-               const reader = new FileReader();      
-               reader.onload = e2 => {
-                  if (e2.target && e2.target.result) {
-                     droppedFile(file.name, new Uint8Array(e2.target.result as ArrayBuffer));
-                  }
-               };
-               reader.readAsArrayBuffer(file); 
+   const dropZone = document.getElementById('screen');
+   if (dropZone) {
+      // Optional.   Show the copy icon when dragging over.  Seems to only work for chrome.
+      dropZone.addEventListener('dragover', function(e: DragEvent) {
+         e.stopPropagation();
+         e.preventDefault();
+         if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'copy';
+         }
+      });
+
+      // Get file data on drop
+      dropZone.addEventListener('drop', (e: DragEvent) => {
+         audio.resume();
+
+         e.stopPropagation();
+         e.preventDefault();
+         if (e.dataTransfer) {
+            const files = e.dataTransfer.files; // Array of all files
+            if (files) {
+               for(let i=0; i<files.length; i++) {
+                  const file = files[i];
+                  const reader = new FileReader();      
+                  reader.onload = e2 => {
+                     if (e2.target && e2.target.result) {
+                        droppedFile(file.name, new Uint8Array(e2.target.result as ArrayBuffer));
+                     }
+                  };
+                  reader.readAsArrayBuffer(file); 
+               }
             }
          }
-      }
-   });
+      });
+   }
 }
 
 async function droppedFile(outName: string, bytes: Uint8Array) {
@@ -201,4 +204,4 @@ async function fetchProgram(name: string)
    }
 }
 
-export { parseQueryStringCommands, goFullScreen, droppedFile };
+export { parseQueryStringCommands, goFullScreen, droppedFile, initBrowser };

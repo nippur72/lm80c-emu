@@ -23,19 +23,28 @@ function calculateGeometry() {
    }
 }
 
-calculateGeometry();
-
 /**************************************************/
 
 const DOT_WIDTH = 342;
 const DOT_HEIGHT = 262;
 
-let tms9928a_canvas = document.getElementById("canvas") as HTMLCanvasElement;
-let tms9928a_context = (tms9928a_canvas ? tms9928a_canvas.getContext('2d') : null) as CanvasRenderingContext2D | null;
-
+let tms9928a_context: CanvasRenderingContext2D | null = null;
+let tms9928a_imagedata: ImageData | null = null;
 // new drawing method
-let tms9928a_imagedata = tms9928a_context ? tms9928a_context.createImageData(DOT_WIDTH*2, DOT_HEIGHT*2) : null;
-let bmp = tms9928a_imagedata ? new Uint32Array(tms9928a_imagedata.data.buffer) : new Uint32Array(0);
+let bmp: Uint32Array = new Uint32Array(0);
+
+// sets up the canvas and exposes the frame callback to WASM;
+// called once the emulator is running, never at import time
+function initVideo(): void {
+   calculateGeometry();
+
+   const canvas = document.getElementById("canvas") as HTMLCanvasElement;
+   tms9928a_context = (canvas ? canvas.getContext('2d') : null) as CanvasRenderingContext2D | null;
+   tms9928a_imagedata = tms9928a_context ? tms9928a_context.createImageData(DOT_WIDTH*2, DOT_HEIGHT*2) : null;
+   bmp = tms9928a_imagedata ? new Uint32Array(tms9928a_imagedata.data.buffer) : new Uint32Array(0);
+
+   (window as any).vdp_screen_update = vdp_screen_update;
+}
 
 function vdp_screen_update(ptr: number) {
    if (!tms9928a_context || !tms9928a_imagedata) return;
@@ -76,7 +85,4 @@ function vdp_screen_update(ptr: number) {
    }
 }
 
-(window as any).vdp_screen_update = vdp_screen_update;
-
-
-export { calculateGeometry, vdp_screen_update, frameCounter };
+export { calculateGeometry, vdp_screen_update, frameCounter, initVideo };

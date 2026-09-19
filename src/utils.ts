@@ -101,27 +101,29 @@ function led_write(value: number) {
    LED = value;
 }
 
-// Attach to window for developer console and WASM visibility
-(window as any).cpu_status = cpu_status;
-(window as any).paste = paste;
-(window as any).SIO_getRxAvail = (ch: number) => SIO_getRxAvail(ch);
-(window as any).SIO_getFifoLen = (ch: number) => SIO_getFifoLen(ch);
-(window as any).SIO_getOverrun = (ch: number) => SIO_getOverrun(ch);
-(window as any).dumpPointers = dumpPointers;
-(window as any).dumpStack = dumpStack;
-(window as any).make_lm = make_lm;
-(window as any).start_counter = start_counter;
-(window as any).stop_counter = stop_counter;
-(window as any).led_read = led_read;
-(window as any).led_write = led_write;
+// exposes the developer console helpers on window; called from main() once WASM is loaded
+function initUtils(): void {
+   (window as any).cpu_status = cpu_status;
+   (window as any).paste = paste;
+   (window as any).SIO_getRxAvail = (ch: number) => SIO_getRxAvail(ch);
+   (window as any).SIO_getFifoLen = (ch: number) => SIO_getFifoLen(ch);
+   (window as any).SIO_getOverrun = (ch: number) => SIO_getOverrun(ch);
+   (window as any).dumpPointers = dumpPointers;
+   (window as any).dumpStack = dumpStack;
+   (window as any).make_lm = make_lm;
+   (window as any).start_counter = start_counter;
+   (window as any).stop_counter = stop_counter;
+   (window as any).led_read = led_read;
+   (window as any).led_write = led_write;
 
-(window as any).debugBefore = debugBefore;
-(window as any).debugAfter = debugAfter;
+   (window as any).debugBefore = debugBefore;
+   (window as any).debugAfter = debugAfter;
+}
 
 export {
    cpu_status, paste, zap, power,
    dumpPointers, dumpStack, make_lm, start_counter, stop_counter,
-   led_read, led_write, debugBefore, debugAfter
+   led_read, led_write, debugBefore, debugAfter, initUtils
 };
 
 

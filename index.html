@@ -103,9 +103,8 @@
    <script type="text/javascript" src="roms/rom_64K_120.js"></script>
 
    <script type="module">
-      import { main, load_wasm } from './dist/bundle.js';
-      await load_wasm();
-      main();
+      import { start } from './dist/bundle.js';
+      start();
    </script>
 </body>
 </html>
