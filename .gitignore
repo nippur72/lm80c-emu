@@ -23,3 +23,6 @@ $RECYCLE.BIN/
 # =========================
 # Operating System Files
 # =========================
+
+# the ~250 MB raw CF card image is only committed in its gzipped form (see README)
+software/cfcard.img

@@ -52,14 +52,25 @@ The file is fetched from the `software/` directory, copied into memory and run. 
 CF CARD
 =======
 
-By default the emulator mounts `software/cfcard.img` as the CF card at startup. Pass a
-different image to the `cfcard` querystring parameter to mount it instead:
+By default the emulator mounts `software/cfcard.img.gz` as the CF card at startup. The image
+is gzipped because the raw card is about 250 MB, and it is inflated in the browser with the
+native `DecompressionStream` API (Chrome 80+, Firefox 113+, Safari 16.4+). On older browsers
+the emulator logs a message and keeps the empty, unformatted CF card.
+
+Pass a different image to the `cfcard` querystring parameter to mount it instead; both a
+plain and a gzipped image are accepted:
 
 https://nippur72.github.io/lm80c-emu?cfcard=mycard.img
+https://nippur72.github.io/lm80c-emu?cfcard=mycard.img.gz
 
 The file is fetched from the `software/` directory; an absolute `http(s)` URL can be used
 instead to fetch the image from a remote location. If the image cannot be loaded, the
 emulator keeps the empty, unformatted CF card.
+
+Build a new card by mounting it in the emulator and using File → Save CF card…, then compress
+it for the repository with:
+
+    npm run packcfcard     gzip software/cfcard.img into software/cfcard.img.gz
 
 BUILD AND RUN LOCALLY
 =====================

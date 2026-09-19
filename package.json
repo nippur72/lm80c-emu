@@ -6,6 +6,7 @@
     "all": "npm run buildwasm && npm run build && npm run serve",
     "buildwasm": "mkwasm.bat",
     "build": "vite build",
+    "packcfcard": "node mk_cfcard_gzip.js",
     "serve": "http-server -p 8080"
   },
   "repository": {

@@ -2,12 +2,16 @@
 
 import { getFileExtension } from './bytes';
 import { cf_card_mount } from './cfcard';
+import { decompressIfGzip } from './compression';
 import { loadProgram } from './files';
 import { calculateGeometry } from './video';
 import { externalLoad } from './externalLoad';
 import { audio, options } from './emulator';
 import { isUiTarget } from './ui/uiState';
 import { EmulatorOptions } from './types';
+
+/** the CF card shipped with the emulator, stored gzipped and inflated in the browser */
+const DEFAULT_CF_CARD = "cfcard.img.gz";
 
 let aspect = 1.25;
 let border_top = 0;
@@ -165,26 +169,49 @@ async function parseQueryStringCommands() {
       onResize();
    }
 
-   const cfname = options.cfcard ?? "cfcard.img";
-   await mountCfCard(cfname);   
+   await mountCfCard(options.cfcard);
 }
 
-/** loads a CF card image and mounts it; on failure the empty card is left in place */
-async function mountCfCard(name: string): Promise<void> {
+/** fetches software/<name>; when the name is not already gzipped, the .gz variant is tried too */
+async function fetchCfCard(name: string): Promise<Uint8Array | undefined> {
+   const names = name.endsWith(".gz") ? [name] : [name, `${name}.gz`];
+
+   for(const candidate of names) {
+      const response = await fetch(`software/${candidate}`);
+      if(response.ok) return new Uint8Array(await response.arrayBuffer());
+   }
+   return undefined;
+}
+
+/** loads a CF card image, inflating it when needed; on failure the empty card is left in place */
+async function mountCfCard(name?: string): Promise<void> {
+   const label = name ?? DEFAULT_CF_CARD;
    let bytes: Uint8Array | undefined;
 
-   if(name.startsWith("http")) {
-      // external load
-      bytes = await externalLoad(name);
-   }
-   else {
-      // internal load
-      const response = await fetch(`software/${name}`);
-      if(response.ok) bytes = new Uint8Array(await response.arrayBuffer());
-   }
+   try {
+      if(name === undefined) {
+         // the shipped default is gzipped, but a raw image is still accepted for local builds
+         bytes = (await fetchCfCard(DEFAULT_CF_CARD)) ?? (await fetchCfCard("cfcard.img"));
+      }
+      else if(name.startsWith("http")) {
+         // external load
+         bytes = await externalLoad(name);
+      }
+      else {
+         // internal load
+         bytes = await fetchCfCard(name);
+      }
 
-   if(bytes !== undefined) cf_card_mount(bytes);
-   else console.log(`CF: could not load "${name}", keeping the empty card`);
+      if(bytes === undefined) {
+         console.log(`CF: could not load "${label}", keeping the empty card`);
+         return;
+      }
+
+      cf_card_mount(await decompressIfGzip(bytes, label));
+   }
+   catch(error) {
+      console.error(`CF: could not load "${label}", keeping the empty card`, error);
+   }
 }
 
 async function fetchProgram(name: string)

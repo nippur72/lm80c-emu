@@ -1,6 +1,7 @@
 import { audio, cpu } from '../emulator';
 import { downloadBytes } from '../bytes';
 import { cf_card_dump, cf_card_mount } from '../cfcard';
+import { decompressIfGzip } from '../compression';
 import { download_prg } from '../files';
 import { isPasting, stopPaste, pasteText, pasteClipboard } from '../paste';
 import { droppedFile, goFullScreen } from '../browser';
@@ -61,9 +62,9 @@ const pickPrgFile = makeFilePicker('.prg', file => {
       .catch(error => console.error(error));
 });
 
-const pickCfCardFile = makeFilePicker('.img,.bin,.iso', file => {
+const pickCfCardFile = makeFilePicker('.img,.img.gz', file => {
    file.arrayBuffer()
-      .then(bytes => cf_card_mount(new Uint8Array(bytes)))
+      .then(async bytes => cf_card_mount(await decompressIfGzip(new Uint8Array(bytes), file.name)))
       .catch(error => console.error(error));
 });
 
