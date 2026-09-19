@@ -1,7 +1,7 @@
 import { downloadBytes, mem_read_word, mem_write_word, hex } from './bytes';
 import { BASTXT, PROGND } from './emulator';
 import { mem_read, mem_write } from './emscripten_wrapper';
-import { paste } from './utils';
+import { paste } from './paste';
 
 function loadBytes(bytes: Uint8Array | number[], address?: number, fileName?: string): void {
     const startAddress = (address === undefined) ? mem_read_word(BASTXT) : address;

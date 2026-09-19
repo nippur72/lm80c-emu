@@ -4,6 +4,7 @@ import { commands, runCommand, unlockAudio } from './commands';
 import type { Command } from './commands';
 import { menuModel } from './menuModel';
 import type { MenuItemDef } from './menuModel';
+import { onPasteStateChange } from '../paste';
 import { setUiCapturesKeyboard } from './uiState';
 import { useAutoHide } from './useAutoHide';
 
@@ -46,6 +47,9 @@ function MenuBar() {
       return () => setUiCapturesKeyboard(false);
    }, [open]);
 
+   // items that depend on the paste state (paste/paste file/stop pasting) must refresh live
+   React.useEffect(() => onPasteStateChange(refresh), [refresh]);
+
    const handleValueChange = (value: string) => {
       setOpenMenu(value);
       refresh();
@@ -86,6 +90,7 @@ function MenuBar() {
 
       const command = commands[item.id];
       if (!command) return null;
+      if (command.isVisible && !command.isVisible(item.arg)) return null;
 
       const label = item.label ?? command.label;
       const disabled = command.isEnabled ? !command.isEnabled(item.arg) : false;

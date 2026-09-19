@@ -94,7 +94,8 @@ const menuModel: MenuDef[] = [
          { kind: 'command', id: 'keyboard.serial' },
          { kind: 'separator' },
          { kind: 'command', id: 'keyboard.paste' },
-         { kind: 'command', id: 'keyboard.pasteFile' }
+         { kind: 'command', id: 'keyboard.pasteFile' },
+         { kind: 'command', id: 'keyboard.stopPaste' }
       ]
    },
    {

@@ -1,23 +1,14 @@
 import { hex, mem_read_word } from './bytes';
 import { cpu, BASTXT, PROGND } from './emulator';
 import { mem_read, SIO_getRxAvail, SIO_getFifoLen, SIO_getOverrun } from './emscripten_wrapper';
-import { sendSerialChar, resetSerial } from './serial';
+import { resetSerial } from './serial';
+import { paste, stopPaste, isPasting } from './paste';
 
 // **** machine-specific utility functions ****
 
 function cpu_status(): string {
    const state = cpu.getState();
    return `A=${hex(state.a)} BC=${hex(state.b)}${hex(state.c)} DE=${hex(state.d)}${hex(state.e)} HL=${hex(state.h)}${hex(state.l)} IX=${hex(state.ix,4)} IY=${hex(state.iy,4)} SP=${hex(state.sp,4)} PC=${hex(state.pc,4)} S=${state.flags.S}, Z=${state.flags.Z}, Y=${state.flags.Y}, H=${state.flags.H}, X=${state.flags.X}, P=${state.flags.P}, N=${state.flags.N}, C=${state.flags.C}`;   
-}
-
-async function paste(text: string): Promise<void> {
-   const lines = text.replace(/\r\n?/g, "\n").split("\n");
-   for(const linea of lines) {
-      for(let t=0; t<linea.length; t++) {
-         await sendSerialChar(linea.charCodeAt(t));
-      }
-      await sendSerialChar(13);   // CR
-   }
 }
 
 function zap() {            
@@ -105,6 +96,8 @@ function led_write(value: number) {
 function initUtils(): void {
    (window as any).cpu_status = cpu_status;
    (window as any).paste = paste;
+   (window as any).stopPaste = stopPaste;
+   (window as any).isPasting = isPasting;
    (window as any).SIO_getRxAvail = (ch: number) => SIO_getRxAvail(ch);
    (window as any).SIO_getFifoLen = (ch: number) => SIO_getFifoLen(ch);
    (window as any).SIO_getOverrun = (ch: number) => SIO_getOverrun(ch);
@@ -121,7 +114,7 @@ function initUtils(): void {
 }
 
 export {
-   cpu_status, paste, zap, power,
+   cpu_status, zap, power,
    dumpPointers, dumpStack, make_lm, start_counter, stop_counter,
    led_read, led_write, debugBefore, debugAfter, initUtils
 };

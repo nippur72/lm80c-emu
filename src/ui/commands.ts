@@ -2,7 +2,7 @@ import { audio, cpu } from '../emulator';
 import { downloadBytes } from '../bytes';
 import { cf_card_dump, cf_card_mount } from '../cfcard';
 import { download_prg } from '../files';
-import { paste } from '../utils';
+import { isPasting, stopPaste, pasteText, pasteClipboard } from '../paste';
 import { droppedFile, goFullScreen } from '../browser';
 import { getKbType, setKbType, tapKeys } from '../keyboard';
 import { KEY_CBM, KEY_CTRL } from '../keys';
@@ -13,6 +13,7 @@ type Command = {
    label: string;
    shortcut?: string;
    type?: CommandType;
+   isVisible?: (arg?: string) => boolean;
    isEnabled?: (arg?: string) => boolean;
    isChecked?: (arg?: string) => boolean;
    run: (arg?: string) => void;
@@ -60,12 +61,6 @@ const pickPrgFile = makeFilePicker('.prg', file => {
       .catch(error => console.error(error));
 });
 
-/** paste() writes straight to the SIO, so it does not depend on the keyboard mode */
-function pasteText(text: string): void {
-   if (text === '') return;
-   fire(paste(text));
-}
-
 const pickCfCardFile = makeFilePicker('.img,.bin,.iso', file => {
    file.arrayBuffer()
       .then(bytes => cf_card_mount(new Uint8Array(bytes)))
@@ -81,11 +76,6 @@ const pickTextFile = makeFilePicker('.txt,.bas', file => {
 /** the LM80C manuals are pdf files in the docs folder served next to index.html */
 function openManual(file: string): void {
    window.open(`docs/${encodeURIComponent(file)}`, '_blank');
-}
-
-async function pasteClipboard(): Promise<void> {
-   const text = await navigator.clipboard?.readText();
-   if (text) pasteText(text);
 }
 
 const commands: Record<string, Command> = {
@@ -142,11 +132,18 @@ const commands: Record<string, Command> = {
    },
    'keyboard.paste': {
       label: 'Paste clipboard',
+      isVisible: () => !isPasting(),
       run: () => fire(pasteClipboard())
    },
    'keyboard.pasteFile': {
       label: 'Paste file…',
+      isVisible: () => !isPasting(),
       run: pickTextFile
+   },
+   'keyboard.stopPaste': {
+      label: 'Stop pasting',
+      isVisible: () => isPasting(),
+      run: stopPaste
    },
 
    'view.fullscreen': {
